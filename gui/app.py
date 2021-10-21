@@ -5,6 +5,8 @@ import cv2
 from PyQt5.QtCore import pyqtSignal, pyqtSlot, Qt, QThread
 import numpy as np
 
+from util import data_path
+print(data_path)
 
 class VideoThread(QThread):
     change_pixmap_signal = pyqtSignal(np.ndarray)
