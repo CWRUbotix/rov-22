@@ -8,24 +8,37 @@ import numpy as np
 from util import data_path
 print(data_path)
 
-class VideoThread(QThread):
-    change_pixmap_signal = pyqtSignal(np.ndarray)
+class Frame():
+    def __init__(self, cv_img, cam_index):
+        self.cv_img = cv_img
+        self.cam_index = cam_index
 
-    def __init__(self, filename: str):
+
+class VideoThread(QThread):
+    update_frames_signal = pyqtSignal(Frame)
+
+    def __init__(self, filenames):
         super().__init__()
         self._run_flag = True
-        self._filename = filename
+        self._filenames = filenames
+        self._captures = []
 
     def run(self):
-        # capture from web cam
-        cap = cv2.VideoCapture(self._filename)
+        # Create list of video capturers
+        for filename in self._filenames:
+            self._captures.append(cv2.VideoCapture(filename))
+
+        # Emit Frames of the captures
         while self._run_flag:
-            ret, cv_img = cap.read()
-            if ret:
-                self.change_pixmap_signal.emit(cv_img)
+            for index, capture in enumerate(self._captures):
+                ret, cv_img = capture.read()
+                if ret:
+                    self.update_frames_signal.emit(Frame(cv_img, index))
             self.msleep(int(1000/30))
-        # shut down capture system
-        cap.release()
+        
+        # Shut down capturers
+        for capture in self._captures:
+            capture.release()
 
     def stop(self):
         """Sets run flag to False and waits for thread to finish"""
@@ -34,29 +47,35 @@ class VideoThread(QThread):
 
 
 class App(QWidget):
-    def __init__(self, filename: str):
+    def __init__(self, filenames):
         super().__init__()
         self.setWindowTitle("Qt live label demo")
         self.disply_width = 640
         self.display_height = 480
-        # create the label that holds the image
-        self.image_label = QLabel(self)
-        self.image_label.resize(self.disply_width, self.display_height)
-        # create a text label
+
+        # Create the labels that hold the images
+        self.image_labels = []
+        for i in range(0, 2):
+            self.image_labels.append(QLabel(self))
+            self.image_labels[i].resize(self.disply_width, self.display_height)
+
+        # Create a text label
         self.textLabel = QLabel('Webcam')
 
-        # create a vertical box layout and add the two labels
+        # Create a vertical box layout and add the labels
         vbox = QVBoxLayout()
-        vbox.addWidget(self.image_label)
+        for label in self.image_labels:
+            vbox.addWidget(label)
         vbox.addWidget(self.textLabel)
-        # set the vbox layout as the widgets layout
+
+        # Set the vbox layout as the widgets layout
         self.setLayout(vbox)
 
-        # create the video capture thread
-        self.thread = VideoThread(filename)
-        # connect its signal to the update_image slot
-        self.thread.change_pixmap_signal.connect(self.update_image)
-        # start the thread
+        # Create the video capture thread
+        self.thread = VideoThread(filenames)
+        # Connect its signal to the update_image slot
+        self.thread.update_frames_signal.connect(self.update_image)
+        # Start the thread
         self.thread.start()
 
     def closeEvent(self, event):
@@ -64,12 +83,12 @@ class App(QWidget):
         event.accept()
 
 
-
-    @pyqtSlot(np.ndarray)
-    def update_image(self, cv_img):
-        """Updates the image_label with a new opencv image"""
-        qt_img = self.convert_cv_qt(cv_img)
-        self.image_label.setPixmap(qt_img)
+    @pyqtSlot(Frame)
+    def update_image(self, frame: Frame):
+        """Updates the appropriate image_label with a new opencv image"""
+        qt_img = self.convert_cv_qt(frame.cv_img)
+        # to be replace with a loop thru VideoWidgets & comparison of frame's cam_index to videowidget's cam_index
+        self.image_labels[frame.cam_index].setPixmap(qt_img)
     
     def convert_cv_qt(self, cv_img):
         """Convert from an opencv image to QPixmap"""
