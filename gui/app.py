@@ -1,14 +1,16 @@
 from PyQt5 import QtGui
-from PyQt5.QtWidgets import QWidget, QApplication, QLabel, QVBoxLayout, QComboBox, QHBoxLayout
+from PyQt5.QtWidgets import QWidget, QApplication, QLabel, QVBoxLayout, QComboBox
 from PyQt5.QtGui import QPixmap
 import cv2
 from PyQt5.QtCore import pyqtSignal, pyqtSlot, Qt, QThread
 import numpy as np
 
+from gui.decorator import Decorator
 from util import data_path
 
 print(data_path)
 
+add_to_dropdown = Decorator()
 
 class Frame():
     def __init__(self, cv_img, cam_index):
@@ -55,12 +57,11 @@ class App(QWidget):
         self.disply_width = 250
         self.display_height = 250
 
-        self.drop_down = QComboBox()
-        self.drop_down.addItem("Apple")
-        self.drop_down.addItem("Pear")
-        self.drop_down.addItem("Orange")
+        # Creating dropdown and adding the functions
+        self.dropdown = QComboBox()
 
-        self.show()
+        for func in add_to_dropdown.function_list:
+            self.dropdown.addItem(func.__name__)
 
         # Create the labels that hold the images
         self.image_labels = []
@@ -79,7 +80,7 @@ class App(QWidget):
         vbox.addWidget(self.textLabel)
 
         # Adding drop down menu
-        vbox.addWidget(self.drop_down)
+        vbox.addWidget(self.dropdown)
 
         # Set the vbox layout as the widgets layout
         self.setLayout(vbox)
@@ -110,3 +111,11 @@ class App(QWidget):
         convert_to_Qt_format = QtGui.QImage(rgb_image.data, w, h, bytes_per_line, QtGui.QImage.Format_RGB888)
         p = convert_to_Qt_format.scaled(self.disply_width, self.display_height, Qt.KeepAspectRatio)
         return QPixmap.fromImage(p)
+
+    @add_to_dropdown
+    def testFunc(self):
+        print("test 1")
+
+    @add_to_dropdown
+    def testFunc2(self):
+        print("test 2")
