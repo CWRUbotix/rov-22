@@ -10,6 +10,7 @@ from util import data_path
 
 print(data_path)
 
+
 class Frame():
     def __init__(self, cv_img, cam_index):
         self.cv_img = cv_img
@@ -59,8 +60,12 @@ class App(QWidget):
         self.combo_box = QComboBox()
         self.combo_box.addItem("None")
 
-        for func in dropdown.function_list:
-            self.combo_box.addItem(func.__name__)
+        for func_name in dropdown.func_dictionary.keys():
+            self.combo_box.addItem(func_name)
+
+        # self.ui.combo_box.currentIndexChanged.connect(self.update_combo_box())
+        self.combo_box.currentTextChanged.connect(self.update_combo_box)
+        self.update_combo_box(self.combo_box.currentText())
 
         # Create the labels that hold the images
         self.image_labels = []
@@ -111,3 +116,7 @@ class App(QWidget):
         convert_to_Qt_format = QtGui.QImage(rgb_image.data, w, h, bytes_per_line, QtGui.QImage.Format_RGB888)
         p = convert_to_Qt_format.scaled(self.display_width, self.display_height, Qt.KeepAspectRatio)
         return QPixmap.fromImage(p)
+
+    def update_combo_box(self, text):
+        if text != "None":
+            dropdown.func_dictionary[text]()

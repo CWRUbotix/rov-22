@@ -4,7 +4,7 @@ class Decorator:
     """
 
     def __init__(self):
-        self.function_list = []  # List of functions
+        self.func_dictionary = dict()
 
     def __call__(self, func):
-        self.function_list.append(func)  # Adds decorated functions to list
+        self.func_dictionary[func.__name__] = func
