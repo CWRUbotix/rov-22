@@ -1,12 +1,14 @@
 from PyQt5 import QtGui
-from PyQt5.QtWidgets import QWidget, QApplication, QLabel, QVBoxLayout
+from PyQt5.QtWidgets import QWidget, QApplication, QLabel, QVBoxLayout, QTabWidget
 from PyQt5.QtGui import QPixmap
 import cv2
 from PyQt5.QtCore import pyqtSignal, pyqtSlot, Qt, QThread
 import numpy as np
 
 from util import data_path
+
 print(data_path)
+
 
 class Frame():
     def __init__(self, cv_img, cam_index):
@@ -34,8 +36,8 @@ class VideoThread(QThread):
                 ret, cv_img = capture.read()
                 if ret:
                     self.update_frames_signal.emit(Frame(cv_img, index))
-            self.msleep(int(1000/30))
-        
+            self.msleep(int(1000 / 30))
+
         # Shut down capturers
         for capture in self._captures:
             capture.release()
@@ -53,6 +55,29 @@ class App(QWidget):
         self.disply_width = 640
         self.display_height = 480
 
+        # Create a tab widget
+        self.tabs = QTabWidget()
+        self.main_tab = QWidget()
+        self.debug_tab = QWidget()
+        self.tabs.resize(300, 200)
+
+        self.tabs.addTab(self.main_tab, "Main")
+        self.tabs.addTab(self.debug_tab, "Debug")
+
+        # Create a new vbox layout for each tab
+        self.main_layout = QVBoxLayout(self)
+        self.debug_layout = QVBoxLayout(self)
+
+        self.main_tab.setLayout(self.main_layout)
+        self.debug_tab.setLayout(self.debug_layout)
+
+        # Create a vbox to hold the tabs widget
+        vbox = QVBoxLayout()
+        vbox.addWidget(self.tabs)
+
+        # Set the root layout to this vbox
+        self.setLayout(vbox)
+
         # Create the labels that hold the images
         self.image_labels = []
         for i in range(0, 2):
@@ -62,14 +87,10 @@ class App(QWidget):
         # Create a text label
         self.textLabel = QLabel('Webcam')
 
-        # Create a vertical box layout and add the labels
-        vbox = QVBoxLayout()
+        # Add the image labels to the main tab
         for label in self.image_labels:
-            vbox.addWidget(label)
-        vbox.addWidget(self.textLabel)
-
-        # Set the vbox layout as the widgets layout
-        self.setLayout(vbox)
+            self.main_layout.addWidget(label)
+        self.main_layout.addWidget(self.textLabel)
 
         # Create the video capture thread
         self.thread = VideoThread(filenames)
@@ -82,14 +103,13 @@ class App(QWidget):
         self.thread.stop()
         event.accept()
 
-
     @pyqtSlot(Frame)
     def update_image(self, frame: Frame):
         """Updates the appropriate image_label with a new opencv image"""
         qt_img = self.convert_cv_qt(frame.cv_img)
         # to be replace with a loop thru VideoWidgets & comparison of frame's cam_index to videowidget's cam_index
         self.image_labels[frame.cam_index].setPixmap(qt_img)
-    
+
     def convert_cv_qt(self, cv_img):
         """Convert from an opencv image to QPixmap"""
         rgb_image = cv2.cvtColor(cv_img, cv2.COLOR_BGR2RGB)
