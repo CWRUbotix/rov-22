@@ -5,12 +5,10 @@ import cv2
 from PyQt5.QtCore import pyqtSignal, pyqtSlot, Qt, QThread
 import numpy as np
 
-from gui.decorator import Decorator
+from gui.decorated_functions import dropdown
 from util import data_path
 
 print(data_path)
-
-add_to_dropdown = Decorator()
 
 class Frame():
     def __init__(self, cv_img, cam_index):
@@ -54,20 +52,21 @@ class App(QWidget):
     def __init__(self, filenames):
         super().__init__()
         self.setWindowTitle("Qt live label demo")
-        self.disply_width = 250
+        self.display_width = 250
         self.display_height = 250
 
-        # Creating dropdown and adding the functions
-        self.dropdown = QComboBox()
+        # Creating combo_box and adding the functions
+        self.combo_box = QComboBox()
+        self.combo_box.addItem("None")
 
-        for func in add_to_dropdown.function_list:
-            self.dropdown.addItem(func.__name__)
+        for func in dropdown.function_list:
+            self.combo_box.addItem(func.__name__)
 
         # Create the labels that hold the images
         self.image_labels = []
         for i in range(0, 2):
             self.image_labels.append(QLabel(self))
-            self.image_labels[i].resize(self.disply_width, self.display_height)
+            self.image_labels[i].resize(self.display_width, self.display_height)
 
         # Create a text label
         self.textLabel = QLabel('Webcam')
@@ -77,18 +76,19 @@ class App(QWidget):
 
         for label in self.image_labels:
             vbox.addWidget(label)
-        vbox.addWidget(self.textLabel)
 
-        # Adding drop down menu
-        vbox.addWidget(self.dropdown)
+        vbox.addWidget(self.textLabel)
+        vbox.addWidget(self.combo_box)
 
         # Set the vbox layout as the widgets layout
         self.setLayout(vbox)
 
         # Create the video capture thread
         self.thread = VideoThread(filenames)
+
         # Connect its signal to the update_image slot
         self.thread.update_frames_signal.connect(self.update_image)
+
         # Start the thread
         self.thread.start()
 
@@ -109,13 +109,5 @@ class App(QWidget):
         h, w, ch = rgb_image.shape
         bytes_per_line = ch * w
         convert_to_Qt_format = QtGui.QImage(rgb_image.data, w, h, bytes_per_line, QtGui.QImage.Format_RGB888)
-        p = convert_to_Qt_format.scaled(self.disply_width, self.display_height, Qt.KeepAspectRatio)
+        p = convert_to_Qt_format.scaled(self.display_width, self.display_height, Qt.KeepAspectRatio)
         return QPixmap.fromImage(p)
-
-    @add_to_dropdown
-    def testFunc(self):
-        print("test 1")
-
-    @add_to_dropdown
-    def testFunc2(self):
-        print("test 2")
