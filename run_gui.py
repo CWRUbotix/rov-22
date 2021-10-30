@@ -6,7 +6,8 @@ from util import data_path
 
 import os
 
-os.environ.pop("QT_QPA_PLATFORM_PLUGIN_PATH")
+if 'QT_QPA_PLATFORM_PLUGIN_PATH' in os.environ:
+    os.environ.pop('QT_QPA_PLATFORM_PLUGIN_PATH')
 
 app = QApplication(sys.argv)
 a = App([os.path.join(data_path, 'example-streams', '1.mp4'), os.path.join(data_path, 'example-streams', '2.mp4')])

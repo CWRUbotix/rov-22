@@ -5,10 +5,6 @@ import cv2
 from PyQt5.QtCore import pyqtSignal, pyqtSlot, Qt, QThread
 import numpy as np
 
-from util import data_path
-
-print(data_path)
-
 
 class Frame():
     def __init__(self, cv_img, cam_index):
@@ -51,7 +47,7 @@ class VideoThread(QThread):
 class App(QWidget):
     def __init__(self, filenames):
         super().__init__()
-        self.setWindowTitle("Qt live label demo")
+        self.setWindowTitle("ROV Vision")
         self.disply_width = 640
         self.display_height = 480
 
@@ -84,13 +80,9 @@ class App(QWidget):
             self.image_labels.append(QLabel(self))
             self.image_labels[i].resize(self.disply_width, self.display_height)
 
-        # Create a text label
-        self.textLabel = QLabel('Webcam')
-
         # Add the image labels to the main tab
         for label in self.image_labels:
             self.main_layout.addWidget(label)
-        self.main_layout.addWidget(self.textLabel)
 
         # Create the video capture thread
         self.thread = VideoThread(filenames)
