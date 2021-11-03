@@ -53,10 +53,11 @@ class App(QWidget):
     def __init__(self, filenames):
         super().__init__()
         self.setWindowTitle("Qt live label demo")
+
         self.display_width = 250
         self.display_height = 250
 
-        self.current_filter = "None"
+        self.current_filter = "None"  # Filter applied with dropdown menu
 
         # Creating combo_box and adding the functions
         self.combo_box = QComboBox()
@@ -142,5 +143,10 @@ class App(QWidget):
         if text != "None":
             self.current_filter = text
 
-    def apply_filter(self, image):
-        return dropdown.func_dictionary.get(self.current_filter)(image)
+    def apply_filter(self, frame):
+        """
+        Applies filter from the dropdown menu to the given frame
+        :param frame: frame to apply filter to
+        :return: frame with filter applied
+        """
+        return dropdown.func_dictionary.get(self.current_filter)(frame)

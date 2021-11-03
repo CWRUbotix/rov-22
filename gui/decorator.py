@@ -6,5 +6,9 @@ class Decorator:
     def __init__(self):
         self.func_dictionary = dict()
 
-    def __call__(self, func):
-        self.func_dictionary[func.__name__] = func
+    def __call__(self, name):
+        def decorator(func):
+            self.func_dictionary[name] = func
+            return func
+
+        return decorator
