@@ -10,10 +10,6 @@ def convert_to_gray(image):
 
 
 @dropdown
-def test():
+def test(image):
     print("test")
-
-
-@dropdown
-def test2():
-    print("test2")
+    return image

@@ -56,6 +56,8 @@ class App(QWidget):
         self.display_width = 250
         self.display_height = 250
 
+        self.current_filter = "None"
+
         # Creating combo_box and adding the functions
         self.combo_box = QComboBox()
         self.combo_box.addItem("None")
@@ -64,8 +66,8 @@ class App(QWidget):
             self.combo_box.addItem(func_name)
 
         # self.ui.combo_box.currentIndexChanged.connect(self.update_combo_box())
-        self.combo_box.currentTextChanged.connect(self.update_combo_box)
-        self.update_combo_box(self.combo_box.currentText())
+        self.combo_box.currentTextChanged.connect(self.update_current_filter)
+        self.update_current_filter(self.combo_box.currentText())
 
         # Create the labels that hold the images
         self.image_labels = []
@@ -111,12 +113,37 @@ class App(QWidget):
     def convert_cv_qt(self, cv_img):
         """Convert from an opencv image to QPixmap"""
         rgb_image = cv2.cvtColor(cv_img, cv2.COLOR_BGR2RGB)
-        h, w, ch = rgb_image.shape
-        bytes_per_line = ch * w
-        convert_to_Qt_format = QtGui.QImage(rgb_image.data, w, h, bytes_per_line, QtGui.QImage.Format_RGB888)
+
+        filtered_image = self.apply_filter(rgb_image)
+
+        if len(filtered_image.shape) == 3:
+            h, w, ch = filtered_image.shape
+            bytes_per_line = ch * w
+
+            img_format = QtGui.QImage.Format_RGB888
+
+        elif len(filtered_image.shape) == 2:
+            h, w = filtered_image.shape
+            bytes_per_line = w
+
+            img_format = QtGui.QImage.Format_Grayscale8
+
+
+
+        convert_to_Qt_format = QtGui.QImage(filtered_image.data, w, h, bytes_per_line, img_format)
+
         p = convert_to_Qt_format.scaled(self.display_width, self.display_height, Qt.KeepAspectRatio)
+
         return QPixmap.fromImage(p)
 
-    def update_combo_box(self, text):
+    def update_current_filter(self, text):
+        """
+        Calls the function selected in the dropdown menu
+        :param text: Name of the function to call
+        """
+
         if text != "None":
-            dropdown.func_dictionary[text]()
+            self.current_filter = text
+
+    def apply_filter(self, image):
+        return dropdown.func_dictionary.get(self.current_filter)(image)
