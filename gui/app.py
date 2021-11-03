@@ -60,7 +60,6 @@ class App(QWidget):
 
         # Creating combo_box and adding the functions
         self.combo_box = QComboBox()
-        self.combo_box.addItem("None")
 
         for func_name in dropdown.func_dictionary.keys():
             self.combo_box.addItem(func_name)
@@ -127,8 +126,6 @@ class App(QWidget):
             bytes_per_line = w
 
             img_format = QtGui.QImage.Format_Grayscale8
-
-
 
         convert_to_Qt_format = QtGui.QImage(filtered_image.data, w, h, bytes_per_line, img_format)
 

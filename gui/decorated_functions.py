@@ -5,6 +5,10 @@ dropdown = Decorator()
 
 
 @dropdown
+def none(image):
+    return image
+
+@dropdown
 def convert_to_gray(image):
     return cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
