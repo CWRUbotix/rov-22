@@ -140,8 +140,7 @@ class App(QWidget):
         :param text: Name of the function to call
         """
 
-        if text != "None":
-            self.current_filter = text
+        self.current_filter = text
 
     def apply_filter(self, frame):
         """
