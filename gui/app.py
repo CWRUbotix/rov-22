@@ -1,5 +1,5 @@
 from PyQt5 import QtGui
-from PyQt5.QtWidgets import QWidget, QApplication, QLabel, QVBoxLayout, QComboBox
+from PyQt5.QtWidgets import QWidget, QApplication, QLabel, QVBoxLayout, QComboBox, QTabWidget
 from PyQt5.QtGui import QPixmap
 import cv2
 from PyQt5.QtCore import pyqtSignal, pyqtSlot, Qt, QThread
@@ -7,8 +7,6 @@ import numpy as np
 
 from gui.decorated_functions import dropdown
 from util import data_path
-
-print(data_path)
 
 
 class Frame():
@@ -52,10 +50,9 @@ class VideoThread(QThread):
 class App(QWidget):
     def __init__(self, filenames):
         super().__init__()
-        self.setWindowTitle("Qt live label demo")
-
-        self.display_width = 250
-        self.display_height = 250
+        self.setWindowTitle("ROV Vision")
+        self.disply_width = 640
+        self.display_height = 480
 
         self.current_filter = "None"  # Filter applied with dropdown menu
 
@@ -69,20 +66,44 @@ class App(QWidget):
         self.combo_box.currentTextChanged.connect(self.update_current_filter)
         self.update_current_filter(self.combo_box.currentText())
 
+        # Create a tab widget
+        self.tabs = QTabWidget()
+        self.main_tab = QWidget()
+        self.debug_tab = QWidget()
+        self.tabs.resize(300, 200)
+
+        self.tabs.addTab(self.main_tab, "Main")
+        self.tabs.addTab(self.debug_tab, "Debug")
+
+        # Create a new vbox layout for each tab
+        self.main_layout = QVBoxLayout(self)
+        self.debug_layout = QVBoxLayout(self)
+
+        self.main_tab.setLayout(self.main_layout)
+        self.debug_tab.setLayout(self.debug_layout)
+
+        # Create a vbox to hold the tabs widget
+        vbox = QVBoxLayout()
+        vbox.addWidget(self.tabs)
+
+        # Set the root layout to this vbox
+        self.setLayout(vbox)
+
         # Create the labels that hold the images
         self.image_labels = []
         for i in range(0, 2):
             self.image_labels.append(QLabel(self))
             self.image_labels[i].resize(self.display_width, self.display_height)
-
+        
         # Create a text label
         self.textLabel = QLabel('Webcam')
 
         # Create a vertical box layout and add the labels
         vbox = QVBoxLayout()
 
+        # Add the image labels to the main tab
         for label in self.image_labels:
-            vbox.addWidget(label)
+            self.main_layout.addWidget(label)
 
         vbox.addWidget(self.textLabel)
         vbox.addWidget(self.combo_box)
