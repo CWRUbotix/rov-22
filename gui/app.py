@@ -51,7 +51,7 @@ class App(QWidget):
     def __init__(self, filenames):
         super().__init__()
         self.setWindowTitle("ROV Vision")
-        self.disply_width = 640
+        self.display_width = 640
         self.display_height = 480
 
         self.current_filter = "None"  # Filter applied with dropdown menu
