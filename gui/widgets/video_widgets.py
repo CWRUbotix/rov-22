@@ -1,3 +1,4 @@
+from gui.gui_util import convert_cv_qt
 import cv2
 
 from PyQt5 import QtGui, QtWidgets
@@ -28,20 +29,6 @@ class VideoArea(QWidget):
                 self.small_videos_layout.addWidget(self.video_widgets[i])
         
         self.root_layout.addLayout(self.small_videos_layout)
-
-    def convert_cv_qt(self, cv_img):
-        """Convert from an opencv image to QPixmap"""
-        if len(cv_img.shape) == 2:
-            rgb_image = cv2.cvtColor(cv_img, cv2.COLOR_GRAY2RGB)
-        elif len(cv_img.shape) == 3:
-            rgb_image = cv2.cvtColor(cv_img, cv2.COLOR_BGR2RGB)
-        else:
-            raise ValueError(f"cv_img must be a 2d or 3d numpy array representing an image, not {repr(cv_img)}")
-
-        h, w, ch = rgb_image.shape
-        bytes_per_line = ch * w
-        convert_to_qt_format = QtGui.QImage(rgb_image.data, w, h, bytes_per_line, QtGui.QImage.Format_RGB888)
-        return QtGui.QPixmap.fromImage(convert_to_qt_format)
     
     def get_big_video_cam_index(self):
         """Returns the cam_index of the currently enbiggened video, for use in checking whether to apply filters"""
@@ -49,7 +36,7 @@ class VideoArea(QWidget):
 
     def handle_frame(self, frame: Frame):
         """Recieve a frame and assign it to the correct VideoWidget"""
-        qt_img = self.convert_cv_qt(frame.cv_img)
+        qt_img = convert_cv_qt(frame.cv_img)
 
         for video_widget in self.video_widgets:
             if video_widget.cam_index == frame.cam_index:
