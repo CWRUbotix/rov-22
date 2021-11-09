@@ -1,11 +1,13 @@
 from PyQt5 import QtGui
-from PyQt5.QtWidgets import QWidget, QLabel, QVBoxLayout, QTabWidget
+from PyQt5.QtWidgets import QHBoxLayout, QPushButton, QWidget, QApplication, QLabel, QComboBox, QVBoxLayout, QTabWidget
 from PyQt5.QtGui import QPixmap
 from PyQt5.QtCore import pyqtSignal, pyqtSlot, Qt, QThread
 import cv2
 import numpy as np
 
 from video_controls_widget import VideoControlsWidget
+from gui.decorated_functions import dropdown
+from util import data_path
 
 class Frame():
     def __init__(self, cv_img, cam_index):
@@ -96,8 +98,20 @@ class App(QWidget):
     def __init__(self, filenames):
         super().__init__()
         self.setWindowTitle("ROV Vision")
-        self.disply_width = 640
+        self.display_width = 640
         self.display_height = 480
+
+        self.current_filter = "None"  # Filter applied with dropdown menu
+
+        # Creating combo_box and adding the functions
+        self.combo_box = QComboBox()
+
+        for func_name in dropdown.func_dictionary.keys():
+            self.combo_box.addItem(func_name)
+
+        # self.ui.combo_box.currentIndexChanged.connect(self.update_combo_box())
+        self.combo_box.currentTextChanged.connect(self.update_current_filter)
+        self.update_current_filter(self.combo_box.currentText())
 
         # Create a tab widget
         self.tabs = QTabWidget()
@@ -126,16 +140,30 @@ class App(QWidget):
         self.image_labels = []
         for i in range(0, 2):
             self.image_labels.append(QLabel(self))
-            self.image_labels[i].resize(self.disply_width, self.display_height)
+            self.image_labels[i].resize(self.display_width, self.display_height)
+        
+        # Create a text label
+        self.textLabel = QLabel('Webcam')
+
+        # Create a vertical box layout and add the labels
+        vbox = QVBoxLayout()
 
         # Add the image labels to the main tab
         for label in self.image_labels:
             self.main_layout.addWidget(label)
 
+        vbox.addWidget(self.textLabel)
+        vbox.addWidget(self.combo_box)
+
+        # Set the vbox layout as the widgets layout
+        self.setLayout(vbox)
+
         # Create the video capture thread
         self.thread = VideoThread(filenames)
+
         # Connect its signal to the update_image slot
         self.thread.update_frames_signal.connect(self.update_image)
+
         # Start the thread
         self.thread.start()
 
@@ -158,8 +186,39 @@ class App(QWidget):
     def convert_cv_qt(self, cv_img):
         """Convert from an opencv image to QPixmap"""
         rgb_image = cv2.cvtColor(cv_img, cv2.COLOR_BGR2RGB)
-        h, w, ch = rgb_image.shape
-        bytes_per_line = ch * w
-        convert_to_Qt_format = QtGui.QImage(rgb_image.data, w, h, bytes_per_line, QtGui.QImage.Format_RGB888)
-        p = convert_to_Qt_format.scaled(self.disply_width, self.display_height, Qt.KeepAspectRatio)
+
+        filtered_image = self.apply_filter(rgb_image)
+
+        if len(filtered_image.shape) == 3:
+            h, w, ch = filtered_image.shape
+            bytes_per_line = ch * w
+
+            img_format = QtGui.QImage.Format_RGB888
+
+        elif len(filtered_image.shape) == 2:
+            h, w = filtered_image.shape
+            bytes_per_line = w
+
+            img_format = QtGui.QImage.Format_Grayscale8
+
+        convert_to_Qt_format = QtGui.QImage(filtered_image.data, w, h, bytes_per_line, img_format)
+
+        p = convert_to_Qt_format.scaled(self.display_width, self.display_height, Qt.KeepAspectRatio)
+
         return QPixmap.fromImage(p)
+
+    def update_current_filter(self, text):
+        """
+        Calls the function selected in the dropdown menu
+        :param text: Name of the function to call
+        """
+
+        self.current_filter = text
+
+    def apply_filter(self, frame):
+        """
+        Applies filter from the dropdown menu to the given frame
+        :param frame: frame to apply filter to
+        :return: frame with filter applied
+        """
+        return dropdown.func_dictionary.get(self.current_filter)(frame)
