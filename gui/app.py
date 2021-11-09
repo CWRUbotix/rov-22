@@ -5,7 +5,7 @@ from PyQt5.QtCore import pyqtSignal, pyqtSlot, Qt, QThread
 import cv2
 import numpy as np
 
-from video_controls_widget import VideoControlsWidget
+from gui.video_controls_widget import VideoControlsWidget
 from gui.decorated_functions import dropdown
 from util import data_path
 
@@ -55,7 +55,7 @@ class VideoThread(QThread):
         while self._thread_running_flag:
             # Send frames if the video is playing
             if self._video_playing_flag:
-                self.__emit_frames()
+                self._emit_frames()
             
             self.msleep(int(1000 / 30))
 
@@ -68,7 +68,7 @@ class VideoThread(QThread):
         if not self._video_playing_flag:
             prev_rewind_state = self._rewind
             self._rewind = False
-            self.__emit_frames()
+            self._emit_frames()
             self._rewind = prev_rewind_state
     
     def prev_frame(self):
@@ -76,7 +76,7 @@ class VideoThread(QThread):
         if not self._video_playing_flag:
             prev_rewind_state = self._rewind
             self._rewind = True
-            self.__emit_frames()
+            self._emit_frames()
             self._rewind = prev_rewind_state
 
     def toggle_rewind(self):
