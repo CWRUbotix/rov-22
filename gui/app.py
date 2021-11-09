@@ -1,10 +1,11 @@
 from PyQt5 import QtGui
-from PyQt5.QtWidgets import QHBoxLayout, QPushButton, QWidget, QApplication, QLabel, QVBoxLayout, QTabWidget
+from PyQt5.QtWidgets import QWidget, QLabel, QVBoxLayout, QTabWidget
 from PyQt5.QtGui import QPixmap
-import cv2
 from PyQt5.QtCore import pyqtSignal, pyqtSlot, Qt, QThread
+import cv2
 import numpy as np
 
+from video_controls_widget import VideoControlsWidget
 
 class Frame():
     def __init__(self, cv_img, cam_index):
@@ -23,7 +24,7 @@ class VideoThread(QThread):
         self._captures = []
         self._rewind = False
 
-    def __emit_frames(self):
+    def _emit_frames(self):
         """Emit next/prev frames on the pyqtSignal to be recieved by video widgets"""
         for index, capture in enumerate(self._captures):
             if (self._rewind):
@@ -50,14 +51,11 @@ class VideoThread(QThread):
 
         # Run the play/pausable video 
         while self._thread_running_flag:
-            # Send frames while the video is playing
-            while self._thread_running_flag and self._video_playing_flag:
+            # Send frames if the video is playing
+            if self._video_playing_flag:
                 self.__emit_frames()
-                self.msleep(int(1000 / 30))
             
-            # Take a NOP while its paused
-            while self._thread_running_flag and not self._video_playing_flag:
-                self.msleep(10)
+            self.msleep(int(1000 / 30))
 
         # Shut down capturers
         for capture in self._captures:
@@ -93,35 +91,6 @@ class VideoThread(QThread):
         self._thread_running_flag = False
         self.wait()
 
-class VideoControlsWidget(QWidget):
-    def __init__(self, thread):
-        super().__init__()
-
-        self.thread = thread
-
-        self.horizontal_layout = QHBoxLayout(self)
-
-        self.play_pause_button = QPushButton(self)
-        self.play_pause_button.setText("Play/Pause")
-        self.play_pause_button.clicked.connect(self.thread.toggle_play_pause)
-        self.horizontal_layout.addWidget(self.play_pause_button)
-
-        self.toggle_rewind_button = QPushButton(self)
-        self.toggle_rewind_button.setText("Toggle Rewind")
-        self.toggle_rewind_button.clicked.connect(self.thread.toggle_rewind)
-        self.horizontal_layout.addWidget(self.toggle_rewind_button)
-
-        self.prev_frame_button = QPushButton(self)
-        self.prev_frame_button.setText("<")
-        self.prev_frame_button.clicked.connect(self.thread.prev_frame)
-        self.horizontal_layout.addWidget(self.prev_frame_button)
-
-        self.next_frame_button = QPushButton(self)
-        self.next_frame_button.setText(">")
-        self.next_frame_button.clicked.connect(self.thread.next_frame)
-        self.horizontal_layout.addWidget(self.next_frame_button)
-
-        self.setLayout(self.horizontal_layout)
 
 class App(QWidget):
     def __init__(self, filenames):
