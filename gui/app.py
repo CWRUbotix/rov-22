@@ -53,7 +53,6 @@ class App(QWidget):
         self.setWindowTitle("ROV Vision")
         self.display_width = 640
         self.display_height = 480
-
         self.current_filter = "None"  # Filter applied with dropdown menu
 
         # Creating combo_box and adding the functions
