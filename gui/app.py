@@ -1,14 +1,13 @@
 import dataclasses
 import numpy as np
 from PyQt5 import QtGui
-from PyQt5.QtWidgets import QHBoxLayout, QPushButton, QWidget, QLabel, QComboBox, QVBoxLayout, QTabWidget
+from PyQt5.QtWidgets import QWidget, QLabel, QComboBox, QVBoxLayout, QTabWidget
 from PyQt5.QtGui import QPixmap
 import cv2
 from PyQt5.QtCore import pyqtSignal, pyqtSlot, Qt, QThread
 
 from gui.video_controls_widget import VideoControlsWidget
 from gui.decorated_functions import dropdown
-from util import data_path
 
 
 @dataclasses.dataclass
@@ -19,7 +18,13 @@ class Frame:
 
 def convert_cv_qt(cv_img):
     """Convert from an opencv image to QPixmap"""
-    rgb_image = cv2.cvtColor(cv_img, cv2.COLOR_BGR2RGB)
+    if len(cv_img.shape) == 2:
+        rgb_image = cv2.cvtColor(cv_img, cv2.COLOR_GRAY2RGB)
+    elif len(cv_img.shape) == 3:
+        rgb_image = cv2.cvtColor(cv_img, cv2.COLOR_BGR2RGB)
+    else:
+        raise ValueError(f"cv_img must be a 2d or 3d numpy array representing an image, not {repr(cv_img)}")
+
     h, w, ch = rgb_image.shape
     bytes_per_line = ch * w
     convert_to_qt_format = QtGui.QImage(rgb_image.data, w, h, bytes_per_line, QtGui.QImage.Format_RGB888)
@@ -40,10 +45,10 @@ class VideoThread(QThread):
     def _emit_frames(self):
         """Emit next/prev frames on the pyqtSignal to be recieved by video widgets"""
         for index, capture in enumerate(self._captures):
-            if (self._rewind):
+            if self._rewind:
                 prev_frame = cur_frame = capture.get(cv2.CAP_PROP_POS_FRAMES)
 
-                if (cur_frame >= 2):
+                if cur_frame >= 2:
                     # Go back 2 frames so when we read() we'll read back 1 frame
                     prev_frame -= 2
                 else:
@@ -132,6 +137,10 @@ class VideoTab(RootTab):
         for label in self.image_labels:
             self.root_layout.addWidget(label)
 
+        # Create a text label
+        self.textLabel = QLabel('Webcam')
+        self.root_layout.addWidget(self.textLabel)
+
     def handle_frame(self, frame: Frame):
         qt_img = convert_cv_qt(frame.cv_img)
 
@@ -153,15 +162,6 @@ class MainTab(VideoTab):
 class DebugTab(VideoTab):
     def __init__(self):
         super().__init__()
-        # Add widgets specific to the "Debug" tab here
-
-
-class App(QWidget):
-    def __init__(self, filenames):
-        super().__init__()
-        self.setWindowTitle("ROV Vision")
-        self.resize(1280, 720)
-        self.showMaximized()
 
         self.current_filter = "None"  # Filter applied with dropdown menu
 
@@ -171,12 +171,47 @@ class App(QWidget):
         for func_name in dropdown.func_dictionary.keys():
             self.combo_box.addItem(func_name)
 
-        # self.ui.combo_box.currentIndexChanged.connect(self.update_combo_box())
         self.combo_box.currentTextChanged.connect(self.update_current_filter)
         self.update_current_filter(self.combo_box.currentText())
 
-        vbox.addWidget(self.textLabel)
-        vbox.addWidget(self.combo_box)
+        self.root_layout.addWidget(self.combo_box)
+
+        # Add video control buttons
+        self.video_controls = VideoControlsWidget()
+        self.root_layout.addWidget(self.video_controls)
+
+    def handle_frame(self, frame: Frame):
+        # TODO: This should probably me replaced when VideoWidget is implemented
+
+        # Apply the selected filter from the dropdown
+        if frame.cam_index == 0:
+            frame.cv_img = self.apply_filter(frame.cv_img)
+
+        super().handle_frame(frame)
+
+    def update_current_filter(self, text):
+        """
+        Calls the function selected in the dropdown menu
+        :param text: Name of the function to call
+        """
+
+        self.current_filter = text
+
+    def apply_filter(self, frame):
+        """
+        Applies filter from the dropdown menu to the given frame
+        :param frame: frame to apply filter to
+        :return: frame with filter applied
+        """
+        return dropdown.func_dictionary.get(self.current_filter)(frame)
+
+
+class App(QWidget):
+    def __init__(self, filenames):
+        super().__init__()
+        self.setWindowTitle("ROV Vision")
+        self.resize(1280, 720)
+        self.showMaximized()
 
         # Create a tab widget
         self.tabs = QTabWidget()
@@ -203,13 +238,14 @@ class App(QWidget):
         # Connect its signal to the update_image slot
         self.thread.update_frames_signal.connect(self.update_image)
 
+        # Setup the debug video buttons to control the thread
+        self.debug_tab.video_controls.play_pause_button.clicked.connect(self.thread.toggle_play_pause)
+        self.debug_tab.video_controls.toggle_rewind_button.clicked.connect(self.thread.toggle_rewind)
+        self.debug_tab.video_controls.prev_frame_button.clicked.connect(self.thread.prev_frame)
+        self.debug_tab.video_controls.next_frame_button.clicked.connect(self.thread.next_frame)
+
         # Start the thread
         self.thread.start()
-
-        # Add video control buttons
-        self.video_controls = VideoControlsWidget(self.thread)
-        self.main_layout.addWidget(self.video_controls)
-
 
     def closeEvent(self, event):
         self.thread.stop()
@@ -223,44 +259,3 @@ class App(QWidget):
         current_tab = self.tabs.currentWidget()
         if isinstance(current_tab, VideoTab):
             current_tab.handle_frame(frame)
-
-
-    def convert_cv_qt(self, cv_img):  # TODO WHY
-        """Convert from an opencv image to QPixmap"""
-        rgb_image = cv2.cvtColor(cv_img, cv2.COLOR_BGR2RGB)
-
-        filtered_image = self.apply_filter(rgb_image)
-
-        if len(filtered_image.shape) == 3:
-            h, w, ch = filtered_image.shape
-            bytes_per_line = ch * w
-
-            img_format = QtGui.QImage.Format_RGB888
-
-        elif len(filtered_image.shape) == 2:
-            h, w = filtered_image.shape
-            bytes_per_line = w
-
-            img_format = QtGui.QImage.Format_Grayscale8
-
-        convert_to_Qt_format = QtGui.QImage(filtered_image.data, w, h, bytes_per_line, img_format)
-
-        p = convert_to_Qt_format.scaled(self.display_width, self.display_height, Qt.KeepAspectRatio)
-
-        return QPixmap.fromImage(p)
-
-    def update_current_filter(self, text):
-        """
-        Calls the function selected in the dropdown menu
-        :param text: Name of the function to call
-        """
-
-        self.current_filter = text
-
-    def apply_filter(self, frame):
-        """
-        Applies filter from the dropdown menu to the given frame
-        :param frame: frame to apply filter to
-        :return: frame with filter applied
-        """
-        return dropdown.func_dictionary.get(self.current_filter)(frame)
