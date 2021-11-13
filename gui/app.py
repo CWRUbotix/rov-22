@@ -9,6 +9,7 @@ from gui.video_controls_widget import VideoControlsWidget
 from gui.decorated_functions import dropdown
 from util import data_path
 
+
 class Frame():
     def __init__(self, cv_img, cam_index):
         self.cv_img = cv_img
@@ -29,9 +30,9 @@ class VideoThread(QThread):
     def _emit_frames(self):
         """Emit next/prev frames on the pyqtSignal to be recieved by video widgets"""
         for index, capture in enumerate(self._captures):
-            if (self._rewind):
+            if self._rewind:
                 prev_frame = cur_frame = capture.get(cv2.CAP_PROP_POS_FRAMES)
-                
+
                 if (cur_frame >= 2):
                     # Go back 2 frames so when we read() we'll read back 1 frame
                     prev_frame -= 2
@@ -40,7 +41,7 @@ class VideoThread(QThread):
                     prev_frame = 0
 
                 capture.set(cv2.CAP_PROP_POS_FRAMES, prev_frame)
-            
+
             # Read the frame
             ret, cv_img = capture.read()
             if ret:
@@ -56,13 +57,13 @@ class VideoThread(QThread):
             # Send frames if the video is playing
             if self._video_playing_flag:
                 self._emit_frames()
-            
+
             self.msleep(int(1000 / 30))
 
         # Shut down capturers
         for capture in self._captures:
             capture.release()
-    
+
     def next_frame(self):
         """Goes forward a frame if the video is paused"""
         if not self._video_playing_flag:
@@ -70,7 +71,7 @@ class VideoThread(QThread):
             self._rewind = False
             self._emit_frames()
             self._rewind = prev_rewind_state
-    
+
     def prev_frame(self):
         """Goes back a frame if the video is paused"""
         if not self._video_playing_flag:
@@ -86,20 +87,23 @@ class VideoThread(QThread):
     def toggle_play_pause(self):
         """Toggles the video playing flag"""
         self._video_playing_flag = not self._video_playing_flag
-    
+
     def stop(self):
         """Sets the video playing & thread running flags to False and waits for thread to end"""
         self._video_playing_flag = False
         self._thread_running_flag = False
         self.wait()
 
+    def restart(self):
+        return
+
 
 class App(QWidget):
     def __init__(self, filenames):
         super().__init__()
         self.setWindowTitle("ROV Vision")
-        self.display_width = 640
-        self.display_height = 480
+        self.display_width = 640 / 2
+        self.display_height = 480 / 2
 
         self.current_filter = "None"  # Filter applied with dropdown menu
 
@@ -141,7 +145,7 @@ class App(QWidget):
         for i in range(0, 2):
             self.image_labels.append(QLabel(self))
             self.image_labels[i].resize(self.display_width, self.display_height)
-        
+
         # Create a text label
         self.textLabel = QLabel('Webcam')
 
@@ -170,7 +174,6 @@ class App(QWidget):
         # Add video control buttons
         self.video_controls = VideoControlsWidget(self.thread)
         self.main_layout.addWidget(self.video_controls)
-        
 
     def closeEvent(self, event):
         self.thread.stop()

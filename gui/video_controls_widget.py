@@ -13,6 +13,11 @@ class VideoControlsWidget(QWidget):
         self.play_pause_button.clicked.connect(self.thread.toggle_play_pause)
         self.horizontal_layout.addWidget(self.play_pause_button)
 
+        self.restart_button = QPushButton(self)
+        self.restart_button.setText("Restart")
+        # self.restart_button.clicked.connect(self.thread.toggle_play_pause)
+        self.horizontal_layout.addWidget(self.restart_button)
+
         self.toggle_rewind_button = QPushButton(self)
         self.toggle_rewind_button.setText("Toggle Rewind")
         self.toggle_rewind_button.clicked.connect(self.thread.toggle_rewind)
