@@ -1,4 +1,5 @@
 opencv-python
+numpy
 imutils
 PyQt5
 scikit-learn
