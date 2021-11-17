@@ -1,16 +1,16 @@
 import dataclasses
+import logging
 
 import numpy as np
 from PyQt5 import QtGui
-from PyQt5.QtWidgets import QWidget, QLabel, QComboBox, QVBoxLayout, QTabWidget
-from PyQt5.QtGui import QPixmap
+from PyQt5.QtWidgets import QWidget, QLabel, QComboBox, QVBoxLayout, QTabWidget, QTextEdit
+from PyQt5.QtGui import QPixmap, QTextCursor, QColor
 import cv2
 from PyQt5.QtCore import pyqtSignal, pyqtSlot, Qt, QThread
 
 from gui.video_controls_widget import VideoControlsWidget
 from gui.decorated_functions import dropdown
 from gui.logger import root_logger
-
 
 logger = root_logger.getChild(__name__)
 
@@ -48,7 +48,7 @@ class VideoThread(QThread):
         self._rewind = False
 
     def _emit_frames(self):
-        """Emit next/prev frames on the pyqtSignal to be recieved by video widgets"""
+        """Emit next/prev frames on the pyqtSignal to be received by video widgets"""
         for index, capture in enumerate(self._captures):
             if self._rewind:
                 prev_frame = cur_frame = capture.get(cv2.CAP_PROP_POS_FRAMES)
@@ -115,6 +115,15 @@ class VideoThread(QThread):
         self.wait()
 
 
+class GuiLogHandler(logging.Handler):
+    def __init__(self, update_signal):
+        super().__init__()
+        self.update_signal = update_signal
+
+    def emit(self, record):
+        self.update_signal.emit(record.message, record.levelno)
+
+
 class RootTab(QWidget):
     """An individual tab in the RootTabContainer containing all the widgets to be displayed in the tab"""
 
@@ -124,6 +133,30 @@ class RootTab(QWidget):
         # Create a new vbox layout to contain the tab's widgets
         self.root_layout = QVBoxLayout(self)
         self.setLayout(self.root_layout)
+
+        text_label = QLabel()
+        text_label.setText("Console")
+        self.root_layout.addWidget(text_label)
+
+        self.console = QTextEdit(self)
+        self.console.setReadOnly(True)
+        self.console.setLineWrapMode(QTextEdit.NoWrap)
+
+        font = self.console.font()
+        font.setFamily("Courier")
+        font.setPointSize(12)
+
+        self.root_layout.addWidget(self.console)
+
+    @pyqtSlot(str, int)
+    def update_console(self, line: str, severity: int):
+        self.console.moveCursor(QTextCursor.End)
+        self.console.setTextColor(QColor.fromRgb(0xff0000) if severity > logging.WARNING else QColor.fromRgb(0xffffff))
+
+        self.console.insertPlainText(line)
+
+        scrollbar = self.console.verticalScrollBar()
+        scrollbar.setValue(scrollbar.maximum())
 
 
 class VideoTab(RootTab):
@@ -136,15 +169,9 @@ class VideoTab(RootTab):
         # Create the labels that hold the images
         self.image_labels = []
         for i in range(0, 2):
-            self.image_labels.append(QLabel(self))
-
-        # Add the image labels to the tab
-        for label in self.image_labels:
-            self.root_layout.addWidget(label)
-
-        # Create a text label
-        self.textLabel = QLabel('Webcam')
-        self.root_layout.addWidget(self.textLabel)
+            label = QLabel(self)
+            self.image_labels.append(label)
+            self.root_layout.insertWidget(i, label)
 
     def handle_frame(self, frame: Frame):
         qt_img = convert_cv_qt(frame.cv_img)
@@ -212,6 +239,9 @@ class DebugTab(VideoTab):
 
 
 class App(QWidget):
+    main_log_signal = pyqtSignal(str, int)
+    debug_log_signal = pyqtSignal(str, int)
+
     def __init__(self, filenames):
         super().__init__()
         self.setWindowTitle("ROV Vision")
@@ -251,6 +281,19 @@ class App(QWidget):
 
         # Start the thread
         self.thread.start()
+
+        # Setup GUI logging
+        self.main_log_handler = GuiLogHandler(self.main_log_signal)
+        self.main_log_handler.setLevel(logging.INFO)
+        root_logger.addHandler(self.main_log_handler)
+        self.main_log_signal.connect(self.main_tab.update_console)
+
+        self.debug_log_handler = GuiLogHandler(self.debug_log_signal)
+        self.debug_log_handler.setLevel(logging.DEBUG)
+        root_logger.addHandler(self.debug_log_handler)
+        self.debug_log_signal.connect(self.debug_tab.update_console)
+
+        logger.debug("Application initialized")
 
     def closeEvent(self, event):
         self.thread.stop()
