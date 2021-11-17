@@ -121,7 +121,6 @@ class VideoThread(QThread):
         self._captures = []
         self._rewind = False
         self._prepare_captures()
-        self._emit_frames()
 
 
 class RootTab(QWidget):
