@@ -1,4 +1,5 @@
 import dataclasses
+
 import numpy as np
 from PyQt5 import QtGui
 from PyQt5.QtWidgets import QWidget, QLabel, QComboBox, QVBoxLayout, QTabWidget
@@ -8,6 +9,10 @@ from PyQt5.QtCore import pyqtSignal, pyqtSlot, Qt, QThread
 
 from gui.video_controls_widget import VideoControlsWidget
 from gui.decorated_functions import dropdown
+from gui.logger import root_logger
+
+
+logger = root_logger.getChild(__name__)
 
 
 @dataclasses.dataclass
