@@ -1,7 +1,7 @@
 import dataclasses
 import numpy as np
 from PyQt5 import QtGui
-from PyQt5.QtWidgets import QWidget, QLabel, QComboBox, QVBoxLayout, QTabWidget
+from PyQt5.QtWidgets import QFileDialog, QWidget, QLabel, QComboBox, QVBoxLayout, QTabWidget, QPushButton
 from PyQt5.QtGui import QPixmap
 import cv2
 from PyQt5.QtCore import pyqtSignal, pyqtSlot, Qt, QThread
@@ -42,6 +42,11 @@ class VideoThread(QThread):
         self._captures = []
         self._rewind = False
 
+    def _prepare_captures(self):
+        """Initialize video capturers from self._filenames"""
+        for filename in self._filenames:
+            self._captures.append(cv2.VideoCapture(filename))
+
     def _emit_frames(self):
         """Emit next/prev frames on the pyqtSignal to be recieved by video widgets"""
         for index, capture in enumerate(self._captures):
@@ -63,9 +68,7 @@ class VideoThread(QThread):
                 self.update_frames_signal.emit(Frame(cv_img, index))
 
     def run(self):
-        # Create list of video capturers
-        for filename in self._filenames:
-            self._captures.append(cv2.VideoCapture(filename))
+        self._prepare_captures()
 
         # Run the play/pausable video
         while self._thread_running_flag:
@@ -73,7 +76,9 @@ class VideoThread(QThread):
             if self._video_playing_flag:
                 self._emit_frames()
 
-            self.msleep(int(1000 / 30))
+            # Wait if playing normally, don't if rewinding b/c rewinding is slow
+            if not self._rewind:
+                self.msleep(int(1000 / 30))
 
         # Shut down capturers
         for capture in self._captures:
@@ -108,6 +113,14 @@ class VideoThread(QThread):
         self._video_playing_flag = False
         self._thread_running_flag = False
         self.wait()
+    
+    @pyqtSlot(list)
+    def on_select_filenames(self, filenames):
+        self._video_playing_flag = True
+        self._filenames = filenames
+        self._captures = []
+        self._rewind = False
+        self._prepare_captures()
 
 
 class RootTab(QWidget):
@@ -160,6 +173,9 @@ class MainTab(VideoTab):
 
 
 class DebugTab(VideoTab):
+    # Create file selection signal
+    select_files_signal = pyqtSignal(list)
+    
     def __init__(self):
         super().__init__()
 
@@ -179,6 +195,18 @@ class DebugTab(VideoTab):
         # Add video control buttons
         self.video_controls = VideoControlsWidget()
         self.root_layout.addWidget(self.video_controls)
+
+        # Add select files button
+        self.select_files_button = QPushButton(self)
+        self.select_files_button.setText("Select Files")
+        self.select_files_button.clicked.connect(self.select_files)
+        self.root_layout.addWidget(self.select_files_button)
+
+    def select_files(self):
+        """Run the system file selection dialog and emit results, to be recieved by VideoThread"""
+        filenames, _ = QFileDialog.getOpenFileNames(self, "QFileDialog.getOpenFileNames()", "","All Files (*)", options=QFileDialog.Options())
+        if len(filenames) > 0:
+            self.select_files_signal.emit(filenames[:len(self.image_labels)])
 
     def handle_frame(self, frame: Frame):
         # TODO: This should probably me replaced when VideoWidget is implemented
@@ -237,6 +265,9 @@ class App(QWidget):
 
         # Connect its signal to the update_image slot
         self.thread.update_frames_signal.connect(self.update_image)
+
+        # Connect DebugTab's selecting files signal to video thread's on_select_filenames
+        self.debug_tab.select_files_signal.connect(self.thread.on_select_filenames)
 
         # Setup the debug video buttons to control the thread
         self.debug_tab.video_controls.play_pause_button.clicked.connect(self.thread.toggle_play_pause)
