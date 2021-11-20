@@ -12,7 +12,17 @@ from gui.video_controls_widget import VideoControlsWidget
 from gui.decorated_functions import dropdown
 from gui.logger import root_logger
 
+# The name of the logger will be included in debug messages, so set it to the name of the file to make the log traceable
 logger = root_logger.getChild(__name__)
+
+
+CONSOLE_TEXT_COLORS = {
+    logging.DEBUG: QColor.fromRgb(0xffffff),
+    logging.INFO: QColor.fromRgb(0xffffff),
+    logging.WARN: QColor.fromRgb(0xffff4f),
+    logging.ERROR: QColor.fromRgb(0xff4f4f),
+    logging.CRITICAL: QColor.fromRgb(0xff4f4f)
+}
 
 
 @dataclasses.dataclass
@@ -121,7 +131,7 @@ class GuiLogHandler(logging.Handler):
         self.update_signal = update_signal
 
     def emit(self, record):
-        self.update_signal.emit(record.message, record.levelno)
+        self.update_signal.emit(self.format(record), record.levelno)
 
 
 class RootTab(QWidget):
@@ -151,7 +161,7 @@ class RootTab(QWidget):
     @pyqtSlot(str, int)
     def update_console(self, line: str, severity: int):
         self.console.moveCursor(QTextCursor.End)
-        self.console.setTextColor(QColor.fromRgb(0xff0000) if severity > logging.WARNING else QColor.fromRgb(0xffffff))
+        self.console.setTextColor(CONSOLE_TEXT_COLORS[severity])
 
         self.console.insertPlainText(line)
 
@@ -283,13 +293,17 @@ class App(QWidget):
         self.thread.start()
 
         # Setup GUI logging
+        gui_formatter = logging.Formatter("[{levelname}] {message}", style="{")
+
         self.main_log_handler = GuiLogHandler(self.main_log_signal)
         self.main_log_handler.setLevel(logging.INFO)
+        self.main_log_handler.setFormatter(gui_formatter)
         root_logger.addHandler(self.main_log_handler)
         self.main_log_signal.connect(self.main_tab.update_console)
 
         self.debug_log_handler = GuiLogHandler(self.debug_log_signal)
         self.debug_log_handler.setLevel(logging.DEBUG)
+        self.debug_log_handler.setFormatter(gui_formatter)
         root_logger.addHandler(self.debug_log_handler)
         self.debug_log_signal.connect(self.debug_tab.update_console)
 
