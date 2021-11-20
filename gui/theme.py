@@ -1,17 +1,18 @@
-from PyQt5.QtGui import QKeySequence, QPalette, QColor
 from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import *
+from PyQt5.QtGui import QPalette, QColor
 
-#determines which theme is chosen
+
+# determines which theme is chosen
 def theme_picker(app, theme):
     if theme == 'dark_theme':
         dark_theme(app)
     elif theme == 'alt_theme':
         alt_theme(app)
 
-#sets dark theme
+
+# sets dark theme
 def dark_theme(app):
-    #Set style
+    # Set style
     app.setStyle("Fusion")
 
     # Now use a palette to switch to dark colors:
@@ -33,9 +34,10 @@ def dark_theme(app):
     palette.setColor(QPalette.HighlightedText, Qt.black)
     app.setPalette(palette)
 
-#sets alternate theme
+
+# sets alternate theme
 def alt_theme(app):
-    #Set style
+    # Set style
     app.setStyle("Fusion")
 
     # Now use a palette to switch to dark colors:
