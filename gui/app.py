@@ -1,7 +1,7 @@
 import cv2
 
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QTabWidget
-from PyQt5.QtCore import pyqtSignal, pyqtSlot, QThread
+from PyQt5.QtCore import pyqtSignal, pyqtSlot, Qt, QThread
 
 from gui.data_classes import Frame
 from gui.widgets.tabs import MainTab, DebugTab, VideoTab
@@ -106,6 +106,11 @@ class VideoThread(QThread):
 
         self._restart = True    
     
+    def restart(self):
+        """Restarts the video from the beginning"""
+
+        self._restart = True
+
     @pyqtSlot(list)
     def on_select_filenames(self, filenames):
         self._video_playing_flag = True
@@ -159,6 +164,24 @@ class App(QWidget):
 
         # Start the thread
         self.thread.start()
+
+    def keyPressEvent(self, event):
+        """Sets keyboard keys to different actions"""
+
+        if event.key() == Qt.Key.Key_Space:
+            self.thread.toggle_play_pause()
+
+        elif event.key() == Qt.Key.Key_Left:
+            self.thread.prev_frame() 
+
+        elif event.key() == Qt.Key.Key_Right:
+            self.thread.next_frame()
+
+        elif event.key() == Qt.Key.Key_R:
+            self.thread.restart()
+
+        elif event.key() == Qt.Key.Key_T:
+            self.thread.toggle_rewind()
 
     def closeEvent(self, event):
         self.thread.stop()

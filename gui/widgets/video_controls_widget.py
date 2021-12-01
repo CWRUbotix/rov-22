@@ -1,3 +1,5 @@
+from sys import stdout
+from PyQt5 import QtGui
 from PyQt5.QtWidgets import QHBoxLayout, QPushButton, QWidget
 
 
