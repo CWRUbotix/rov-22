@@ -14,6 +14,8 @@ class VideoThread(QThread):
         super().__init__()
         self._thread_running_flag = True
         self._video_playing_flag = True
+        self._restart = False
+
         self._filenames = filenames
         self._captures = []
         self._rewind = False
@@ -25,7 +27,16 @@ class VideoThread(QThread):
 
     def _emit_frames(self):
         """Emit next/prev frames on the pyqtSignal to be recieved by video widgets"""
+
+        # Restart the videos if restart is true
+        if self._restart:
+            for index, capture in enumerate(self._captures):
+                capture.set(cv2.CAP_PROP_POS_FRAMES, 0)
+
+            self._restart = False
+
         for index, capture in enumerate(self._captures):
+
             if self._rewind:
                 prev_frame = cur_frame = capture.get(cv2.CAP_PROP_POS_FRAMES)
 
@@ -89,6 +100,11 @@ class VideoThread(QThread):
         self._video_playing_flag = False
         self._thread_running_flag = False
         self.wait()
+
+    def restart(self):
+        """Restarts the video from the beginning"""
+
+        self._restart = True    
     
     @pyqtSlot(list)
     def on_select_filenames(self, filenames):
@@ -104,7 +120,7 @@ class App(QWidget):
         super().__init__()
         self.setWindowTitle("ROV Vision")
         self.resize(1280, 720)
-        self.showMaximized()
+        self.showFullScreen()
 
         # Create a tab widget
         self.tabs = QTabWidget()
@@ -136,6 +152,7 @@ class App(QWidget):
 
         # Setup the debug video buttons to control the thread
         self.debug_tab.video_controls.play_pause_button.clicked.connect(self.thread.toggle_play_pause)
+        self.debug_tab.video_controls.restart_button.clicked.connect(self.thread.restart)
         self.debug_tab.video_controls.toggle_rewind_button.clicked.connect(self.thread.toggle_rewind)
         self.debug_tab.video_controls.prev_frame_button.clicked.connect(self.thread.prev_frame)
         self.debug_tab.video_controls.next_frame_button.clicked.connect(self.thread.next_frame)
