@@ -4,10 +4,10 @@ from PyQt5.QtWidgets import *
 
 #determines which theme is chosen
 def theme_picker(app, theme):
-    if theme == 'dark_theme':
-        dark_theme(app)
-    else:
+    if theme == 'alt_theme':
         alt_theme(app)
+    else:
+        dark_theme(app)
 
 #sets dark theme
 def dark_theme(app):

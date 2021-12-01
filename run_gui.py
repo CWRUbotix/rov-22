@@ -12,7 +12,7 @@ if 'QT_QPA_PLATFORM_PLUGIN_PATH' in os.environ:
 
 #run commands from terminal
 parser = argparse.ArgumentParser(description='Run the GUI')
-parser.add_argument('-theme', type=str, help='choose a theme: dark_theme')
+parser.add_argument('-theme', type=str, help='choose a theme: dark_theme, alt_theme')
 args = parser.parse_args()
 
 app = QApplication(sys.argv)
