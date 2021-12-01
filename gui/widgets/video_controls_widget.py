@@ -6,6 +6,7 @@ class VideoControlsWidget(QWidget):
         super().__init__()
 
         self.horizontal_layout = QHBoxLayout(self)
+        self.horizontal_layout.setContentsMargins(0, 0, 0, 0)
 
         self.play_pause_button = QPushButton(self)
         self.play_pause_button.setText("Play/Pause")
