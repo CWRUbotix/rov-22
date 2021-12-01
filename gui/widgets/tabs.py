@@ -1,5 +1,8 @@
+import os
 from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtWidgets import QComboBox, QFileDialog, QHBoxLayout, QLabel, QPushButton, QVBoxLayout, QWidget
+from gui.widgets.image_debug_widget import ImagesWidget
+from util import data_path
 
 from gui.widgets.video_controls_widget import VideoControlsWidget
 from gui.widgets.video_widgets import VideoArea
@@ -16,6 +19,19 @@ class RootTab(QWidget):
         # Create a new vbox layout to contain the tab's widgets
         self.root_layout = QVBoxLayout(self)
         self.setLayout(self.root_layout)
+
+
+class ImageDebugTab(RootTab):
+    """A RootTab which displays and filters image(s)"""
+
+    def __init__(self):
+        super().__init__()
+
+        self.images_widget = ImagesWidget()
+        self.images_widget.show()
+        self.images_widget.set_folder(os.path.join(data_path, 'example-images', 'star'))
+
+        self.root_layout.addWidget(self.images_widget)
 
 
 class VideoTab(RootTab):
