@@ -1,34 +1,10 @@
-import dataclasses
-import numpy as np
-from PyQt5 import QtGui
-from PyQt5.QtWidgets import QFileDialog, QWidget, QLabel, QComboBox, QVBoxLayout, QTabWidget, QPushButton
-from PyQt5.QtGui import QPixmap
 import cv2
+
+from PyQt5.QtWidgets import QWidget, QVBoxLayout, QTabWidget
 from PyQt5.QtCore import pyqtSignal, pyqtSlot, Qt, QThread
 
-from gui.video_controls_widget import VideoControlsWidget
-from gui.decorated_functions import dropdown
-
-
-@dataclasses.dataclass
-class Frame:
-    cv_img: np.ndarray
-    cam_index: int
-
-
-def convert_cv_qt(cv_img):
-    """Convert from an opencv image to QPixmap"""
-    if len(cv_img.shape) == 2:
-        rgb_image = cv2.cvtColor(cv_img, cv2.COLOR_GRAY2RGB)
-    elif len(cv_img.shape) == 3:
-        rgb_image = cv2.cvtColor(cv_img, cv2.COLOR_BGR2RGB)
-    else:
-        raise ValueError(f"cv_img must be a 2d or 3d numpy array representing an image, not {repr(cv_img)}")
-
-    h, w, ch = rgb_image.shape
-    bytes_per_line = ch * w
-    convert_to_qt_format = QtGui.QImage(rgb_image.data, w, h, bytes_per_line, QtGui.QImage.Format_RGB888)
-    return QPixmap.fromImage(convert_to_qt_format)
+from gui.data_classes import Frame
+from gui.widgets.tabs import MainTab, DebugTab, VideoTab
 
 
 class VideoThread(QThread):
@@ -139,117 +115,6 @@ class VideoThread(QThread):
         self._prepare_captures()
 
 
-class RootTab(QWidget):
-    """An individual tab in the RootTabContainer containing all the widgets to be displayed in the tab"""
-
-    def __init__(self):
-        super().__init__()
-
-        # Create a new vbox layout to contain the tab's widgets
-        self.root_layout = QVBoxLayout(self)
-        self.setLayout(self.root_layout)
-
-
-class VideoTab(RootTab):
-    """A RootTab which displays video(s) from a camera stream or video file, among other functions"""
-
-    def __init__(self):
-        super().__init__()
-
-        # TODO: Replace with an instance of VideoArea and several VideoWidgets
-        # Create the labels that hold the images
-        self.image_labels = []
-        for i in range(0, 2):
-            self.image_labels.append(QLabel(self))
-
-        # Add the image labels to the tab
-        for label in self.image_labels:
-            self.root_layout.addWidget(label)
-
-        # Create a text label
-        self.textLabel = QLabel('Webcam')
-        self.root_layout.addWidget(self.textLabel)
-
-    def handle_frame(self, frame: Frame):
-        qt_img = convert_cv_qt(frame.cv_img)
-
-        # Scale image
-        # TODO: VideoWidget should handle the scaling
-        scaled_img = qt_img.scaled(640, 480, Qt.KeepAspectRatio)
-
-        # Update the image label corresponding to the cam_index with the new frame
-        # TODO: Delegate frame to the tab's VideoArea, which should update all its VideoWidgets with the same cam_index
-        self.image_labels[frame.cam_index].setPixmap(scaled_img)
-
-
-class MainTab(VideoTab):
-    def __init__(self):
-        super().__init__()
-        # Add widgets specific to the "Main" tab here
-
-
-class DebugTab(VideoTab):
-    # Create file selection signal
-    select_files_signal = pyqtSignal(list)
-    
-    def __init__(self):
-        super().__init__()
-
-        self.current_filter = "None"  # Filter applied with dropdown menu
-
-        # Creating combo_box and adding the functions
-        self.combo_box = QComboBox()
-
-        for func_name in dropdown.func_dictionary.keys():
-            self.combo_box.addItem(func_name)
-
-        self.combo_box.currentTextChanged.connect(self.update_current_filter)
-        self.update_current_filter(self.combo_box.currentText())
-
-        self.root_layout.addWidget(self.combo_box)
-
-        # Add video control buttons
-        self.video_controls = VideoControlsWidget()
-        self.root_layout.addWidget(self.video_controls)
-
-        # Add select files button
-        self.select_files_button = QPushButton(self)
-        self.select_files_button.setText("Select Files")
-        self.select_files_button.clicked.connect(self.select_files)
-        self.root_layout.addWidget(self.select_files_button)
-
-    def select_files(self):
-        """Run the system file selection dialog and emit results, to be recieved by VideoThread"""
-        filenames, _ = QFileDialog.getOpenFileNames(self, "QFileDialog.getOpenFileNames()", "","All Files (*)", options=QFileDialog.Options())
-        if len(filenames) > 0:
-            self.select_files_signal.emit(filenames[:len(self.image_labels)])
-
-    def handle_frame(self, frame: Frame):
-        # TODO: This should probably me replaced when VideoWidget is implemented
-
-        # Apply the selected filter from the dropdown
-        if frame.cam_index == 0:
-            frame.cv_img = self.apply_filter(frame.cv_img)
-
-        super().handle_frame(frame)
-
-    def update_current_filter(self, text):
-        """
-        Calls the function selected in the dropdown menu
-        :param text: Name of the function to call
-        """
-
-        self.current_filter = text
-
-    def apply_filter(self, frame):
-        """
-        Applies filter from the dropdown menu to the given frame
-        :param frame: frame to apply filter to
-        :return: frame with filter applied
-        """
-        return dropdown.func_dictionary.get(self.current_filter)(frame)
-
-
 class App(QWidget):
     def __init__(self, filenames):
         super().__init__()
@@ -259,8 +124,8 @@ class App(QWidget):
 
         # Create a tab widget
         self.tabs = QTabWidget()
-        self.main_tab = MainTab()
-        self.debug_tab = DebugTab()
+        self.main_tab = MainTab(len(filenames))
+        self.debug_tab = DebugTab(len(filenames))
 
         self.tabs.resize(300, 200)
         self.tabs.addTab(self.main_tab, "Main")
@@ -302,7 +167,7 @@ class App(QWidget):
             self.thread.toggle_play_pause()
 
         elif event.key() == Qt.Key.Key_Left:
-            self.thread.prev_frame()
+            self.thread.prev_frame() 
 
         elif event.key() == Qt.Key.Key_Right:
             self.thread.next_frame()
