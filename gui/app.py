@@ -1,5 +1,3 @@
-from PyQt5.QtWidgets import QWidget, QApplication, QLabel, QVBoxLayout, QComboBox, QTabWidget
-from PyQt5.QtGui import QPixmap
 import cv2
 
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QTabWidget
