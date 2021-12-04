@@ -3,6 +3,8 @@ import logging
 from PyQt5.QtCore import pyqtSignal, Qt, pyqtSlot
 from PyQt5.QtGui import QColor, QTextCursor
 from PyQt5.QtWidgets import QComboBox, QLabel, QVBoxLayout, QWidget, QTextEdit
+from PyQt5.QtCore import pyqtSignal
+from PyQt5.QtWidgets import QComboBox, QFileDialog, QHBoxLayout, QLabel, QPushButton, QVBoxLayout, QWidget
 
 from gui.widgets.video_controls_widget import VideoControlsWidget
 from gui.widgets.video_widgets import VideoArea
@@ -57,38 +59,42 @@ class RootTab(QWidget):
 class VideoTab(RootTab):
     """A RootTab which displays video(s) from a camera stream or video file, among other functions"""
 
-    def __init__(self):
+    def __init__(self, num_video_streams):
         super().__init__()
 
-        # TODO: Replace with an instance of VideoArea and several VideoWidgets
-        # Create the labels that hold the images
-        self.image_labels = []
-        for i in range(0, 2):
-            label = QLabel(self)
-            self.image_labels.append(label)
-            self.root_layout.insertWidget(i, label)
+        self.horizontal_layout = QHBoxLayout()
+        self.root_layout.addLayout(self.horizontal_layout, 100)
+
+        self.video_area = VideoArea(num_video_streams)
+        self.horizontal_layout.addWidget(self.video_area)
+
+        self.right_button_panel = QVBoxLayout()
+        self.right_button_panel.addWidget(QPushButton("Example button right"))
+        self.horizontal_layout.addLayout(self.right_button_panel)
+
+        # Create a text label
+        self.textLabel = QLabel('Webcam')
+
+        self.bottom_button_panel = QVBoxLayout()
+        self.bottom_button_panel.addWidget(self.textLabel)
+
+        self.root_layout.addLayout(self.bottom_button_panel, 10)
 
     def handle_frame(self, frame: Frame):
-        qt_img = convert_cv_qt(frame.cv_img)
-
-        # Scale image
-        # TODO: VideoWidget should handle the scaling
-        scaled_img = qt_img.scaled(640, 480, Qt.KeepAspectRatio)
-
-        # Update the image label corresponding to the cam_index with the new frame
-        # TODO: Delegate frame to the tab's VideoArea, which should update all its VideoWidgets with the same cam_index
-        self.image_labels[frame.cam_index].setPixmap(scaled_img)
+        self.video_area.handle_frame(frame)
 
 
 class MainTab(VideoTab):
-    def __init__(self):
-        super().__init__()
-        # Add widgets specific to the "Main" tab here
+    def __init__(self, num_video_streams):
+        super().__init__(num_video_streams)
 
 
 class DebugTab(VideoTab):
-    def __init__(self):
-        super().__init__()
+    # Create file selection signal
+    select_files_signal = pyqtSignal(list)
+
+    def __init__(self, num_video_streams):
+        super().__init__(num_video_streams)
 
         self.current_filter = "None"  # Filter applied with dropdown menu
 
@@ -107,11 +113,23 @@ class DebugTab(VideoTab):
         self.video_controls = VideoControlsWidget()
         self.root_layout.addWidget(self.video_controls)
 
+        # Add select files button
+        self.select_files_button = QPushButton(self)
+        self.select_files_button.setText("Select Files")
+        self.select_files_button.clicked.connect(self.select_files)
+        self.root_layout.addWidget(self.select_files_button)
+
+    def select_files(self):
+        """Run the system file selection dialog and emit results, to be recieved by VideoThread"""
+        filenames, _ = QFileDialog.getOpenFileNames(self, "QFileDialog.getOpenFileNames()", "","All Files (*)", options=QFileDialog.Options())
+        if len(filenames) > 0:
+            self.select_files_signal.emit(filenames[:len(self.video_area.video_widgets)])
+
     def handle_frame(self, frame: Frame):
         # TODO: This should probably me replaced when VideoWidget is implemented
 
         # Apply the selected filter from the dropdown
-        if frame.cam_index == 0:
+        if frame.cam_index == self.video_area.get_big_video_cam_index():
             frame.cv_img = self.apply_filter(frame.cv_img)
 
         super().handle_frame(frame)
@@ -124,7 +142,7 @@ class DebugTab(VideoTab):
 
         self.current_filter = text
 
-    def apply_filter(self, frame):
+    def apply_filter(self, frame: Frame):
         """
         Applies filter from the dropdown menu to the given frame
         :param frame: frame to apply filter to

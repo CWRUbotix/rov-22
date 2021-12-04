@@ -18,6 +18,7 @@ args = parser.parse_args()
 
 app = QApplication(sys.argv)
 theme_picker(app, args.theme)
-a = App([os.path.join(data_path, 'example-streams', '1.mp4'), os.path.join(data_path, 'example-streams', '2.mp4')])
+a = App([os.path.join(data_path, 'example-streams', '1.mp4'), os.path.join(data_path, 'example-streams', '2.mp4'),
+        os.path.join(data_path, 'example-streams', '1.mp4'), os.path.join(data_path, 'example-streams', '2.mp4')])
 a.show()
 sys.exit(app.exec_())
