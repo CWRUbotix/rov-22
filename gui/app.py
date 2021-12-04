@@ -1,10 +1,4 @@
-import dataclasses
 import logging
-
-import numpy as np
-from PyQt5 import QtGui
-from PyQt5.QtWidgets import QWidget, QVBoxLayout, QTabWidget
-from PyQt5.QtGui import QPixmap, QColor
 import cv2
 
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QTabWidget
@@ -111,11 +105,6 @@ class VideoThread(QThread):
         self._video_playing_flag = False
         self._thread_running_flag = False
         self.wait()
-
-    def restart(self):
-        """Restarts the video from the beginning"""
-
-        self._restart = True
 
     def restart(self):
         """Restarts the video from the beginning"""

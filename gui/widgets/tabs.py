@@ -1,10 +1,8 @@
 import logging
 
-from PyQt5.QtCore import pyqtSignal, Qt, pyqtSlot
+from PyQt5.QtCore import pyqtSignal, pyqtSlot
 from PyQt5.QtGui import QColor, QTextCursor
-from PyQt5.QtWidgets import QComboBox, QLabel, QVBoxLayout, QWidget, QTextEdit
-from PyQt5.QtCore import pyqtSignal
-from PyQt5.QtWidgets import QComboBox, QFileDialog, QHBoxLayout, QLabel, QPushButton, QVBoxLayout, QWidget
+from PyQt5.QtWidgets import QComboBox, QFileDialog, QHBoxLayout, QLabel, QPushButton, QVBoxLayout, QWidget, QTextEdit
 
 from gui.widgets.video_controls_widget import VideoControlsWidget
 from gui.widgets.video_widgets import VideoArea
@@ -121,7 +119,8 @@ class DebugTab(VideoTab):
 
     def select_files(self):
         """Run the system file selection dialog and emit results, to be recieved by VideoThread"""
-        filenames, _ = QFileDialog.getOpenFileNames(self, "QFileDialog.getOpenFileNames()", "","All Files (*)", options=QFileDialog.Options())
+        filenames, _ = QFileDialog.getOpenFileNames(self, "QFileDialog.getOpenFileNames()", "", "All Files (*)",
+                                                    options=QFileDialog.Options())
         if len(filenames) > 0:
             self.select_files_signal.emit(filenames[:len(self.video_area.video_widgets)])
 
