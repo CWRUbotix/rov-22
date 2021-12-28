@@ -1,10 +1,10 @@
 import cv2
-from gui.decorator import Decorator
+from gui.debug_filter import DebugFilter
 
-dropdown = Decorator()
+filter_dropdown = DebugFilter()
 
 
-@dropdown(name="None")
+@filter_dropdown(name="None")
 def none(image):
     """
     Returns the given image
@@ -13,7 +13,7 @@ def none(image):
     """
     return image
 
-@dropdown(name="Gray")
+@filter_dropdown(name="Gray")
 def convert_to_gray(image):
     """
     Converts the given image to grayscale

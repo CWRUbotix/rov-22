@@ -7,7 +7,7 @@ from PyQt5.QtWidgets import QComboBox, QFileDialog, QHBoxLayout, QLabel, QPushBu
 from gui.widgets.video_controls_widget import VideoControlsWidget
 from gui.widgets.video_widgets import VideoArea
 from gui.data_classes import Frame
-from gui.decorated_functions import dropdown
+from gui.debug_filter_functions import filter_dropdown
 
 
 CONSOLE_TEXT_COLORS = {
@@ -99,7 +99,7 @@ class DebugTab(VideoTab):
         # Creating combo_box and adding the functions
         self.combo_box = QComboBox()
 
-        for func_name in dropdown.func_dictionary.keys():
+        for func_name in filter_dropdown.func_dictionary.keys():
             self.combo_box.addItem(func_name)
 
         self.combo_box.currentTextChanged.connect(self.update_current_filter)
@@ -147,4 +147,4 @@ class DebugTab(VideoTab):
         :param frame: frame to apply filter to
         :return: frame with filter applied
         """
-        return dropdown.func_dictionary.get(self.current_filter)(frame)
+        return filter_dropdown.func_dictionary.get(self.current_filter)(frame)
