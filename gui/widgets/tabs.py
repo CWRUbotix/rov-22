@@ -3,6 +3,7 @@ import logging
 from PyQt5.QtCore import pyqtSignal, pyqtSlot
 from PyQt5.QtGui import QColor, QTextCursor
 from PyQt5.QtWidgets import QComboBox, QFileDialog, QHBoxLayout, QLabel, QPushButton, QVBoxLayout, QWidget, QTextEdit
+from gui.widgets.debug_filter_widget import DebugFilterWidget
 
 from gui.widgets.video_controls_widget import VideoControlsWidget
 from gui.widgets.video_widgets import VideoArea
@@ -94,18 +95,9 @@ class DebugTab(VideoTab):
     def __init__(self, num_video_streams):
         super().__init__(num_video_streams)
 
-        self.current_filter = "None"  # Filter applied with dropdown menu
-
-        # Creating combo_box and adding the functions
-        self.combo_box = QComboBox()
-
-        for func_name in filter_dropdown.func_dictionary.keys():
-            self.combo_box.addItem(func_name)
-
-        self.combo_box.currentTextChanged.connect(self.update_current_filter)
-        self.update_current_filter(self.combo_box.currentText())
-
-        self.root_layout.addWidget(self.combo_box)
+        # Add debug filter dropdown
+        self.debug_filter = DebugFilterWidget()
+        self.root_layout.addWidget(self.debug_filter)
 
         # Add video control buttons
         self.video_controls = VideoControlsWidget()
@@ -129,22 +121,22 @@ class DebugTab(VideoTab):
 
         # Apply the selected filter from the dropdown
         if frame.cam_index == self.video_area.get_big_video_cam_index():
-            frame.cv_img = self.apply_filter(frame.cv_img)
+            frame.cv_img = self.debug_filter.apply_filter(frame.cv_img)
 
         super().handle_frame(frame)
 
-    def update_current_filter(self, text):
-        """
-        Calls the function selected in the dropdown menu
-        :param text: Name of the function to call
-        """
+    # def update_current_filter(self, text):
+    #     """
+    #     Calls the function selected in the dropdown menu
+    #     :param text: Name of the function to call
+    #     """
 
-        self.current_filter = text
+    #     self.current_filter = text
 
-    def apply_filter(self, frame: Frame):
-        """
-        Applies filter from the dropdown menu to the given frame
-        :param frame: frame to apply filter to
-        :return: frame with filter applied
-        """
-        return filter_dropdown.func_dictionary.get(self.current_filter)(frame)
+    # def apply_filter(self, frame: Frame):
+    #     """
+    #     Applies filter from the dropdown menu to the given frame
+    #     :param frame: frame to apply filter to
+    #     :return: frame with filter applied
+    #     """
+    #     return filter_dropdown.func_dictionary.get(self.current_filter)(frame)
