@@ -1,13 +1,27 @@
-import os
-from PyQt5.QtCore import pyqtSignal
-from PyQt5.QtWidgets import QComboBox, QFileDialog, QHBoxLayout, QLabel, QPushButton, QVBoxLayout, QWidget
-from gui.widgets.image_debug_widget import ImagesWidget
-from util import data_path
+import logging
 
+from PyQt5.QtCore import pyqtSignal, pyqtSlot
+from PyQt5.QtGui import QColor, QTextCursor
+from PyQt5.QtWidgets import QComboBox, QFileDialog, QHBoxLayout, QLabel, QPushButton, QVBoxLayout, QWidget, QTextEdit
+
+from gui.widgets.image_debug_widget import ImagesWidget
 from gui.widgets.video_controls_widget import VideoControlsWidget
 from gui.widgets.video_widgets import VideoArea
 from gui.data_classes import Frame
 from gui.decorated_functions import dropdown
+
+# Temporary imports for basic image debug tab
+import os
+from util import data_path
+
+
+CONSOLE_TEXT_COLORS = {
+    logging.DEBUG: QColor.fromRgb(0xffffff),
+    logging.INFO: QColor.fromRgb(0xffffff),
+    logging.WARN: QColor.fromRgb(0xffff4f),
+    logging.ERROR: QColor.fromRgb(0xff4f4f),
+    logging.CRITICAL: QColor.fromRgb(0xff4f4f)
+}
 
 
 class RootTab(QWidget):
@@ -19,6 +33,30 @@ class RootTab(QWidget):
         # Create a new vbox layout to contain the tab's widgets
         self.root_layout = QVBoxLayout(self)
         self.setLayout(self.root_layout)
+
+        text_label = QLabel()
+        text_label.setText("Console")
+        self.root_layout.addWidget(text_label)
+
+        self.console = QTextEdit(self)
+        self.console.setReadOnly(True)
+        self.console.setLineWrapMode(QTextEdit.NoWrap)
+
+        font = self.console.font()
+        font.setFamily("Courier")
+        font.setPointSize(12)
+
+        self.root_layout.addWidget(self.console)
+
+    @pyqtSlot(str, int)
+    def update_console(self, line: str, severity: int):
+        self.console.moveCursor(QTextCursor.End)
+        self.console.setTextColor(CONSOLE_TEXT_COLORS[severity])
+
+        self.console.insertPlainText(line)
+
+        scrollbar = self.console.verticalScrollBar()
+        scrollbar.setValue(scrollbar.maximum())
 
 
 class ImageDebugTab(RootTab):
@@ -70,7 +108,7 @@ class MainTab(VideoTab):
 class DebugTab(VideoTab):
     # Create file selection signal
     select_files_signal = pyqtSignal(list)
-    
+
     def __init__(self, num_video_streams):
         super().__init__(num_video_streams)
 
@@ -99,7 +137,8 @@ class DebugTab(VideoTab):
 
     def select_files(self):
         """Run the system file selection dialog and emit results, to be recieved by VideoThread"""
-        filenames, _ = QFileDialog.getOpenFileNames(self, "QFileDialog.getOpenFileNames()", "","All Files (*)", options=QFileDialog.Options())
+        filenames, _ = QFileDialog.getOpenFileNames(self, "QFileDialog.getOpenFileNames()", "", "All Files (*)",
+                                                    options=QFileDialog.Options())
         if len(filenames) > 0:
             self.select_files_signal.emit(filenames[:len(self.video_area.video_widgets)])
 

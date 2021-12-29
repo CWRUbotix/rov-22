@@ -1,10 +1,15 @@
+import logging
 import cv2
 
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QTabWidget
-from PyQt5.QtCore import pyqtSignal, pyqtSlot, QThread
+from PyQt5.QtCore import pyqtSignal, pyqtSlot, Qt, QThread
 
 from gui.data_classes import Frame
 from gui.widgets.tabs import ImageDebugTab, MainTab, DebugTab, VideoTab
+from gui.logger import root_logger
+
+# The name of the logger will be included in debug messages, so set it to the name of the file to make the log traceable
+logger = root_logger.getChild(__name__)
 
 
 class VideoThread(QThread):
@@ -14,6 +19,8 @@ class VideoThread(QThread):
         super().__init__()
         self._thread_running_flag = True
         self._video_playing_flag = True
+        self._restart = False
+
         self._filenames = filenames
         self._captures = []
         self._rewind = False
@@ -24,8 +31,17 @@ class VideoThread(QThread):
             self._captures.append(cv2.VideoCapture(filename))
 
     def _emit_frames(self):
-        """Emit next/prev frames on the pyqtSignal to be recieved by video widgets"""
+        """Emit next/prev frames on the pyqtSignal to be received by video widgets"""
+
+        # Restart the videos if restart is true
+        if self._restart:
+            for index, capture in enumerate(self._captures):
+                capture.set(cv2.CAP_PROP_POS_FRAMES, 0)
+
+            self._restart = False
+
         for index, capture in enumerate(self._captures):
+
             if self._rewind:
                 prev_frame = cur_frame = capture.get(cv2.CAP_PROP_POS_FRAMES)
 
@@ -89,7 +105,12 @@ class VideoThread(QThread):
         self._video_playing_flag = False
         self._thread_running_flag = False
         self.wait()
-    
+
+    def restart(self):
+        """Restarts the video from the beginning"""
+
+        self._restart = True
+
     @pyqtSlot(list)
     def on_select_filenames(self, filenames):
         self._video_playing_flag = True
@@ -99,12 +120,24 @@ class VideoThread(QThread):
         self._prepare_captures()
 
 
+class GuiLogHandler(logging.Handler):
+    def __init__(self, update_signal):
+        super().__init__()
+        self.update_signal = update_signal
+
+    def emit(self, record):
+        self.update_signal.emit(self.format(record), record.levelno)
+
+
 class App(QWidget):
+    main_log_signal = pyqtSignal(str, int)
+    debug_log_signal = pyqtSignal(str, int)
+
     def __init__(self, filenames):
         super().__init__()
         self.setWindowTitle("ROV Vision")
         self.resize(1280, 720)
-        self.showMaximized()
+        self.showFullScreen()
 
         # Create a tab widget
         self.tabs = QTabWidget()
@@ -135,12 +168,48 @@ class App(QWidget):
 
         # Setup the debug video buttons to control the thread
         self.debug_tab.video_controls.play_pause_button.clicked.connect(self.thread.toggle_play_pause)
+        self.debug_tab.video_controls.restart_button.clicked.connect(self.thread.restart)
         self.debug_tab.video_controls.toggle_rewind_button.clicked.connect(self.thread.toggle_rewind)
         self.debug_tab.video_controls.prev_frame_button.clicked.connect(self.thread.prev_frame)
         self.debug_tab.video_controls.next_frame_button.clicked.connect(self.thread.next_frame)
 
         # Start the thread
         self.thread.start()
+
+        # Setup GUI logging
+        gui_formatter = logging.Formatter("[{levelname}] {message}", style="{")
+
+        self.main_log_handler = GuiLogHandler(self.main_log_signal)
+        self.main_log_handler.setLevel(logging.INFO)
+        self.main_log_handler.setFormatter(gui_formatter)
+        root_logger.addHandler(self.main_log_handler)
+        self.main_log_signal.connect(self.main_tab.update_console)
+
+        self.debug_log_handler = GuiLogHandler(self.debug_log_signal)
+        self.debug_log_handler.setLevel(logging.DEBUG)
+        self.debug_log_handler.setFormatter(gui_formatter)
+        root_logger.addHandler(self.debug_log_handler)
+        self.debug_log_signal.connect(self.debug_tab.update_console)
+
+        logger.debug("Application initialized")
+
+    def keyPressEvent(self, event):
+        """Sets keyboard keys to different actions"""
+
+        if event.key() == Qt.Key.Key_Space:
+            self.thread.toggle_play_pause()
+
+        elif event.key() == Qt.Key.Key_Left:
+            self.thread.prev_frame()
+
+        elif event.key() == Qt.Key.Key_Right:
+            self.thread.next_frame()
+
+        elif event.key() == Qt.Key.Key_R:
+            self.thread.restart()
+
+        elif event.key() == Qt.Key.Key_T:
+            self.thread.toggle_rewind()
 
     def closeEvent(self, event):
         self.thread.stop()

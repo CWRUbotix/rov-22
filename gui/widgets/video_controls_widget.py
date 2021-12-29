@@ -1,3 +1,5 @@
+from sys import stdout
+from PyQt5 import QtGui
 from PyQt5.QtWidgets import QHBoxLayout, QPushButton, QWidget
 
 
@@ -11,6 +13,10 @@ class VideoControlsWidget(QWidget):
         self.play_pause_button = QPushButton(self)
         self.play_pause_button.setText("Play/Pause")
         self.horizontal_layout.addWidget(self.play_pause_button)
+
+        self.restart_button = QPushButton(self)
+        self.restart_button.setText("Restart")
+        self.horizontal_layout.addWidget(self.restart_button)
 
         self.toggle_rewind_button = QPushButton(self)
         self.toggle_rewind_button.setText("Toggle Rewind")
