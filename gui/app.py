@@ -143,6 +143,8 @@ class App(QWidget):
         self.tabs = QTabWidget()
         self.main_tab = MainTab(len(filenames))
         self.debug_tab = DebugTab(len(filenames))
+        self.main_tab.organize()
+        self.debug_tab.organize()
 
         self.tabs.resize(300, 200)
         self.tabs.addTab(self.main_tab, "Main")
@@ -168,11 +170,11 @@ class App(QWidget):
         self.debug_tab.select_files_signal.connect(self.thread.on_select_filenames)
 
         # Setup the debug video buttons to control the thread
-        self.debug_tab.video_controls.play_pause_button.clicked.connect(self.thread.toggle_play_pause)
-        self.debug_tab.video_controls.restart_button.clicked.connect(self.thread.restart)
-        self.debug_tab.video_controls.toggle_rewind_button.clicked.connect(self.thread.toggle_rewind)
-        self.debug_tab.video_controls.prev_frame_button.clicked.connect(self.thread.prev_frame)
-        self.debug_tab.video_controls.next_frame_button.clicked.connect(self.thread.next_frame)
+        self.debug_tab.widgets.video_controls.play_pause_button.clicked.connect(self.thread.toggle_play_pause)
+        self.debug_tab.widgets.video_controls.restart_button.clicked.connect(self.thread.restart)
+        self.debug_tab.widgets.video_controls.toggle_rewind_button.clicked.connect(self.thread.toggle_rewind)
+        self.debug_tab.widgets.video_controls.prev_frame_button.clicked.connect(self.thread.prev_frame)
+        self.debug_tab.widgets.video_controls.next_frame_button.clicked.connect(self.thread.next_frame)
 
         # Start the thread
         self.thread.start()
