@@ -1,9 +1,11 @@
 import logging
 from types import SimpleNamespace
 
+from PyQt5 import QtCore
 from PyQt5.QtCore import pyqtSignal, pyqtSlot
-from PyQt5.QtGui import QColor, QTextCursor
-from PyQt5.QtWidgets import QComboBox, QFileDialog, QHBoxLayout, QLabel, QPushButton, QVBoxLayout, QWidget, QTextEdit
+from PyQt5.QtGui import QColor, QTextCursor, QFont
+from PyQt5.QtWidgets import QComboBox, QFileDialog, QHBoxLayout, QLabel, QPushButton, QVBoxLayout, QWidget, QTextEdit, \
+    QFrame
 
 from gui.widgets.video_controls_widget import VideoControlsWidget
 from gui.widgets.video_widgets import VideoArea
@@ -18,6 +20,8 @@ CONSOLE_TEXT_COLORS = {
     logging.ERROR: QColor.fromRgb(0xff4f4f),
     logging.CRITICAL: QColor.fromRgb(0xff4f4f)
 }
+
+HEADER_FONT = QFont("Sans Serif", 12)
 
 
 class RootTab(QWidget):
@@ -49,10 +53,14 @@ class RootTab(QWidget):
         self.layouts.root_layout = root_layout
 
         main_vbox = QVBoxLayout()
+        sidebar_frame = QFrame()
         sidebar = QVBoxLayout()
+        sidebar_frame.setLayout(sidebar)
+        sidebar_frame.setFrameShape(QFrame.Box)
+
         root_layout.addLayout(main_vbox, 3)
-        root_layout.addLayout(sidebar, 1)
-        
+        root_layout.addWidget(sidebar_frame, 1)
+
         self.layouts.main_vbox = main_vbox
         self.layouts.sidebar = sidebar
 
@@ -75,8 +83,6 @@ class VideoTab(RootTab):
 
         self.widgets.video_area = VideoArea(num_video_streams)
 
-        self.widgets.right_button = QPushButton("Example button right")
-
     def handle_frame(self, frame: Frame):
         self.widgets.video_area.handle_frame(frame)
 
@@ -89,6 +95,13 @@ class VideoTab(RootTab):
         text_label.setText("Console")
         self.layouts.main_vbox.addWidget(text_label)
         self.layouts.main_vbox.addWidget(self.widgets.console, 1)
+
+
+def header_label(text: str) -> QLabel:
+    label = QLabel(text)
+    label.setFont(HEADER_FONT)
+    label.setAlignment(QtCore.Qt.AlignCenter)
+    return label
 
 
 class MainTab(VideoTab):
@@ -128,6 +141,20 @@ class DebugTab(VideoTab):
         select_files_button.setText("Select Files")
         select_files_button.clicked.connect(self.select_files)
         self.widgets.select_files_button = select_files_button
+
+    def organize(self):
+        super().organize()
+
+        sidebar = self.layouts.sidebar
+
+        sidebar.addWidget(header_label("Filter"))
+        sidebar.addWidget(self.widgets.filter_dropdown)
+
+        sidebar.addWidget(header_label("Video Controls"))
+        sidebar.addWidget(self.widgets.video_controls)
+
+        sidebar.addWidget(self.widgets.select_files_button)
+        sidebar.addStretch()
 
     def select_files(self):
         """Run the system file selection dialog and emit results, to be received by VideoThread"""
