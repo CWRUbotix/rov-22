@@ -2,33 +2,62 @@
 
 import cv2
 import os
-from os import path
 from util import data_path    
 
-def record_mouse_position(event, x, y, flag, params):
+file = open("/Users/georgiamartinez/rov-vision-22/scripts/fish_pixels_list", "a")
+num_clicks = 0
+
+def record_mouse_position(event, x, y, flags, param):
     """Records mouse position on click""" 
 
-    if event == cv2.EVENT_LBUTTONDOWN:
- 
-        print(f"{x}, {y}")
+    global num_clicks
 
-def browse_images(image_path):
+    label = param[0]
+    image_name = param[1]
+
+    # Get mouse coordinates
+    if event == cv2.EVENT_LBUTTONDOWN:
+        coords = f" {x} {y}"
+
+        print(coords)
+
+        # Format coordinates on the text file
+        if num_clicks % 2 == 0:
+            if num_clicks != 0:
+                file.write("\n")
+
+            file.write(label+"/"+image_name)
+
+        file.write(coords)
+
+        num_clicks += 1
+
+def browse_images(label):
     """Browse images with the 'a' and 'd' keys"""
 
-    images_list = [image_name for image_name in os.listdir(image_path)]
+    global file, num_clicks
+
+    # Get list of images to browse through
+    image_path = os.path.join(data_path, "stereo", "1undistort", label)
+
+    images_list = [img for img in os.listdir(image_path)]
+    images_list.sort()
+
     index = 0
 
     window = "image"
 
     cv2.namedWindow(window)
-        
+    
+    # Display the images
     while True:
         image = cv2.imread(image_path +"/"+ images_list[index])
         image = cv2.putText(image, images_list[index], (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2, cv2.LINE_AA)
 
         cv2.imshow(window, image)
+
         cv2.setWindowProperty(window, cv2.WND_PROP_TOPMOST, 1)
-        cv2.setMouseCallback(window, record_mouse_position)
+        cv2.setMouseCallback(window, record_mouse_position, [label, images_list[index]])
 
         k = cv2.waitKey(0) & 0xFF
 
@@ -45,8 +74,7 @@ def browse_images(image_path):
             cv2.destroyAllWindows()
             break
 
-image_path_left = path.join(data_path, 'stereo', '1undistort', 'left')
-image_path_right = path.join(data_path, 'stereo', '1undistort', 'right')
+browse_images("left")
+# browse_images(image_path_right)
 
-browse_images(image_path_left)
-browse_images(image_path_right)
+file.close()
