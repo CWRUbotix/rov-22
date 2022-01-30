@@ -15,7 +15,7 @@ class KeyboardControl(BaseTask):
     Shift: Down
     Space: Up
     IJKL: Pitch and Yaw
-    Q/E: Roll
+    U/O: Roll
     """
     def __init__(self, vehicle: VehicleControl, keys_down):
         super().__init__(vehicle)
