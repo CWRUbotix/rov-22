@@ -4,3 +4,4 @@ imutils
 PyQt5
 scikit-learn
 scikit-image
+pymavlink
