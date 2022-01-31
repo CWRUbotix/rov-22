@@ -35,11 +35,11 @@ class VehicleControl:
 
     def arm(self) -> None:
         self.link.arducopter_arm()
-        logger.debug("Arm command sent")
+        logger.info("Arm command sent")
 
     def disarm(self) -> None:
         self.link.arducopter_disarm()
-        logger.debug("Disarm command sent")
+        logger.info("Disarm command sent")
 
     def is_connected(self) -> bool:
         last_connected = self.connected

@@ -9,6 +9,7 @@ from PyQt5.QtWidgets import QComboBox, QFileDialog, QHBoxLayout, QLabel, QPushBu
 
 from gui.widgets.video_controls_widget import VideoControlsWidget
 from gui.widgets.video_widgets import VideoArea
+from gui.widgets.arm_control_widget import ArmControlWidget
 from gui.data_classes import Frame
 from gui.decorated_functions import dropdown
 
@@ -108,8 +109,13 @@ class MainTab(VideoTab):
     def __init__(self, num_video_streams):
         super().__init__(num_video_streams)
 
+        arm_control_widget = ArmControlWidget()
+        self.widgets.arm_control = arm_control_widget
+
     def organize(self):
         super().organize()
+        self.layouts.sidebar.addStretch()
+        self.layouts.sidebar.addWidget(self.widgets.arm_control)
 
 
 class DebugTab(VideoTab):

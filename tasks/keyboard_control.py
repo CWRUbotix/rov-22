@@ -27,12 +27,12 @@ class KeyboardControl(BaseTask):
     def periodic(self):
         """Set vehicle inputs based on pressed keys"""
         inputs = {
-            InputChannel.FORWARD: (self.keys_down[Qt.Key_W] - self.keys_down[Qt.Key_S]) * TRANSLATION_SENSITIVITY,
-            InputChannel.LATERAL: (self.keys_down[Qt.Key_D] - self.keys_down[Qt.Key_A]) * TRANSLATION_SENSITIVITY,
+            InputChannel.FORWARD:  (self.keys_down[Qt.Key_W] - self.keys_down[Qt.Key_S]) * TRANSLATION_SENSITIVITY,
+            InputChannel.LATERAL:  (self.keys_down[Qt.Key_D] - self.keys_down[Qt.Key_A]) * TRANSLATION_SENSITIVITY,
             InputChannel.THROTTLE: (self.keys_down[Qt.Key_Space] - self.keys_down[Qt.Key_Shift]) * TRANSLATION_SENSITIVITY,
-            InputChannel.PITCH: (self.keys_down[Qt.Key_I] - self.keys_down[Qt.Key_K]) * ROTATIONAL_SENSITIVITY,
-            InputChannel.YAW: (self.keys_down[Qt.Key_L] - self.keys_down[Qt.Key_J]) * ROTATIONAL_SENSITIVITY,
-            InputChannel.ROLL: (self.keys_down[Qt.Key_U] - self.keys_down[Qt.Key_O]) * ROTATIONAL_SENSITIVITY,
+            InputChannel.PITCH:    (self.keys_down[Qt.Key_I] - self.keys_down[Qt.Key_K]) * ROTATIONAL_SENSITIVITY,
+            InputChannel.YAW:      (self.keys_down[Qt.Key_L] - self.keys_down[Qt.Key_J]) * ROTATIONAL_SENSITIVITY,
+            InputChannel.ROLL:     (self.keys_down[Qt.Key_U] - self.keys_down[Qt.Key_O]) * ROTATIONAL_SENSITIVITY,
         }
 
         self.vehicle.set_rc_inputs(inputs)
