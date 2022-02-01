@@ -37,11 +37,7 @@ class TaskScheduler(QThread):
         period_ns = int(1e9) // PERIODIC_FREQUENCY
 
         while True:
-            self.vehicle.check_heartbeat()
-
-            if self.vehicle.is_connected() and not self.vehicle.is_armed():
-                self.vehicle.arm()
-                self.msleep(1000)
+            self.vehicle.update()
 
             if not self.vehicle.is_connected() or not self.vehicle.is_armed():
                 self.end_current_task()

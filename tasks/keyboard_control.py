@@ -12,8 +12,8 @@ class KeyboardControl(BaseTask):
 
     Controls:
     WASD: Forward and lateral translation
-    Shift: Down
-    Space: Up
+    Control: Down
+    Shift: Up (I couldn't use space because PyQt already uses it  and for some stupid reason I couldn't override it)
     IJKL: Pitch and Yaw
     U/O: Roll
     """
@@ -29,10 +29,10 @@ class KeyboardControl(BaseTask):
         inputs = {
             InputChannel.FORWARD:  (self.keys_down[Qt.Key_W] - self.keys_down[Qt.Key_S]) * TRANSLATION_SENSITIVITY,
             InputChannel.LATERAL:  (self.keys_down[Qt.Key_D] - self.keys_down[Qt.Key_A]) * TRANSLATION_SENSITIVITY,
-            InputChannel.THROTTLE: (self.keys_down[Qt.Key_Space] - self.keys_down[Qt.Key_Shift]) * TRANSLATION_SENSITIVITY,
+            InputChannel.THROTTLE: (self.keys_down[Qt.Key_Shift] - self.keys_down[Qt.Key_Control]) * TRANSLATION_SENSITIVITY,
             InputChannel.PITCH:    (self.keys_down[Qt.Key_I] - self.keys_down[Qt.Key_K]) * ROTATIONAL_SENSITIVITY,
             InputChannel.YAW:      (self.keys_down[Qt.Key_L] - self.keys_down[Qt.Key_J]) * ROTATIONAL_SENSITIVITY,
-            InputChannel.ROLL:     (self.keys_down[Qt.Key_U] - self.keys_down[Qt.Key_O]) * ROTATIONAL_SENSITIVITY,
+            InputChannel.ROLL:     (self.keys_down[Qt.Key_O] - self.keys_down[Qt.Key_U]) * ROTATIONAL_SENSITIVITY,
         }
 
         self.vehicle.set_rc_inputs(inputs)

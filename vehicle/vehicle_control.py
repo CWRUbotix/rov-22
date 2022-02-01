@@ -1,11 +1,15 @@
 import enum
 import time
 import typing as t
-from pymavlink import mavutil
+
+from PyQt5.QtCore import pyqtSignal, QObject
+from pymavlink import mavutil, mavlink
 
 from logger import root_logger
 
 logger = root_logger.getChild(__name__)
+
+TIMEOUT = 2  # Seconds without a message before we assume the connection's lost
 
 
 class InputChannel(enum.Enum):
@@ -22,16 +26,42 @@ class InputChannel(enum.Enum):
     VIDEO_SWITCH = 11
 
 
-class VehicleControl:
+class VehicleControl(QObject):
+    connected_signal = pyqtSignal()
+    disconnected_signal = pyqtSignal()
+    armed_signal = pyqtSignal()
+    disarmed_signal = pyqtSignal()
+
     def __init__(self, port):
-        self.last_heartbeat = None
+        super().__init__()
+        self.last_msg_time = None
         self.connected = False
+        self.armed = False
 
         self.link = mavutil.mavlink_connection(f'udpin:0.0.0.0:{port}')
 
-    def check_heartbeat(self) -> None:
-        if self.link.wait_heartbeat(blocking=False) is not None:
-            self.last_heartbeat = time.time()
+    def update(self):
+        msg = self.link.wait_heartbeat(blocking=False)
+        if msg is not None:
+            if not self.connected:
+                self.connected_signal.emit()
+                self.connected = True
+
+            self.last_msg_time = time.time()
+            msg_dict = msg.to_dict()
+
+            armed = msg_dict.get("system_status", None) == mavlink.MAV_STATE_ACTIVE
+
+            if armed != self.armed:
+                if armed:
+                    self.armed_signal.emit()
+                else:
+                    self.disarmed_signal.emit()
+            self.armed = armed
+        else:
+            if self.connected and time.time() - self.last_msg_time > TIMEOUT:
+                self.disconnected_signal.emit()
+                self.connected = False
 
     def arm(self) -> None:
         self.link.arducopter_arm()
@@ -42,16 +72,10 @@ class VehicleControl:
         logger.info("Disarm command sent")
 
     def is_connected(self) -> bool:
-        last_connected = self.connected
-        self.connected = self.last_heartbeat is not None and time.time() - self.last_heartbeat < 2  # Timeout after 2 seconds
-        if not last_connected and self.connected:
-            logger.debug("Connected to vehicle")
-        elif last_connected and not self.connected:
-            logger.info("Lost connection to vehicle")
         return self.connected
 
     def is_armed(self) -> bool:
-        return self.link.motors_armed()
+        return self.armed
 
     def set_rc_input_pwms(self, pwms: t.Dict[int, int]) -> None:
         """Sets and RC input channel pwm value. PWM values should be between 1100 and 1900"""

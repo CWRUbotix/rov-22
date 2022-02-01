@@ -62,19 +62,6 @@ class App(QWidget):
         # Create the video capture thread
         self.video_thread = VideoThread(filenames)
 
-        # Connect its signal to the update_image slot
-        self.video_thread.update_frames_signal.connect(self.update_image)
-
-        # Connect DebugTab's selecting files signal to video thread's on_select_filenames
-        self.debug_tab.select_files_signal.connect(self.video_thread.on_select_filenames)
-
-        # Setup the debug video buttons to control the thread
-        self.debug_tab.widgets.video_controls.play_pause_button.clicked.connect(self.video_thread.toggle_play_pause)
-        self.debug_tab.widgets.video_controls.restart_button.clicked.connect(self.video_thread.restart)
-        self.debug_tab.widgets.video_controls.toggle_rewind_button.clicked.connect(self.video_thread.toggle_rewind)
-        self.debug_tab.widgets.video_controls.prev_frame_button.clicked.connect(self.video_thread.prev_frame)
-        self.debug_tab.widgets.video_controls.next_frame_button.clicked.connect(self.video_thread.next_frame)
-
         # Start the video thread
         self.video_thread.start()
 
@@ -101,7 +88,32 @@ class App(QWidget):
         root_logger.addHandler(self.debug_log_handler)
         self.debug_log_signal.connect(self.debug_tab.update_console)
 
+        # Connect the disparate parts of the gui which need to communicate
+        self.connect_signals()
+
         logger.debug("Application initialized")
+
+    def connect_signals(self):
+        # Connect its signal to the update_image slot
+        self.video_thread.update_frames_signal.connect(self.update_image)
+
+        # Connect the arm/disarm gui buttons to the arm/disarm commands
+        self.main_tab.widgets.arm_control.arm_button.clicked.connect(self.vehicle.arm)
+        self.main_tab.widgets.arm_control.disarm_button.clicked.connect(self.vehicle.disarm)
+        self.vehicle.connected_signal.connect(self.main_tab.widgets.arm_control.on_connect)
+        self.vehicle.disconnected_signal.connect(self.main_tab.widgets.arm_control.on_disconnect)
+        self.vehicle.armed_signal.connect(self.main_tab.widgets.arm_control.on_arm)
+        self.vehicle.disarmed_signal.connect(self.main_tab.widgets.arm_control.on_disarm)
+
+        # Connect DebugTab's selecting files signal to video thread's on_select_filenames
+        self.debug_tab.select_files_signal.connect(self.video_thread.on_select_filenames)
+
+        # Setup the debug video buttons to control the thread
+        self.debug_tab.widgets.video_controls.play_pause_button.clicked.connect(self.video_thread.toggle_play_pause)
+        self.debug_tab.widgets.video_controls.restart_button.clicked.connect(self.video_thread.restart)
+        self.debug_tab.widgets.video_controls.toggle_rewind_button.clicked.connect(self.video_thread.toggle_rewind)
+        self.debug_tab.widgets.video_controls.prev_frame_button.clicked.connect(self.video_thread.prev_frame)
+        self.debug_tab.widgets.video_controls.next_frame_button.clicked.connect(self.video_thread.next_frame)
 
     def keyPressEvent(self, event):
         """Sets keyboard keys to different actions"""
