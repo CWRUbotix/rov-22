@@ -143,8 +143,6 @@ class App(QWidget):
         self.tabs = QTabWidget()
         self.main_tab = MainTab(len(filenames))
         self.debug_tab = DebugTab(len(filenames))
-        self.main_tab.organize()
-        self.debug_tab.organize()
 
         self.tabs.resize(300, 200)
         self.tabs.addTab(self.main_tab, "Main")

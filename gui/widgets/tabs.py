@@ -12,7 +12,6 @@ from gui.widgets.video_widgets import VideoArea
 from gui.data_classes import Frame
 from gui.decorated_functions import dropdown
 
-
 CONSOLE_TEXT_COLORS = {
     logging.DEBUG: QColor.fromRgb(0xffffff),
     logging.INFO: QColor.fromRgb(0xffffff),
@@ -33,6 +32,10 @@ class RootTab(QWidget):
         self.widgets = SimpleNamespace()  # An empty object which will contain all the widgets in the tab
         self.layouts = SimpleNamespace()  # An empty object which will contain all the layouts in the tab
 
+        self.init_widgets()
+        self.organize()
+
+    def init_widgets(self):
         console = QTextEdit(self)
         console.setReadOnly(True)
 
@@ -79,9 +82,13 @@ class VideoTab(RootTab):
     """A RootTab which displays video(s) from a camera stream or video file, among other functions"""
 
     def __init__(self, num_video_streams):
+        self.num_video_streams = num_video_streams
+
         super().__init__()
 
-        self.widgets.video_area = VideoArea(num_video_streams)
+    def init_widgets(self):
+        super().init_widgets()
+        self.widgets.video_area = VideoArea(self.num_video_streams)
 
     def handle_frame(self, frame: Frame):
         self.widgets.video_area.handle_frame(frame)
@@ -117,9 +124,12 @@ class DebugTab(VideoTab):
     select_files_signal = pyqtSignal(list)
 
     def __init__(self, num_video_streams):
+        self.current_filter = "None"  # Filter applied with dropdown menu
+
         super().__init__(num_video_streams)
 
-        self.current_filter = "None"  # Filter applied with dropdown menu
+    def init_widgets(self):
+        super().init_widgets()
 
         # Creating combo_box and adding the functions
         combo_box = QComboBox()
