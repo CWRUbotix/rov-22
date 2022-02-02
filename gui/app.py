@@ -10,6 +10,8 @@ from gui.data_classes import Frame, VideoSource
 from gui.widgets.tabs import MainTab, DebugTab, VideoTab
 from gui.logger import root_logger
 
+from util import data_path
+
 # The name of the logger will be included in debug messages, so set it to the name of the file to make the log traceable
 logger = root_logger.getChild(__name__)
 
@@ -129,6 +131,8 @@ class VideoThread(QThread):
                         api = cv2.CAP_FFMPEG
                         if source["api"] == "gstreamer":
                             api = cv2.CAP_GSTREAMER
+                        else:
+                            source["name"] = os.path.join(data_path, source["name"])
                         
                         self._video_sources.append(VideoSource(source["name"], api))
 

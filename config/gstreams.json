@@ -2,7 +2,7 @@
 	"sources": [
 		{
 			"api": "ffmpeg",
-			"name": "/home/ubuntu0/data/example-streams/1.mp4"
+			"name": "example-streams/1.mp4"
 		},
 		{
 			"api": "gstreamer",
