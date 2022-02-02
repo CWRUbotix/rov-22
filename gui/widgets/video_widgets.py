@@ -23,12 +23,12 @@ class VideoArea(QWidget):
         for i in range(0, num_video_widgets):
             self.video_widgets.append(VideoWidget(i, i == 0))
             if i == 0:  # Big video
-                self.root_layout.addWidget(self.video_widgets[i])
+                self.root_layout.addWidget(self.video_widgets[i], 5)
             else:       # Small videos
                 self.video_widgets[i].update_big_video_signal.connect(self.set_as_big_video)
                 self.small_videos_layout.addWidget(self.video_widgets[i])
         
-        self.root_layout.addLayout(self.small_videos_layout)
+        self.root_layout.addLayout(self.small_videos_layout, 2)
     
     def get_big_video_cam_index(self):
         """Returns the cam_index of the currently enbiggened video, for use in checking whether to apply filters"""

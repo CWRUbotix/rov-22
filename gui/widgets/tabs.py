@@ -1,16 +1,17 @@
 import logging
 import os
+from types import SimpleNamespace
 
+from PyQt5 import QtCore
 from PyQt5.QtCore import pyqtSignal, pyqtSlot
-from PyQt5.QtGui import QColor, QTextCursor
-from PyQt5.QtWidgets import QComboBox, QFileDialog, QHBoxLayout, QLabel, QPushButton, QVBoxLayout, QWidget, QTextEdit
+from PyQt5.QtGui import QColor, QTextCursor, QFont
+from PyQt5.QtWidgets import QComboBox, QFileDialog, QHBoxLayout, QLabel, QPushButton, QVBoxLayout, QWidget, QTextEdit, QFrame
 import cv2
 
 from gui.widgets.video_controls_widget import VideoControlsWidget
 from gui.widgets.video_widgets import VideoArea
 from gui.data_classes import Frame, VideoSource
 from gui.decorated_functions import dropdown
-
 
 CONSOLE_TEXT_COLORS = {
     logging.DEBUG: QColor.fromRgb(0xffffff),
@@ -20,6 +21,8 @@ CONSOLE_TEXT_COLORS = {
     logging.CRITICAL: QColor.fromRgb(0xff4f4f)
 }
 
+HEADER_FONT = QFont("Sans Serif", 12)
+
 
 class RootTab(QWidget):
     """An individual tab in the RootTabContainer containing all the widgets to be displayed in the tab"""
@@ -27,32 +30,52 @@ class RootTab(QWidget):
     def __init__(self):
         super().__init__()
 
-        # Create a new vbox layout to contain the tab's widgets
-        self.root_layout = QVBoxLayout(self)
-        self.setLayout(self.root_layout)
+        self.widgets = SimpleNamespace()  # An empty object which will contain all the widgets in the tab
+        self.layouts = SimpleNamespace()  # An empty object which will contain all the layouts in the tab
 
-        text_label = QLabel()
-        text_label.setText("Console")
-        self.root_layout.addWidget(text_label)
+        self.init_widgets()
+        self.organize()
 
-        self.console = QTextEdit(self)
-        self.console.setReadOnly(True)
-        self.console.setLineWrapMode(QTextEdit.NoWrap)
+    def init_widgets(self):
+        console = QTextEdit(self)
+        console.setReadOnly(True)
 
-        font = self.console.font()
-        font.setFamily("Courier")
-        font.setPointSize(12)
+        console_font = console.font()
+        console_font.setFamily("Courier")
+        console_font.setPointSize(12)
 
-        self.root_layout.addWidget(self.console)
+        self.widgets.console = console
+
+    def organize(self):
+        """
+        Create layouts and widgets to organize the widgets in self.widgets into a coherent gui
+        """
+
+        # Create a new hbox layout to contain the tab's widgets
+        root_layout = QHBoxLayout(self)
+        self.setLayout(root_layout)
+        self.layouts.root_layout = root_layout
+
+        main_vbox = QVBoxLayout()
+        sidebar_frame = QFrame()
+        sidebar = QVBoxLayout()
+        sidebar_frame.setLayout(sidebar)
+        sidebar_frame.setFrameShape(QFrame.Box)
+
+        root_layout.addLayout(main_vbox, 3)
+        root_layout.addWidget(sidebar_frame, 1)
+
+        self.layouts.main_vbox = main_vbox
+        self.layouts.sidebar = sidebar
 
     @pyqtSlot(str, int)
     def update_console(self, line: str, severity: int):
-        self.console.moveCursor(QTextCursor.End)
-        self.console.setTextColor(CONSOLE_TEXT_COLORS[severity])
+        self.widgets.console.moveCursor(QTextCursor.End)
+        self.widgets.console.setTextColor(CONSOLE_TEXT_COLORS[severity])
 
-        self.console.insertPlainText(line)
+        self.widgets.console.insertPlainText(line + "\n")
 
-        scrollbar = self.console.verticalScrollBar()
+        scrollbar = self.widgets.console.verticalScrollBar()
         scrollbar.setValue(scrollbar.maximum())
 
 
@@ -60,33 +83,41 @@ class VideoTab(RootTab):
     """A RootTab which displays video(s) from a camera stream or video file, among other functions"""
 
     def __init__(self, num_video_streams):
+        self.num_video_streams = num_video_streams
+
         super().__init__()
 
-        self.horizontal_layout = QHBoxLayout()
-        self.root_layout.addLayout(self.horizontal_layout, 100)
-
-        self.video_area = VideoArea(num_video_streams)
-        self.horizontal_layout.addWidget(self.video_area)
-
-        self.right_button_panel = QVBoxLayout()
-        self.right_button_panel.addWidget(QPushButton("Example button right"))
-        self.horizontal_layout.addLayout(self.right_button_panel)
-
-        # Create a text label
-        self.textLabel = QLabel('Webcam')
-
-        self.bottom_button_panel = QVBoxLayout()
-        self.bottom_button_panel.addWidget(self.textLabel)
-
-        self.root_layout.addLayout(self.bottom_button_panel, 10)
+    def init_widgets(self):
+        super().init_widgets()
+        self.widgets.video_area = VideoArea(self.num_video_streams)
 
     def handle_frame(self, frame: Frame):
-        self.video_area.handle_frame(frame)
+        self.widgets.video_area.handle_frame(frame)
+
+    def organize(self):
+        super().organize()
+
+        self.layouts.main_vbox.addWidget(self.widgets.video_area, 7)
+
+        text_label = QLabel()
+        text_label.setText("Console")
+        self.layouts.main_vbox.addWidget(text_label)
+        self.layouts.main_vbox.addWidget(self.widgets.console, 1)
+
+
+def header_label(text: str) -> QLabel:
+    label = QLabel(text)
+    label.setFont(HEADER_FONT)
+    label.setAlignment(QtCore.Qt.AlignCenter)
+    return label
 
 
 class MainTab(VideoTab):
     def __init__(self, num_video_streams):
         super().__init__(num_video_streams)
+
+    def organize(self):
+        super().organize()
 
 
 class DebugTab(VideoTab):
@@ -94,30 +125,47 @@ class DebugTab(VideoTab):
     select_files_signal = pyqtSignal(list)
 
     def __init__(self, num_video_streams):
-        super().__init__(num_video_streams)
-
         self.current_filter = "None"  # Filter applied with dropdown menu
 
+        super().__init__(num_video_streams)
+
+    def init_widgets(self):
+        super().init_widgets()
+
         # Creating combo_box and adding the functions
-        self.combo_box = QComboBox()
+        combo_box = QComboBox()
 
         for func_name in dropdown.func_dictionary.keys():
-            self.combo_box.addItem(func_name)
+            combo_box.addItem(func_name)
 
-        self.combo_box.currentTextChanged.connect(self.update_current_filter)
-        self.update_current_filter(self.combo_box.currentText())
+        combo_box.currentTextChanged.connect(self.update_current_filter)
+        self.update_current_filter(combo_box.currentText())
 
-        self.root_layout.addWidget(self.combo_box)
+        self.widgets.filter_dropdown = combo_box
 
         # Add video control buttons
-        self.video_controls = VideoControlsWidget()
-        self.root_layout.addWidget(self.video_controls)
+        video_controls = VideoControlsWidget()
+        self.widgets.video_controls = video_controls
 
         # Add select files button
-        self.select_files_button = QPushButton(self)
-        self.select_files_button.setText("Select Files")
-        self.select_files_button.clicked.connect(self.select_files)
-        self.root_layout.addWidget(self.select_files_button)
+        select_files_button = QPushButton(self)
+        select_files_button.setText("Select Files")
+        select_files_button.clicked.connect(self.select_files)
+        self.widgets.select_files_button = select_files_button
+
+    def organize(self):
+        super().organize()
+
+        sidebar = self.layouts.sidebar
+
+        sidebar.addWidget(header_label("Filter"))
+        sidebar.addWidget(self.widgets.filter_dropdown)
+
+        sidebar.addWidget(header_label("Video Controls"))
+        sidebar.addWidget(self.widgets.video_controls)
+
+        sidebar.addWidget(self.widgets.select_files_button)
+        sidebar.addStretch()
 
     def select_files(self):
         """Run the system file selection dialog and emit results, to be recieved by VideoThread"""
@@ -128,10 +176,8 @@ class DebugTab(VideoTab):
             self.select_files_signal.emit(filenames)
 
     def handle_frame(self, frame: Frame):
-        # TODO: This should probably me replaced when VideoWidget is implemented
-
         # Apply the selected filter from the dropdown
-        if frame.cam_index == self.video_area.get_big_video_cam_index():
+        if frame.cam_index == self.widgets.video_area.get_big_video_cam_index():
             frame.cv_img = self.apply_filter(frame.cv_img)
 
         super().handle_frame(frame)
