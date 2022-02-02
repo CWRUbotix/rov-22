@@ -1,12 +1,14 @@
 import logging
+import os
 
 from PyQt5.QtCore import pyqtSignal, pyqtSlot
 from PyQt5.QtGui import QColor, QTextCursor
 from PyQt5.QtWidgets import QComboBox, QFileDialog, QHBoxLayout, QLabel, QPushButton, QVBoxLayout, QWidget, QTextEdit
+import cv2
 
 from gui.widgets.video_controls_widget import VideoControlsWidget
 from gui.widgets.video_widgets import VideoArea
-from gui.data_classes import Frame
+from gui.data_classes import Frame, VideoSource
 from gui.decorated_functions import dropdown
 
 
@@ -119,10 +121,11 @@ class DebugTab(VideoTab):
 
     def select_files(self):
         """Run the system file selection dialog and emit results, to be recieved by VideoThread"""
-        filenames, _ = QFileDialog.getOpenFileNames(self, "QFileDialog.getOpenFileNames()", "", "All Files (*)",
+        filenames, _ = QFileDialog.getOpenFileNames(self, "QFileDialog.getOpenFileNames()", "", "Video/Config (*.mp4 *.json)",
                                                     options=QFileDialog.Options())
-        if len(filenames) > 0:
-            self.select_files_signal.emit(filenames[:len(self.video_area.video_widgets)])
+        
+        if len(filenames) != 0:
+            self.select_files_signal.emit(filenames)
 
     def handle_frame(self, frame: Frame):
         # TODO: This should probably me replaced when VideoWidget is implemented
