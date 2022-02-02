@@ -7,10 +7,15 @@ from PyQt5.QtGui import QColor, QTextCursor, QFont
 from PyQt5.QtWidgets import QComboBox, QFileDialog, QHBoxLayout, QLabel, QPushButton, QVBoxLayout, QWidget, QTextEdit, \
     QFrame
 
+from gui.widgets.image_debug_widget import ImagesWidget
 from gui.widgets.video_controls_widget import VideoControlsWidget
 from gui.widgets.video_widgets import VideoArea
 from gui.data_classes import Frame
 from gui.decorated_functions import dropdown
+
+# Temporary imports for basic image debug tab
+import os
+from util import data_path
 
 CONSOLE_TEXT_COLORS = {
     logging.DEBUG: QColor.fromRgb(0xffffff),
@@ -76,6 +81,19 @@ class RootTab(QWidget):
 
         scrollbar = self.widgets.console.verticalScrollBar()
         scrollbar.setValue(scrollbar.maximum())
+
+
+class ImageDebugTab(RootTab):
+    """A RootTab which displays and filters image(s)"""
+
+    def __init__(self):
+        super().__init__()
+
+        self.images_widget = ImagesWidget()
+        self.images_widget.show()
+        self.images_widget.set_folder(os.path.join(data_path, 'example-images', 'star'))
+
+        self.root_layout.addWidget(self.images_widget)
 
 
 class VideoTab(RootTab):
