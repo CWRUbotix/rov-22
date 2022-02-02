@@ -7,7 +7,7 @@ from PyQt5.QtWidgets import QWidget, QVBoxLayout, QTabWidget
 from PyQt5.QtCore import pyqtSignal, pyqtSlot, Qt, QThread
 
 from gui.data_classes import Frame, VideoSource
-from gui.widgets.tabs import MainTab, DebugTab, VideoTab
+from gui.widgets.tabs import ImageDebugTab, MainTab, DebugTab, VideoTab
 from gui.logger import root_logger
 
 from util import data_path
@@ -171,19 +171,18 @@ class App(QWidget):
         self.tabs = QTabWidget()
         self.main_tab = MainTab(len(video_sources))
         self.debug_tab = DebugTab(len(video_sources))
+        self.image_tab = ImageDebugTab()
 
         self.tabs.resize(300, 200)
         self.tabs.addTab(self.main_tab, "Main")
         self.tabs.addTab(self.debug_tab, "Debug")
+        self.tabs.addTab(self.image_tab, "Images")
 
         # Create a vbox to hold the tabs widget
         vbox = QVBoxLayout()
         vbox.addWidget(self.tabs)
 
         # Set the root layout to this vbox
-        self.setLayout(vbox)
-
-        # Set the vbox layout as the widgets layout
         self.setLayout(vbox)
 
         # Create the video capture thread

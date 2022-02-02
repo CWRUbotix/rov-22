@@ -24,11 +24,6 @@ class ImagesWidget(QGraphicsView):
         self.scene = QGraphicsScene()
         super().__init__(self.scene)
 
-        # gl = QOpenGLWidget()
-        # format = QSurfaceFormat()
-        # gl.setFormat(format)
-        # self.setViewport(gl)
-
         self.threadpool = QThreadPool()
 
         for i in range(4):
@@ -49,18 +44,3 @@ class ImagesWidget(QGraphicsView):
     def load_images(self):
         for i in range(16):
             self.image_pixmaps[i].setPixmap(convert_cv_qt(self.image_cache[i], IMAGE_SIZE, IMAGE_SIZE))
-
-
-        
-
-
-
-
-if __name__ == '__main__':
-    if 'QT_QPA_PLATFORM_PLUGIN_PATH' in os.environ:
-        os.environ.pop('QT_QPA_PLATFORM_PLUGIN_PATH')
-    app = QApplication(sys.argv)
-    a = ImagesWidget()
-    a.show()
-    a.set_folder(os.path.join(data_path, 'example-images', 'star'))
-    sys.exit(app.exec_())
