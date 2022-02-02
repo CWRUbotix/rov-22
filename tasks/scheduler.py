@@ -25,7 +25,7 @@ class TaskScheduler(QThread):
             self.end_current_task()
             self.current_task = task
             task.initialize()
-            logger.info(f"Started task \"{task.display_name()}\"")
+            logger.info(f"Started task \"{str(task)}\"")
 
     def end_current_task(self):
         if self.current_task is not None:
@@ -48,7 +48,7 @@ class TaskScheduler(QThread):
                 if self.current_task is not None:
                     self.current_task.periodic()
                     if self.current_task.is_finished():
-                        logger.info(f"Task \"{self.current_task.display_name()}\" finished")
+                        logger.info(f"Task \"{str(self.current_task)}\" finished")
                         self.end_current_task()
 
             wait_until = last_timestamp + period_ns
@@ -63,4 +63,4 @@ class TaskScheduler(QThread):
                 last_timestamp = current_time
 
     def get_current_task_name(self) -> str:
-        return "None" if self.current_task is None else self.current_task.display_name()
+        return "None" if self.current_task is None else str(self.current_task)

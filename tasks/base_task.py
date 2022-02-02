@@ -27,6 +27,6 @@ class BaseTask:
         """Called whenever a new frame is received from a camera"""
         pass
 
-    def display_name(self) -> str:
+    def __str__(self) -> str:
         """Get a readable name of the task"""
         return type(self).__name__
