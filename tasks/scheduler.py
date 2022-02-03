@@ -1,7 +1,7 @@
 import time
 import typing as t
 
-from PyQt5.QtCore import QThread
+from PyQt5.QtCore import QThread, pyqtSignal
 
 from vehicle.vehicle_control import VehicleControl
 from logger import root_logger
@@ -14,6 +14,8 @@ logger = root_logger.getChild(__name__)
 
 
 class TaskScheduler(QThread):
+    change_task_signal = pyqtSignal(str)
+
     def __init__(self, vehicle: VehicleControl):
         super().__init__()
         self.vehicle = vehicle
@@ -26,11 +28,13 @@ class TaskScheduler(QThread):
             self.current_task = task
             task.initialize()
             logger.info(f"Started task \"{str(task)}\"")
+            self.change_task_signal.emit(str(task))
 
     def end_current_task(self):
         if self.current_task is not None:
             self.current_task.end()
             self.current_task = None
+            self.change_task_signal.emit(None)
 
     def run(self):
         last_timestamp = time.time_ns()
@@ -50,6 +54,8 @@ class TaskScheduler(QThread):
                     if self.current_task.is_finished():
                         logger.info(f"Task \"{str(self.current_task)}\" finished")
                         self.end_current_task()
+                else:
+                    self.vehicle.stop_thrusters()
 
             wait_until = last_timestamp + period_ns
             current_time = time.time_ns()

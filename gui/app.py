@@ -62,16 +62,12 @@ class App(QWidget):
         # Create the video capture thread
         self.video_thread = VideoThread(filenames)
 
-        # Start the video thread
-        self.video_thread.start()
-
         # Create VehicleControl object to handle the connection to the ROV
         self.vehicle = VehicleControl(port=14550)
 
         # Setup the task scheduling thread
         self.task_scheduler = TaskScheduler(self.vehicle)
         self.task_scheduler.default_task = KeyboardControl(self.vehicle, self.keysDown)
-        self.task_scheduler.start()
 
         # Setup GUI logging
         gui_formatter = logging.Formatter("[{levelname}] {message}", style="{")
@@ -80,21 +76,27 @@ class App(QWidget):
         self.main_log_handler.setLevel(logging.INFO)
         self.main_log_handler.setFormatter(gui_formatter)
         root_logger.addHandler(self.main_log_handler)
-        self.main_log_signal.connect(self.main_tab.update_console)
 
         self.debug_log_handler = GuiLogHandler(self.debug_log_signal)
         self.debug_log_handler.setLevel(logging.DEBUG)
         self.debug_log_handler.setFormatter(gui_formatter)
         root_logger.addHandler(self.debug_log_handler)
-        self.debug_log_signal.connect(self.debug_tab.update_console)
 
         # Connect the disparate parts of the gui which need to communicate
         self.connect_signals()
 
+        # Start the independent threads
+        self.video_thread.start()
+        self.task_scheduler.start()
+
         logger.debug("Application initialized")
 
     def connect_signals(self):
-        # Connect its signal to the update_image slot
+        # Connect the loggers to the console
+        self.main_log_signal.connect(self.main_tab.update_console)
+        self.debug_log_signal.connect(self.debug_tab.update_console)
+
+        # Connect the video thread signal to the update_image function
         self.video_thread.update_frames_signal.connect(self.update_image)
 
         # Connect the arm/disarm gui buttons to the arm/disarm commands
@@ -104,6 +106,11 @@ class App(QWidget):
         self.vehicle.disconnected_signal.connect(self.main_tab.widgets.arm_control.on_disconnect)
         self.vehicle.armed_signal.connect(self.main_tab.widgets.arm_control.on_arm)
         self.vehicle.disarmed_signal.connect(self.main_tab.widgets.arm_control.on_disarm)
+
+        # Connect the vehicle and task scheduler to the vehicle status widget
+        self.vehicle.connected_signal.connect(self.main_tab.widgets.vehicle_status.on_connect)
+        self.vehicle.disconnected_signal.connect(self.main_tab.widgets.vehicle_status.on_disconnect)
+        self.task_scheduler.change_task_signal.connect(self.main_tab.widgets.vehicle_status.on_task_change)
 
         # Connect DebugTab's selecting files signal to video thread's on_select_filenames
         self.debug_tab.select_files_signal.connect(self.video_thread.on_select_filenames)

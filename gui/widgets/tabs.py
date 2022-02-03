@@ -7,6 +7,7 @@ from PyQt5.QtGui import QColor, QTextCursor, QFont
 from PyQt5.QtWidgets import QComboBox, QFileDialog, QHBoxLayout, QLabel, QPushButton, QVBoxLayout, QWidget, QTextEdit, \
     QFrame
 
+from gui.widgets.vehicle_status_widget import VehicleStatusWidget
 from gui.widgets.video_controls_widget import VideoControlsWidget
 from gui.widgets.video_widgets import VideoArea
 from gui.widgets.arm_control_widget import ArmControlWidget
@@ -109,13 +110,14 @@ class MainTab(VideoTab):
     def __init__(self, num_video_streams):
         super().__init__(num_video_streams)
 
-        arm_control_widget = ArmControlWidget()
-        self.widgets.arm_control = arm_control_widget
+        self.widgets.arm_control = ArmControlWidget()
+        self.widgets.vehicle_status = VehicleStatusWidget()
 
     def organize(self):
         super().organize()
         self.layouts.sidebar.addStretch()
         self.layouts.sidebar.addWidget(self.widgets.arm_control)
+        self.layouts.sidebar.addWidget(self.widgets.vehicle_status)
 
 
 class DebugTab(VideoTab):
