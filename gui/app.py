@@ -95,6 +95,7 @@ class App(QWidget):
 
         # Connect the video thread signal to the update_image function
         self.video_thread.update_frames_signal.connect(self.update_image)
+        self.video_thread.update_frames_signal.connect(self.task_scheduler.on_frame)
 
         # Connect the arm/disarm gui buttons to the arm/disarm commands
         self.main_tab.widgets.arm_control.arm_button.clicked.connect(self.vehicle.arm)

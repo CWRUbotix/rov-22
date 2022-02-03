@@ -70,3 +70,7 @@ class TaskScheduler(QThread):
 
     def get_current_task_name(self) -> str:
         return "None" if self.current_task is None else str(self.current_task)
+
+    def on_frame(self, frame):
+        if self.current_task is not None:
+            self.current_task.handle_frame(frame)
