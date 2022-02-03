@@ -88,14 +88,14 @@ class RootTab(QWidget):
 class ImageDebugTab(RootTab):
     """A RootTab which displays and filters image(s)"""
 
-    def __init__(self):
-        super().__init__()
+    def init_widgets(self):
+        self.widgets.images_widget = ImagesWidget()
+        self.widgets.images_widget.show()
+        self.widgets.images_widget.set_folder(os.path.join(data_path, 'example-images', 'star'))
 
-        self.images_widget = ImagesWidget()
-        self.images_widget.show()
-        self.images_widget.set_folder(os.path.join(data_path, 'example-images', 'star'))
-
-        self.root_layout.addWidget(self.images_widget)
+    def organize(self):
+        super().organize()
+        self.layouts.main_vbox.addWidget(self.widgets.images_widget)
 
 
 class VideoTab(RootTab):
@@ -135,6 +135,8 @@ class MainTab(VideoTab):
     def __init__(self, num_video_streams):
         super().__init__(num_video_streams)
 
+    def init_widgets(self):
+        super().init_widgets()
         self.widgets.arm_control = ArmControlWidget()
         self.widgets.vehicle_status = VehicleStatusWidget()
 
