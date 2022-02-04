@@ -13,7 +13,7 @@ class BaseTask:
 
     def periodic(self):
         """Called periodically while the task is running"""
-        self.vehicle.check_heartbeat()
+        pass
 
     def end(self):
         """Called once when the task finishes or is cancelled"""
