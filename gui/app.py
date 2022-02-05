@@ -140,8 +140,6 @@ class VideoThread(QThread):
             else:
                 self._video_sources.append(VideoSource(filename, cv2.CAP_FFMPEG))
 
-        print(self._video_sources)
-
         self._video_playing_flag = True
         self._captures = []
         self._rewind = False

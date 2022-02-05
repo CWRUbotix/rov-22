@@ -23,11 +23,8 @@ theme_picker(app, args.theme)
 a = App([
         VideoSource(os.path.join(data_path, 'example-streams', '1.mp4'), cv2.CAP_FFMPEG),
         VideoSource(os.path.join(data_path, 'example-streams', '2.mp4'), cv2.CAP_FFMPEG),
-        VideoSource(os.path.join(data_path, 'example-streams', '1.mp4'), cv2.CAP_FFMPEG),
-        VideoSource('udpsrc port=5600 caps = "application/x-rtp, media=(string)video, clock-rate=(int)90000, encoding-name=(string)H264, payload=(int)96" ! rtph264depay ! decodebin ! videoconvert ! appsink', cv2.CAP_GSTREAMER)
+        VideoSource(os.path.join(data_path, 'example-streams', '1.mp4'), cv2.CAP_FFMPEG)
     ])
-
-print(os.path.join(data_path, 'example-streams', '1.mp4'))
 
 a.show()
 sys.exit(app.exec_())

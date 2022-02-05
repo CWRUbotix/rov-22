@@ -94,7 +94,7 @@ class ImageDebugTab(RootTab):
         self.images_widget.show()
         self.images_widget.set_folder(os.path.join(data_path, 'example-images', 'star'))
 
-        self.root_layout.addWidget(self.images_widget)
+        self.layouts.root_layout.addWidget(self.images_widget)
 
 
 class VideoTab(RootTab):
