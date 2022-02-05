@@ -26,7 +26,7 @@ def dark_theme(app):
     palette.setColor(QPalette.ToolTipText, Qt.white)
     palette.setColor(QPalette.Text, Qt.white)
 
-    palette.setColor(QPalette.Button, QColor(22, 22, 22))
+    palette.setColor(QPalette.Button, QColor(45, 45, 45))
     palette.setColor(QPalette.ButtonText, Qt.white)
     palette.setColor(QPalette.BrightText, Qt.red)
     palette.setColor(QPalette.Link, QColor(42, 130, 218))

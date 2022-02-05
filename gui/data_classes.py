@@ -7,7 +7,6 @@ class Frame:
     cv_img: np.ndarray
     cam_index: int
 
-
 @dataclasses.dataclass
 class VideoSource:
     filename: str

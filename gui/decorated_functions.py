@@ -13,6 +13,7 @@ def none(image):
     """
     return image
 
+
 @dropdown(name="Gray")
 def convert_to_gray(image):
     """
