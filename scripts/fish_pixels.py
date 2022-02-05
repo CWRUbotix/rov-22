@@ -2,9 +2,12 @@
 
 import cv2
 import os
+import shutil
 from util import data_path    
 
-file = open("/Users/georgiamartinez/rov-vision-22/scripts/fish_pixels_list", "a")
+file_path = "/Users/georgiamartinez/rov-vision-22/scripts/fish_pixels_list"
+
+file = open(file_path, "a")
 num_clicks = 0
 
 def record_mouse_position(event, x, y, flags, param):
@@ -77,7 +80,10 @@ def browse_images(label):
             cv2.destroyAllWindows()
             break
 
-browse_images("left")
-browse_images("right")
+def save_to_data():
+    shutil.move(file_path, data_path + "/stereo/fish_pixels_list")
+
+# browse_images("left")
+# browse_images("right")
 
 file.close()
