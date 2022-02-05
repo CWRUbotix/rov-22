@@ -81,6 +81,8 @@ def browse_images(label):
             break
 
 def save_to_data():
+    """Saves file to data repo"""
+
     shutil.move(file_path, data_path + "/stereo/fish_pixels_list")
 
 # browse_images("left")
