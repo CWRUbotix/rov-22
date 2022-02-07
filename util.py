@@ -5,6 +5,8 @@ import numpy as np
 
 parent_dir = path.split(path.dirname(__file__))[0]
 data_path = path.join(parent_dir, "data")
+ardusub_path = path.join(parent_dir, 'ardupilot', 'ArduSub')
+gazebo_path = path.join(parent_dir, 'gazebo_rov')
 
 def undistort(img, DIM, K, D, balance=0.0, dim2=None, dim3=None) -> np.ndarray:
     '''
