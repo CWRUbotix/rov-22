@@ -3,6 +3,7 @@ import cv2
 import json
 
 from PyQt5.QtCore import pyqtSignal, pyqtSlot, QThread
+from cv2 import CAP_GSTREAMER
 
 from gui.data_classes import Frame, VideoSource
 from util import data_path
@@ -32,13 +33,14 @@ class VideoThread(QThread):
         # Restart the videos if restart is true
         if self._restart:
             for index, capture in enumerate(self._captures):
-                capture.set(cv2.CAP_PROP_POS_FRAMES, 0)
+                if self._video_sources[index].api_preference != CAP_GSTREAMER:  # don't restart gstreams
+                    capture.set(cv2.CAP_PROP_POS_FRAMES, 0)
 
             self._restart = False
 
         for index, capture in enumerate(self._captures):
 
-            if self._rewind:
+            if self._rewind and self._video_sources[index].api_preference != CAP_GSTREAMER:  # don't rewind gstreams
                 prev_frame = cur_frame = capture.get(cv2.CAP_PROP_POS_FRAMES)
 
                 if cur_frame >= 2:
@@ -104,7 +106,6 @@ class VideoThread(QThread):
 
     def restart(self):
         """Restarts the video from the beginning"""
-
         self._restart = True
 
     @pyqtSlot(list)

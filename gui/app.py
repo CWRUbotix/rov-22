@@ -59,7 +59,7 @@ class App(QWidget):
         self.setLayout(vbox)
 
         # Create the video capture thread
-        self.thread = VideoThread(video_sources)
+        self.video_thread = VideoThread(video_sources)
 
         # Create VehicleControl object to handle the connection to the ROV
         self.vehicle = VehicleControl(port=14550)
@@ -85,7 +85,7 @@ class App(QWidget):
         self.connect_signals()
 
         # Start the independent threads
-        self.thread.start()
+        self.video_thread.start()
         self.task_scheduler.start()
 
         logger.debug("Application initialized")
@@ -96,8 +96,8 @@ class App(QWidget):
         self.debug_log_signal.connect(self.debug_tab.update_console)
 
         # Connect the video thread signal to the update_image function
-        self.thread.update_frames_signal.connect(self.update_image)
-        self.thread.update_frames_signal.connect(self.task_scheduler.on_frame)
+        self.video_thread.update_frames_signal.connect(self.update_image)
+        self.video_thread.update_frames_signal.connect(self.task_scheduler.on_frame)
 
         # Connect the arm/disarm gui buttons to the arm/disarm commands
         self.main_tab.widgets.arm_control.arm_button.clicked.connect(self.vehicle.arm)
@@ -113,33 +113,33 @@ class App(QWidget):
         self.task_scheduler.change_task_signal.connect(self.main_tab.widgets.vehicle_status.on_task_change)
 
         # Connect DebugTab's selecting files signal to video thread's on_select_filenames
-        self.debug_tab.select_files_signal.connect(self.thread.on_select_filenames)
+        self.debug_tab.select_files_signal.connect(self.video_thread.on_select_filenames)
 
         # Setup the debug video buttons to control the thread
-        self.debug_tab.widgets.video_controls.play_pause_button.clicked.connect(self.thread.toggle_play_pause)
-        self.debug_tab.widgets.video_controls.restart_button.clicked.connect(self.thread.restart)
-        self.debug_tab.widgets.video_controls.toggle_rewind_button.clicked.connect(self.thread.toggle_rewind)
-        self.debug_tab.widgets.video_controls.prev_frame_button.clicked.connect(self.thread.prev_frame)
-        self.debug_tab.widgets.video_controls.next_frame_button.clicked.connect(self.thread.next_frame)
+        self.debug_tab.widgets.video_controls.play_pause_button.clicked.connect(self.video_thread.toggle_play_pause)
+        self.debug_tab.widgets.video_controls.restart_button.clicked.connect(self.video_thread.restart)
+        self.debug_tab.widgets.video_controls.toggle_rewind_button.clicked.connect(self.video_thread.toggle_rewind)
+        self.debug_tab.widgets.video_controls.prev_frame_button.clicked.connect(self.video_thread.prev_frame)
+        self.debug_tab.widgets.video_controls.next_frame_button.clicked.connect(self.video_thread.next_frame)
 
     def keyPressEvent(self, event):
         """Sets keyboard keys to different actions"""
         self.keysDown[event.key()] = True
 
         if event.key() == Qt.Key_Space:
-            self.thread.toggle_play_pause()
+            self.video_thread.toggle_play_pause()
 
         elif event.key() == Qt.Key_Left:
-            self.thread.prev_frame()
+            self.video_thread.prev_frame()
 
         elif event.key() == Qt.Key_Right:
-            self.thread.next_frame()
+            self.video_thread.next_frame()
 
         elif event.key() == Qt.Key_R:
-            self.thread.restart()
+            self.video_thread.restart()
 
         elif event.key() == Qt.Key_T:
-            self.thread.toggle_rewind()
+            self.video_thread.toggle_rewind()
 
     def keyReleaseEvent(self, event):
         if self.keysDown[event.key()]:
@@ -147,7 +147,7 @@ class App(QWidget):
             self.keysDown.pop(event.key())
 
     def closeEvent(self, event):
-        self.thread.stop()
+        self.video_thread.stop()
         event.accept()
 
     @pyqtSlot(Frame)
