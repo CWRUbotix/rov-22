@@ -1,18 +1,19 @@
 import logging
+import os
 from types import SimpleNamespace
 
 from PyQt5 import QtCore
 from PyQt5.QtCore import pyqtSignal, pyqtSlot
 from PyQt5.QtGui import QColor, QTextCursor, QFont
-from PyQt5.QtWidgets import QComboBox, QFileDialog, QHBoxLayout, QLabel, QPushButton, QVBoxLayout, QWidget, QTextEdit, \
-    QFrame
+from PyQt5.QtWidgets import QComboBox, QFileDialog, QHBoxLayout, QLabel, QPushButton, QVBoxLayout, QWidget, QTextEdit, QFrame
+import cv2
 
 from gui.widgets.vehicle_status_widget import VehicleStatusWidget
 from gui.widgets.image_debug_widget import ImagesWidget
 from gui.widgets.video_controls_widget import VideoControlsWidget
 from gui.widgets.video_widgets import VideoArea
+from gui.data_classes import Frame, VideoSource
 from gui.widgets.arm_control_widget import ArmControlWidget
-from gui.data_classes import Frame
 from gui.decorated_functions import dropdown
 
 # Temporary imports for basic image debug tab
@@ -195,11 +196,12 @@ class DebugTab(VideoTab):
         sidebar.addStretch()
 
     def select_files(self):
-        """Run the system file selection dialog and emit results, to be received by VideoThread"""
-        filenames, _ = QFileDialog.getOpenFileNames(self, "Select images or videos to load", "", "All Files (*)",
+        """Run the system file selection dialog and emit results, to be recieved by VideoThread"""
+        filenames, _ = QFileDialog.getOpenFileNames(self, "QFileDialog.getOpenFileNames()", "", "Video/Config (*.mp4 *.json)",
                                                     options=QFileDialog.Options())
-        if len(filenames) > 0:
-            self.select_files_signal.emit(filenames[:len(self.widgets.video_area.video_widgets)])
+        
+        if len(filenames) != 0:
+            self.select_files_signal.emit(filenames)
 
     def handle_frame(self, frame: Frame):
         # Apply the selected filter from the dropdown

@@ -12,6 +12,8 @@ from vehicle.vehicle_control import VehicleControl
 from tasks.scheduler import TaskScheduler
 from tasks.keyboard_control import KeyboardControl
 
+from util import data_path
+
 # The name of the logger will be included in debug messages, so set it to the name of the file to make the log traceable
 logger = root_logger.getChild(__name__)
 
@@ -29,19 +31,19 @@ class App(QWidget):
     main_log_signal = pyqtSignal(str, int)
     debug_log_signal = pyqtSignal(str, int)
 
-    def __init__(self, filenames):
+    def __init__(self, video_sources):
         super().__init__()
         self.setWindowTitle("ROV Vision")
         self.resize(1280, 720)
-        self.showFullScreen()
+        # self.showFullScreen()
 
         # Dictionary to keep track of which keys are pressed. If a key is not in the dict, assume it is not pressed.
         self.keysDown = defaultdict(lambda: False)
 
         # Create a tab widget
         self.tabs = QTabWidget()
-        self.main_tab = MainTab(len(filenames))
-        self.debug_tab = DebugTab(len(filenames))
+        self.main_tab = MainTab(len(video_sources))
+        self.debug_tab = DebugTab(len(video_sources))
         self.image_tab = ImageDebugTab()
 
         self.tabs.resize(300, 200)
@@ -57,7 +59,7 @@ class App(QWidget):
         self.setLayout(vbox)
 
         # Create the video capture thread
-        self.video_thread = VideoThread(filenames)
+        self.video_thread = VideoThread(video_sources)
 
         # Create VehicleControl object to handle the connection to the ROV
         self.vehicle = VehicleControl(port=14550)

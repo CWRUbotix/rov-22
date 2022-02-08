@@ -3,9 +3,11 @@ import os
 import sys
 
 from PyQt5.QtWidgets import QApplication
+import cv2
 
 from gui.app import App
 from gui.theme import *
+from gui.data_classes import VideoSource
 from util import data_path
 
 if 'QT_QPA_PLATFORM_PLUGIN_PATH' in os.environ:
@@ -18,7 +20,11 @@ args = parser.parse_args()
 
 app = QApplication(sys.argv)
 theme_picker(app, args.theme)
-a = App([os.path.join(data_path, 'example-streams', '1.mp4'), os.path.join(data_path, 'example-streams', '2.mp4'),
-        os.path.join(data_path, 'example-streams', '1.mp4'), os.path.join(data_path, 'example-streams', '2.mp4')])
+a = App([
+        VideoSource(os.path.join(data_path, 'example-streams', '1.mp4'), cv2.CAP_FFMPEG),
+        VideoSource(os.path.join(data_path, 'example-streams', '2.mp4'), cv2.CAP_FFMPEG),
+        VideoSource(os.path.join(data_path, 'example-streams', '1.mp4'), cv2.CAP_FFMPEG)
+    ])
+
 a.show()
 sys.exit(app.exec_())

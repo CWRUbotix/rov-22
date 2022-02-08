@@ -1,26 +1,31 @@
-from PyQt5.QtCore import pyqtSignal, pyqtSlot, QThread
-from gui.data_classes import Frame
-
+import os
 import cv2
+import json
+
+from PyQt5.QtCore import pyqtSignal, pyqtSlot, QThread
+from cv2 import CAP_GSTREAMER
+
+from gui.data_classes import Frame, VideoSource
+from util import data_path
 
 
 class VideoThread(QThread):
     update_frames_signal = pyqtSignal(Frame)
 
-    def __init__(self, filenames):
+    def __init__(self, video_sources):
         super().__init__()
         self._thread_running_flag = True
         self._video_playing_flag = True
         self._restart = False
 
-        self._filenames = filenames
+        self._video_sources = video_sources
         self._captures = []
         self._rewind = False
 
     def _prepare_captures(self):
-        """Initialize video capturers from self._filenames"""
-        for filename in self._filenames:
-            self._captures.append(cv2.VideoCapture(filename))
+        """Initialize video capturers from self._video_sources"""
+        for source in self._video_sources:
+            self._captures.append(cv2.VideoCapture(source.filename, source.api_preference))
 
     def _emit_frames(self):
         """Emit next/prev frames on the pyqtSignal to be received by video widgets"""
@@ -28,13 +33,14 @@ class VideoThread(QThread):
         # Restart the videos if restart is true
         if self._restart:
             for index, capture in enumerate(self._captures):
-                capture.set(cv2.CAP_PROP_POS_FRAMES, 0)
+                if self._video_sources[index].api_preference != CAP_GSTREAMER:  # don't restart gstreams
+                    capture.set(cv2.CAP_PROP_POS_FRAMES, 0)
 
             self._restart = False
 
         for index, capture in enumerate(self._captures):
 
-            if self._rewind:
+            if self._rewind and self._video_sources[index].api_preference != CAP_GSTREAMER:  # don't rewind gstreams
                 prev_frame = cur_frame = capture.get(cv2.CAP_PROP_POS_FRAMES)
 
                 if cur_frame >= 2:
@@ -100,13 +106,34 @@ class VideoThread(QThread):
 
     def restart(self):
         """Restarts the video from the beginning"""
-
         self._restart = True
 
     @pyqtSlot(list)
     def on_select_filenames(self, filenames):
+        """Adds all files specified in .json arrays or by selecting actual files"""
+
+        self._video_sources = []
+
+        for filename in filenames:
+            if os.path.splitext(filename)[1] == ".json":
+                file = open(filename, "r")
+                json_data = json.load(file)
+
+                if json_data["sources"]:
+                    for source in json_data["sources"]:
+                        api = cv2.CAP_FFMPEG
+                        if source["api"] == "gstreamer":
+                            api = cv2.CAP_GSTREAMER
+                        else:
+                            source["name"] = os.path.join(data_path, source["name"])
+                        
+                        self._video_sources.append(VideoSource(source["name"], api))
+
+                file.close()
+            else:
+                self._video_sources.append(VideoSource(filename, cv2.CAP_FFMPEG))
+
         self._video_playing_flag = True
-        self._filenames = filenames
         self._captures = []
         self._rewind = False
         self._prepare_captures()
