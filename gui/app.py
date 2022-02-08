@@ -1,3 +1,4 @@
+import json
 import logging
 from collections import defaultdict
 
@@ -31,19 +32,26 @@ class App(QWidget):
     main_log_signal = pyqtSignal(str, int)
     debug_log_signal = pyqtSignal(str, int)
 
-    def __init__(self, video_sources):
+    def __init__(self, args):
         super().__init__()
         self.setWindowTitle("ROV Vision")
         self.resize(1280, 720)
-        # self.showFullScreen()
+
+        if args.fullscreen:
+            self.showFullScreen()
+
+        # Create the video capture thread
+        with args.cameras as file:
+            json_data = json.load(file)
+        self.thread = VideoThread(json_data)
 
         # Dictionary to keep track of which keys are pressed. If a key is not in the dict, assume it is not pressed.
         self.keysDown = defaultdict(lambda: False)
 
         # Create a tab widget
         self.tabs = QTabWidget()
-        self.main_tab = MainTab(len(video_sources))
-        self.debug_tab = DebugTab(len(video_sources))
+        self.main_tab = MainTab(len(self.thread._video_sources))
+        self.debug_tab = DebugTab(len(self.thread._video_sources))
         self.image_tab = ImageDebugTab()
 
         self.tabs.resize(300, 200)
@@ -58,8 +66,7 @@ class App(QWidget):
         # Set the root layout to this vbox
         self.setLayout(vbox)
 
-        # Create the video capture thread
-        self.thread = VideoThread(video_sources)
+        
 
         # Create VehicleControl object to handle the connection to the ROV
         self.vehicle = VehicleControl(port=14550)

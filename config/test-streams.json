@@ -1,0 +1,12 @@
+{
+	"sources": [
+		{
+			"api": "ffmpeg",
+			"name": "example-streams/1.mp4"
+		},
+		{
+			"api": "ffmpeg",
+			"name": "example-streams/2.mp4"
+        }
+	]
+}
