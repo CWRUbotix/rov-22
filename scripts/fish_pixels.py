@@ -1,22 +1,21 @@
-"""Goes through the fish images for manually marking the ends of the fish"""
+"""Goes through the fish images for manually marking the ends of the fis"""
 
 import cv2
 import os
-import shutil
 from util import data_path    
 
-file_path = "/Users/georgiamartinez/rov-vision-22/scripts/fish_pixels_list"
-
-file = open(file_path, "a")
 num_clicks = 0
 
 def record_mouse_position(event, x, y, flags, param):
-    """Records mouse position on click""" 
+    """
+    Records mouse position on click to the specified file. Saved in the format: label/img_name x1 y1 x2 y2.
+    """ 
 
     global num_clicks
 
-    label = param[0]
-    image_name = label+"/"+param[1]
+    file = param[0]
+    label = param[1]
+    image_name = label+"/"+param[2]
 
     # Get mouse coordinates
     if event == cv2.EVENT_LBUTTONDOWN:
@@ -36,34 +35,38 @@ def record_mouse_position(event, x, y, flags, param):
 
         num_clicks += 1
 
-def browse_images(label):
-    """Browse images with the 'a' and 'd' keys"""
+def browse_images(file_path, images_path, label=""):
+    """
+    Browse through images with the 'a' and 'd' keys
 
-    global file, num_clicks
+    :param file_path: path to text file to write the coordinates to
+    :param images_path: path to the images to look through
+    :param label: optional text printed before the mouse coordinates in the external file in the format: label/img_name
+    """
 
-    # Get list of images to browse through
-    image_path = os.path.join(data_path, "stereo", "1undistort", label)
-
-    images_list = [img for img in os.listdir(image_path)]
+    global num_clicks
+    images_list = [img for img in os.listdir(images_path)]
     images_list.sort()
 
     index = 0
 
     window = "image"
     cv2.namedWindow(window)
+
+    file = open(file_path, "a")
     
     # Display the images
     while True:
 
         current_image = images_list[index]
 
-        image = cv2.imread(image_path +"/"+ current_image)
+        image = cv2.imread(images_path +"/"+ current_image)
         image = cv2.putText(image, current_image, (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2, cv2.LINE_AA)
 
         cv2.imshow(window, image)
 
         cv2.setWindowProperty(window, cv2.WND_PROP_TOPMOST, 1)
-        cv2.setMouseCallback(window, record_mouse_position, [label, current_image])
+        cv2.setMouseCallback(window, record_mouse_position, [file, label, current_image])
 
         k = cv2.waitKey(0) & 0xFF
 
@@ -80,12 +83,14 @@ def browse_images(label):
             cv2.destroyAllWindows()
             break
 
-def save_to_data():
-    """Saves file to data repo"""
+    file.close()
 
-    shutil.move(file_path, data_path + "/stereo/fish_pixels_list")
 
-# browse_images("left")
-# browse_images("right")
+file_name = "test" 
+file_path = os.path.join(data_path, "stereo", "1undistort", file_name) 
 
-file.close()
+left_images = os.path.join(data_path, "stereo", "1undistort", "left")
+right_images = os.path.join(data_path, "stereo", "1undistort", "right")
+
+# browse_images(file_path, left_images, "left")
+# browse_images(file_path, right_images, "right")
