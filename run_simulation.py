@@ -8,12 +8,6 @@ import signal
 import subprocess
 from util import ardusub_path, gazebo_path
 
-def log_subprocess_output(name):
-    def hangle_log(pipe):
-        for line in iter(pipe.readline, b''): # b'\n'-separated lines
-            logging.info('%r: %r', name, line)
-    return hangle_log
-
 if __name__ == '__main__':
     
     signal.signal(signal.SIGINT, signal.SIG_DFL)
