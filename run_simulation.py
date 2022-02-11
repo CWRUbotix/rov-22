@@ -5,7 +5,7 @@ import os
 from run_gui import parse_args, run_gui
 import signal
 import subprocess
-from util import ardusub_path, gazebo_path
+from util import ardusub_path, config_parser, gazebo_path
 
 if __name__ == '__main__':
 
@@ -15,7 +15,7 @@ if __name__ == '__main__':
             gui_args: An array of strings for the arguments passed to run_gui.py
             ''', formatter_class=argparse.RawDescriptionHelpFormatter)
 
-    parser.add_argument('-c', '--config', type=argparse.FileType('r'), help='The simulation configuration file.')
+    parser.add_argument('-c', '--config', type=config_parser('simulation'), help='The simulation configuration file located in config/simulation', required=True)
     parser.add_argument('-f', '--fullscreen', action='store_true', help='Runs the app in fullscreen mode')
     args = parser.parse_args()
 

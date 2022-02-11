@@ -1,3 +1,4 @@
+import argparse
 from os import path
 
 import cv2
@@ -7,6 +8,18 @@ parent_dir = path.split(path.dirname(__file__))[0]
 data_path = path.join(parent_dir, "data")
 ardusub_path = path.join(parent_dir, 'ardupilot', 'ArduSub')
 gazebo_path = path.join(parent_dir, 'gazebo_rov')
+
+
+def config_parser(config_dir: str):
+    '''Returns a function to parse config files. config_dir is the directory within the 'config' directory where the parser will look for files'''
+    def parse(arg: str):
+        file = path.join(path.dirname(__file__), 'config', config_dir, arg)
+        if not path.isfile(file):
+            raise argparse.ArgumentError(None, 'File does not exist in config/' + config_dir + ' directory')
+        return open(file, 'r')
+
+    return parse
+
 
 def undistort(img, DIM, K, D, balance=0.0, dim2=None, dim3=None) -> np.ndarray:
     '''

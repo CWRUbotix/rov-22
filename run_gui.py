@@ -8,13 +8,13 @@ import cv2
 from gui.app import App
 from gui.theme import *
 from gui.data_classes import VideoSource
-from util import data_path
+from util import config_parser, data_path
 
 
 def parse_args(arg_list):
     parser = argparse.ArgumentParser(description='Run the GUI')
     parser.add_argument('-t', '--theme', type=str, help='choose a theme: dark_theme, alt_theme')
-    parser.add_argument('-c', '--cameras', type=argparse.FileType('r'), help='The camera configuration file to use', default=open('config/test-streams.json'))
+    parser.add_argument('-c', '--cameras', type=config_parser('camera'), help='The camera configuration file to use located in camera/config')
     parser.add_argument('-f', '--fullscreen', action='store_true', help='Runs the app in fullscreen mode')
     return parser.parse_args(arg_list)
 
