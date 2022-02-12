@@ -140,8 +140,6 @@ class VideoThread(QThread):
                         else:
                             source["name"] = os.path.join(data_path, source["name"])
                         
-                        print(source["name"])
-                        
                         self._video_sources.append(VideoSource(source["name"], api))
 
                 file.close()
