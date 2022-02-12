@@ -1,6 +1,7 @@
 import os
 import cv2
 import json
+import datetime
 
 from PyQt5.QtCore import pyqtSignal, pyqtSlot, QThread
 from cv2 import CAP_GSTREAMER
@@ -122,10 +123,24 @@ class VideoThread(QThread):
                 if json_data["sources"]:
                     for source in json_data["sources"]:
                         api = cv2.CAP_FFMPEG
-                        if source["api"] == "gstreamer":
+
+                        # gstreamer or gstreamer-pipeline: [name] is the full gstreamer pipeline
+                        if source["api"] == "gstreamer" or source["api"] == "gstreamer-pipeline":
                             api = cv2.CAP_GSTREAMER
+                        # gstreamer-record: [name] is the port (i.e. 5600) to be both streamed and displayed
+                        elif source["api"] == "gstreamer-record":
+                            api = cv2.CAP_GSTREAMER
+                            recording_file = datetime.datetime.now().strftime("recordings/%Y-%m-%d_%H%M%S.flv")
+                            source["name"] = "udpsrc port=" + source["name"] + " caps=\"application/x-rtp, media=(string)video, clock-rate=(int)90000, encoding-name=(string)H264, payload=(int)96\" ! rtph264depay ! h264parse ! tee name=t t. ! queue ! flvmux ! filesink location=" + recording_file + " t. ! queue leaky=1 ! decodebin ! videoconvert ! appsink"
+                        # gstreamer-stream: [name] is the port (i.e. 5600) to be displayed only
+                        elif source["api"] == "gstreamer-display":
+                            api = cv2.CAP_GSTREAMER
+                            source["name"] = "udpsrc port=" + source["name"] + " caps=\"application/x-rtp, media=(string)video, clock-rate=(int)90000, encoding-name=(string)H264\" ! rtph264depay ! avdec_h264 ! videoconvert ! appsink"
+                        # otherwise we assume ffmpeg, and use [name] as a filename
                         else:
                             source["name"] = os.path.join(data_path, source["name"])
+                        
+                        print(source["name"])
                         
                         self._video_sources.append(VideoSource(source["name"], api))
 
