@@ -16,6 +16,7 @@ def parse_args(arg_list):
     parser.add_argument('-t', '--theme', type=str, help='choose a theme: dark_theme, alt_theme')
     parser.add_argument('-c', '--cameras', type=config_parser('camera'), help='The camera configuration file to use located in camera/config')
     parser.add_argument('-f', '--fullscreen', action='store_true', help='Runs the app in fullscreen mode')
+    parser.add_argument('-m', '--maximize', action='store_true', help='Runs the app in maximized mode')
     return parser.parse_args(arg_list)
 
 def run_gui(args):

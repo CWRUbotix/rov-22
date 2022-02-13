@@ -40,6 +40,9 @@ class App(QWidget):
         if args.fullscreen:
             self.showFullScreen()
 
+        if args.maximize:
+            self.showMaximized()
+
         # Create the video capture thread
         with args.cameras as file:
             json_data = json.load(file)

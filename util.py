@@ -1,13 +1,27 @@
 import argparse
+import json
 from os import path
 
 import cv2
 import numpy as np
 
-parent_dir = path.split(path.dirname(__file__))[0]
-data_path = path.join(parent_dir, "data")
-ardusub_path = path.join(parent_dir, 'ardupilot', 'ArduSub')
-gazebo_path = path.join(parent_dir, 'gazebo_rov')
+from logger import root_logger
+
+logger = root_logger.getChild(__name__)
+
+try:
+    with open("config/resource-paths.json", 'r') as paths_file:
+        paths = json.load(paths_file)
+        data_path = path.abspath(paths["data_path"])
+        ardupilot_path = path.abspath(paths["ardupilot_path"])
+        gazebo_path = path.abspath(paths["gazebo_path"])
+except (FileNotFoundError, json.JSONDecodeError, KeyError):
+    logger.debug("config/resource-paths.json not found or is invalid, using default resource paths")
+    parent_dir = path.split(path.dirname(__file__))[0]
+    data_path = path.join(parent_dir, "data")
+    ardupilot_path = path.join(parent_dir, 'ardupilot', 'ArduSub')
+    gazebo_path = path.join(parent_dir, 'gazebo_rov')
+ardusub_path = path.join(ardupilot_path, 'ArduSub')
 
 
 def config_parser(config_dir: str):
