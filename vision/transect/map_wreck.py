@@ -1,13 +1,13 @@
+"""Opens window with the transect line diagram and lets you manually map the wreck"""
+
 import cv2
 import os
 import numpy as np
 from util import data_path    
 
-"""Opens window with the transect line diagram and lets you manually map the wreck"""
-
 class MapWreck():
     def __init__(self):
-        self.canvas = self.canvas()
+        self.canvas = self.new_canvas()
         self.preview = self.canvas.copy()
 
         self.drawing = False
@@ -18,10 +18,7 @@ class MapWreck():
         self.x2 = 0
         self.y2 = 0
 
-        self.point1 = []
-        self.point2 = []
-
-    def canvas(self):
+    def new_canvas(self):
         """Creating the canvas"""
 
         final = 255 * np.ones(shape=[1000, 1000, 3], dtype=np.uint8)
@@ -50,54 +47,59 @@ class MapWreck():
     def draw(self, event, x, y, flags, param):
         """Draws a line on the screen based on mouse clicks"""
 
-        if self.drawing == True:
-            # Show the line being drawn on the screen
-
-            self.preview = self.canvas.copy()
-            cv2.line(self.preview, self.point1, (x, y), self.line_color, thickness=6)
-
         if event == cv2.EVENT_LBUTTONDOWN:
             if self.drawing == False:
                 # Save mouse position of the first click
 
                 self.x1, self.y1 = x, y
-                self.point1 = [x, y]
-                
                 self.drawing = True
 
             else: 
                 # Save mouse posiiton of the second click
-                self.x2, self.y2 = x, y
 
-                self.point2 = [x, y]
+                self.x2, self.y2 = x, y
                 self.drawing = False
 
                 # Draw the line on the actual canvas
-                cv2.line(self.canvas, self.point1, self.point2, self.line_color, thickness=6)
+                cv2.line(self.canvas, (self.x1, self.y1), (self.x2, self.y2), self.line_color, thickness=6)
 
         if event == cv2.EVENT_RBUTTONDOWN:
+            # Delete line currently being drawn
+
             self.drawing = False
+
+        if self.drawing == True:
+            # Show the line being drawn on the screen
+
+            self.preview = self.canvas.copy()
+            cv2.line(self.preview, (self.x1, self.y1), (x, y), self.line_color, thickness=6)
 
     def show_canvas(self):
         """Display the canvas"""
 
+        window = "Map Wreck"
+
         while True:
 
-            cv2.setMouseCallback("image", self.draw)
+            cv2.setMouseCallback(window, self.draw)
 
             if self.drawing == False:
-                cv2.imshow("image", self.canvas)
+                cv2.imshow(window, self.canvas)
 
             else:
-                cv2.imshow("image", self.preview)
+                cv2.imshow(window, self.preview)
+
+            cv2.setWindowProperty(window, cv2.WND_PROP_TOPMOST, 1)
+
+            key = cv2.waitKey(1) & 0xFF
 
             # 'q' key to exit
-            key = cv2.waitKey(1) & 0xFF
             if key == ord("q"):
                 break
 
-        cv2.destroyAllWindows()
-        
+            # 'c' key to clear the window
+            elif key == ord("c"):
+                self.canvas = self.new_canvas()
+                self.preview = self.canvas.copy()
 
-mapper = MapWreck()
-mapper.show_canvas()
+        cv2.destroyAllWindows()
