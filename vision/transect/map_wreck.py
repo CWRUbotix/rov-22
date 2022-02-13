@@ -1,4 +1,11 @@
-"""Opens window with the transect line diagram and lets you manually map the wreck"""
+"""
+Opens a window with the transect line diagram and lets you manually map the wreck.
+
+Left click to start drawing a line and then click again to set the line.
+Right click to delete the line you are currently drawing.
+'q' to quit
+'c' to clear the window
+"""
 
 import cv2
 import os
@@ -21,28 +28,25 @@ class MapWreck():
     def new_canvas(self):
         """Creating the canvas"""
 
-        final = 255 * np.ones(shape=[1000, 1000, 3], dtype=np.uint8)
-
         # Get transect line image from data repo
-        transect_path = os.path.join(data_path, "transect", "transect_line.png") 
-        transect_img = cv2.imread(transect_path, cv2.IMREAD_UNCHANGED)
+        img_path = os.path.join(data_path, "transect", "transect_line.png") 
+        image = cv2.imread(img_path, cv2.IMREAD_UNCHANGED)
 
         # Make transparent background white
-        transect_mask = transect_img[:,:,3] == 0
-        transect_img[transect_mask] = [255, 255, 255, 255]
+        mask = image[:,:,3] == 0
+        image[mask] = [255, 255, 255, 255]
 
-        transect_img = cv2.cvtColor(transect_img, cv2.COLOR_BGRA2BGR)
+        image = cv2.cvtColor(image, cv2.COLOR_BGRA2BGR)
 
-        # Overlaying the transect image onto the final image
-        x_offset = 0
-        y_offset = 200
+        # Resize image
+        scale_percent = 100 # percent of original size
+        width = int(image.shape[1] * scale_percent / 100)
+        height = int(image.shape[0] * scale_percent / 100)
+        dim = (width, height)
+  
+        # image = cv2.resize(image, dim, interpolation = cv2.INTER_AREA)
 
-        x_end = x_offset + transect_img.shape[1]
-        y_end = y_offset + transect_img.shape[0]
-
-        final[y_offset:y_end,x_offset:x_end] = transect_img
-
-        return final
+        return image
 
     def draw(self, event, x, y, flags, param):
         """Draws a line on the screen based on mouse clicks"""
