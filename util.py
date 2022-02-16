@@ -1,3 +1,4 @@
+import json
 from os import path
 
 import cv2
@@ -5,6 +6,7 @@ import numpy as np
 
 parent_dir = path.split(path.dirname(__file__))[0]
 data_path = path.join(parent_dir, "data")
+pipeline_templates = json.load(open(path.join(path.dirname(path.abspath(__file__)), "config", "pipeline_templates.json")))
 
 def undistort(img, DIM, K, D, balance=0.0, dim2=None, dim3=None) -> np.ndarray:
     '''

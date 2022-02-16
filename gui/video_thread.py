@@ -8,6 +8,7 @@ from cv2 import CAP_GSTREAMER
 
 from gui.data_classes import Frame, VideoSource
 from util import data_path
+from util import pipeline_templates
 
 
 class VideoThread(QThread):
@@ -118,29 +119,27 @@ class VideoThread(QThread):
         for filename in filenames:
             if os.path.splitext(filename)[1] == ".json":
                 file = open(filename, "r")
-                json_data = json.load(file)
+                file_json = json.load(file)
 
-                if json_data["sources"]:
-                    for source in json_data["sources"]:
-                        api = cv2.CAP_FFMPEG
+                if file_json["sources"]:
+                    for source in file_json["sources"]:
+                        content = ""
 
-                        # gstreamer or gstreamer-pipeline: [name] is the full gstreamer pipeline
-                        if source["api"] == "gstreamer" or source["api"] == "gstreamer-pipeline":
-                            api = cv2.CAP_GSTREAMER
-                        # gstreamer-record: [name] is the port (i.e. 5600) to be both streamed and displayed
-                        elif source["api"] == "gstreamer-record":
-                            api = cv2.CAP_GSTREAMER
-                            recording_file = datetime.datetime.now().strftime("recordings/%Y-%m-%d_%H%M%S.flv")
-                            source["name"] = "udpsrc port=" + source["name"] + " caps=\"application/x-rtp, media=(string)video, clock-rate=(int)90000, encoding-name=(string)H264, payload=(int)96\" ! rtph264depay ! h264parse ! tee name=t t. ! queue ! flvmux ! filesink location=" + recording_file + " t. ! queue leaky=1 ! decodebin ! videoconvert ! appsink"
-                        # gstreamer-stream: [name] is the port (i.e. 5600) to be displayed only
-                        elif source["api"] == "gstreamer-display":
-                            api = cv2.CAP_GSTREAMER
-                            source["name"] = "udpsrc port=" + source["name"] + " caps=\"application/x-rtp, media=(string)video, clock-rate=(int)90000, encoding-name=(string)H264\" ! rtph264depay ! avdec_h264 ! videoconvert ! appsink"
-                        # otherwise we assume ffmpeg, and use [name] as a filename
+                        if source["template"] == "file":
+                            content = os.path.join(data_path, source["content"])
+                        elif hasattr(pipeline_templates, source["template"]):
+                            for section in pipeline_templates[source["template"]]:
+                                if section == "json.content":
+                                    content += source["content"]
+                                elif section == "python.new_recording":
+                                    content += datetime.datetime.now().strftime("recordings/%Y-%m-%d_%H%M%S.flv")
+                                else:
+                                    content += section
                         else:
-                            source["name"] = os.path.join(data_path, source["name"])
+                            content = source["content"]
                         
-                        self._video_sources.append(VideoSource(source["name"], api))
+                        if hasattr(cv2, source["api"]):
+                            self._video_sources.append( VideoSource(content, getattr(cv2, source["api"])) )
 
                 file.close()
             else:
