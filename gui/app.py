@@ -9,6 +9,7 @@ from gui.data_classes import Frame
 from gui.video_thread import VideoThread
 from gui.widgets.tabs import MainTab, DebugTab, ImageDebugTab, VideoTab
 from logger import root_logger
+from tasks.no_button_docking import NoButtonDocking
 from vehicle.vehicle_control import VehicleControl
 from tasks.scheduler import TaskScheduler
 from tasks.keyboard_control import KeyboardControl
@@ -76,6 +77,9 @@ class App(QWidget):
         self.task_scheduler = TaskScheduler(self.vehicle)
         self.task_scheduler.default_task = KeyboardControl(self.vehicle, self.keysDown)
 
+        # Create the autonomous tasks
+        self.no_button_docking_task = NoButtonDocking(self.vehicle)
+
         # Setup GUI logging
         gui_formatter = logging.Formatter("[{levelname}] {message}", style="{")
 
@@ -130,6 +134,11 @@ class App(QWidget):
         self.debug_tab.widgets.video_controls.toggle_rewind_button.clicked.connect(self.video_thread.toggle_rewind)
         self.debug_tab.widgets.video_controls.prev_frame_button.clicked.connect(self.video_thread.prev_frame)
         self.debug_tab.widgets.video_controls.next_frame_button.clicked.connect(self.video_thread.next_frame)
+
+        # Connect the task buttons to the task they control
+        self.main_tab.widgets.task_buttons.no_button_docking.clicked.connect(
+            lambda: self.task_scheduler.start_task(self.no_button_docking_task)
+        )
 
     def keyPressEvent(self, event):
         """Sets keyboard keys to different actions"""
