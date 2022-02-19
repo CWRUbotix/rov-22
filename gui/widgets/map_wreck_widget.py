@@ -1,13 +1,17 @@
 import subprocess
+import os
 
 from PyQt5.QtWidgets import QWidget, QHBoxLayout, QPushButton
 from logger import root_logger
+from util import vision_path
 
 logger = root_logger.getChild(__name__)
+script_path = os.path.join(vision_path, "vision", "transect", "map_wreck.py") 
 
 def map_wreck():
     logger.debug("Opening map wreck window")
-    subprocess.Popen(["python", "CHANGE THIS"])
+
+    subprocess.Popen(["python", script_path])
 
 class MapWreckWidget(QWidget):
     def __init__(self):

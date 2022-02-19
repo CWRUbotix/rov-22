@@ -107,3 +107,8 @@ class MapWreck():
                 self.preview = self.canvas.copy()
 
         cv2.destroyAllWindows()
+
+if __name__ == "__main__":
+
+    mapper = MapWreck()
+    mapper.show_canvas()
