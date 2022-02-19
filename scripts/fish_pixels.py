@@ -86,11 +86,11 @@ def browse_images(file_path, images_path, label=""):
     file.close()
 
 
-file_name = "test" 
-file_path = os.path.join(data_path, "stereo", "1undistort", file_name) 
+file_name = "right.txtdddddddddddd" 
+file_path = os.path.join(data_path, "stereo", "gazebo1", file_name) 
 
-left_images = os.path.join(data_path, "stereo", "1undistort", "left")
-right_images = os.path.join(data_path, "stereo", "1undistort", "right")
+left_images = os.path.join(data_path, "stereo", "gazebo1", "left")
+right_images = os.path.join(data_path, "stereo", "gazebo1", "right")
 
-# browse_images(file_path, left_images, "left")
-# browse_images(file_path, right_images, "right")
+#browse_images(file_path, left_images, "left")
+browse_images(file_path, right_images, "right")
