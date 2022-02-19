@@ -19,7 +19,7 @@ def unpause():
 
 def reset():
     logger.debug("Resetting simulation")
-    subprocess.Popen(["gz", "world", "--reset-all"])
+    subprocess.Popen(["gz", "world", "--reset-models"])
 
 
 class GazeboControlWidget(QWidget):
