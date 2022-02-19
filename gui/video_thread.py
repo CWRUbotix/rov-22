@@ -124,10 +124,12 @@ class VideoThread(QThread):
                 if file_json["sources"]:
                     for source in file_json["sources"]:
                         content = ""
-
-                        if source["template"] == "file":
+                        
+                        if not "template" in source:
+                            content = source["content"]
+                        elif source["template"] == "file":
                             content = os.path.join(data_path, source["content"])
-                        elif hasattr(pipeline_templates, source["template"]):
+                        elif source["template"] in pipeline_templates:
                             for section in pipeline_templates[source["template"]]:
                                 if section == "json.content":
                                     content += source["content"]
@@ -142,7 +144,7 @@ class VideoThread(QThread):
                             self._video_sources.append( VideoSource(content, getattr(cv2, source["api"])) )
 
                 file.close()
-            else:
+            else:  # Regular file (not JSON)
                 self._video_sources.append(VideoSource(filename, cv2.CAP_FFMPEG))
 
         self._video_playing_flag = True
