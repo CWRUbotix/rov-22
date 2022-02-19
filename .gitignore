@@ -116,7 +116,7 @@ venv.bak/
 .spyproject
 
 # Rope project settings
-.ropeproject
+.ropeprojectg
 
 # mkdocs documentation
 /site
@@ -130,3 +130,10 @@ dmypy.json
 .pyre/
 
 .vscode/
+
+
+
+## ROV-specific stuff ##
+
+# User data files
+recordings/*
