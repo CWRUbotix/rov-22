@@ -1,0 +1,5 @@
+{
+    "data_path": "../data",
+    "ardupilot_path": "../ardupilot",
+    "gazebo_path": "../gazebo_rov"
+}

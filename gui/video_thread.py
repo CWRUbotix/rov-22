@@ -7,22 +7,23 @@ from PyQt5.QtCore import pyqtSignal, pyqtSlot, QThread
 from cv2 import CAP_GSTREAMER
 
 from gui.data_classes import Frame, VideoSource
-from util import data_path
-from util import pipeline_templates
+from util import data_path, pipeline_templates_path
 
 
 class VideoThread(QThread):
     update_frames_signal = pyqtSignal(Frame)
 
-    def __init__(self, video_sources):
+    def __init__(self, json_data):
         super().__init__()
         self._thread_running_flag = True
         self._video_playing_flag = True
         self._restart = False
 
-        self._video_sources = video_sources
+        self._video_sources = []
         self._captures = []
         self._rewind = False
+
+        self.load_json(json_data)
 
     def _prepare_captures(self):
         """Initialize video capturers from self._video_sources"""
@@ -119,29 +120,9 @@ class VideoThread(QThread):
         for filename in filenames:
             if os.path.splitext(filename)[1] == ".json":
                 file = open(filename, "r")
-                file_json = json.load(file)
+                json_data = json.load(file)
 
-                if file_json["sources"]:
-                    for source in file_json["sources"]:
-                        content = ""
-                        
-                        if not "template" in source:
-                            content = source["content"]
-                        elif source["template"] == "file":
-                            content = os.path.join(data_path, source["content"])
-                        elif source["template"] in pipeline_templates:
-                            for section in pipeline_templates[source["template"]]:
-                                if section == "json.content":
-                                    content += source["content"]
-                                elif section == "python.new_recording":
-                                    content += datetime.datetime.now().strftime("recordings/%Y-%m-%d_%H%M%S.flv")
-                                else:
-                                    content += section
-                        else:
-                            content = source["content"]
-                        
-                        if hasattr(cv2, source["api"]):
-                            self._video_sources.append( VideoSource(content, getattr(cv2, source["api"])) )
+                self.load_json(json_data)
 
                 file.close()
             else:  # Regular file (not JSON)
@@ -151,3 +132,28 @@ class VideoThread(QThread):
         self._captures = []
         self._rewind = False
         self._prepare_captures()
+
+    def load_json(self, json_data):
+        if json_data["sources"]:
+            pipeline_templates = json.load(open(pipeline_templates_path, 'r'))
+
+            for source in json_data["sources"]:
+                content = ""
+                
+                if not "template" in source:
+                    content = source["content"]
+                elif source["template"] == "file":
+                    content = os.path.join(data_path, source["content"])
+                elif source["template"] in pipeline_templates:
+                    for section in pipeline_templates[source["template"]]:
+                        if section == "json.content":
+                            content += source["content"]
+                        elif section == "python.new_recording":
+                            content += datetime.datetime.now().strftime("recordings/%Y-%m-%d_%H%M%S.flv")
+                        else:
+                            content += section
+                else:
+                    content = source["content"]
+                
+                if hasattr(cv2, source["api"]):
+                    self._video_sources.append( VideoSource(content, getattr(cv2, source["api"])) )

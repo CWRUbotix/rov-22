@@ -1,12 +1,44 @@
+import argparse
 import json
 from os import path
 
 import cv2
 import numpy as np
 
-parent_dir = path.split(path.dirname(__file__))[0]
-data_path = path.join(parent_dir, "data")
-pipeline_templates = json.load(open(path.join(path.dirname(path.abspath(__file__)), "config", "pipeline_templates.json")))
+from logger import root_logger
+
+logger = root_logger.getChild(__name__)
+
+# pipeline_templates = json.load(open(path.join(path.dirname(path.abspath(__file__)), "config", "pipeline_templates.json")))
+
+#If your repository paths do not match the following defaults, copy the "config/resource-paths.json.default" file to "config/resource-paths-paths.json" and edit.
+try:
+    with open('config/resource-paths.json', 'r') as paths_file:
+        paths = json.load(paths_file)
+        data_path = path.abspath(paths['data_path'])
+        ardupilot_path = path.abspath(paths['ardupilot_path'])
+        gazebo_path = path.abspath(paths['gazebo_path'])
+except (FileNotFoundError, json.JSONDecodeError, KeyError):
+    logger.debug('config/resource-paths.json not found or is invalid, using default resource paths')
+    parent_dir = path.split(path.dirname(__file__))[0]
+    data_path = path.join(parent_dir, 'data')
+    ardupilot_path = path.join(parent_dir, 'ardupilot')
+    gazebo_path = path.join(parent_dir, 'gazebo_rov')
+ardusub_path = path.join(ardupilot_path, 'ArduSub')
+
+pipeline_templates_path = path.join(path.dirname(__file__), 'config', 'camera', 'pipeline_templates.json')
+
+
+def config_parser(config_dir: str):
+    '''Returns a function to parse config files. config_dir is the directory within the 'config' directory where the parser will look for files'''
+    def parse(arg: str):
+        file = path.join(path.dirname(__file__), 'config', config_dir, arg)
+        if not path.isfile(file):
+            raise argparse.ArgumentError(None, 'File does not exist in config/' + config_dir + ' directory')
+        return open(file, 'r')
+
+    return parse
+
 
 def undistort(img, DIM, K, D, balance=0.0, dim2=None, dim3=None) -> np.ndarray:
     '''
