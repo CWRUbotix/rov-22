@@ -15,6 +15,7 @@ from gui.widgets.video_widgets import VideoArea
 from gui.data_classes import Frame, VideoSource
 from gui.widgets.arm_control_widget import ArmControlWidget
 from gui.decorated_functions import dropdown
+from gui.widgets.map_wreck_widget import MapWreckWidget
 
 # Temporary imports for basic image debug tab
 import os
@@ -140,10 +141,14 @@ class MainTab(VideoTab):
         super().init_widgets()
         self.widgets.arm_control = ArmControlWidget()
         self.widgets.vehicle_status = VehicleStatusWidget()
+        self.widgets.map_wreck = MapWreckWidget()
 
     def organize(self):
         super().organize()
         self.layouts.sidebar.addStretch()
+
+        self.layouts.sidebar.addWidget(self.widgets.map_wreck)
+
         self.layouts.sidebar.addWidget(self.widgets.arm_control)
         self.layouts.sidebar.addWidget(self.widgets.vehicle_status)
 
