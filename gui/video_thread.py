@@ -12,15 +12,17 @@ from util import data_path
 class VideoThread(QThread):
     update_frames_signal = pyqtSignal(Frame)
 
-    def __init__(self, video_sources):
+    def __init__(self, json_data):
         super().__init__()
         self._thread_running_flag = True
         self._video_playing_flag = True
         self._restart = False
 
-        self._video_sources = video_sources
+        self._video_sources = []
         self._captures = []
         self._rewind = False
+
+        self.load_json(json_data)
 
     def _prepare_captures(self):
         """Initialize video capturers from self._video_sources"""
@@ -119,15 +121,7 @@ class VideoThread(QThread):
                 file = open(filename, "r")
                 json_data = json.load(file)
 
-                if json_data["sources"]:
-                    for source in json_data["sources"]:
-                        api = cv2.CAP_FFMPEG
-                        if source["api"] == "gstreamer":
-                            api = cv2.CAP_GSTREAMER
-                        else:
-                            source["name"] = os.path.join(data_path, source["name"])
-                        
-                        self._video_sources.append(VideoSource(source["name"], api))
+                self.load_json(json_data)
 
                 file.close()
             else:
@@ -137,3 +131,14 @@ class VideoThread(QThread):
         self._captures = []
         self._rewind = False
         self._prepare_captures()
+
+    def load_json(self, json_data):
+        if json_data["sources"]:
+            for source in json_data["sources"]:
+                api = cv2.CAP_FFMPEG
+                if source["api"] == "gstreamer":
+                    api = cv2.CAP_GSTREAMER
+                else:
+                    source["name"] = os.path.join(data_path, source["name"])
+                
+                self._video_sources.append(VideoSource(source["name"], api))

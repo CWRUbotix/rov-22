@@ -1,13 +1,12 @@
 import logging
-import os
 from types import SimpleNamespace
 
 from PyQt5 import QtCore
 from PyQt5.QtCore import pyqtSignal, pyqtSlot
 from PyQt5.QtGui import QColor, QTextCursor, QFont
 from PyQt5.QtWidgets import QComboBox, QFileDialog, QHBoxLayout, QLabel, QPushButton, QVBoxLayout, QWidget, QTextEdit, QFrame
-import cv2
 
+from gui.widgets.gazebo_control_widget import GazeboControlWidget
 from gui.widgets.vehicle_status_widget import VehicleStatusWidget
 from gui.widgets.image_debug_widget import ImagesWidget
 from gui.widgets.video_controls_widget import VideoControlsWidget
@@ -186,6 +185,11 @@ class DebugTab(VideoTab):
         select_files_button.clicked.connect(self.select_files)
         self.widgets.select_files_button = select_files_button
 
+        self.widgets.gazebo_control = GazeboControlWidget()
+
+        self.widgets.arm_control = ArmControlWidget()
+        self.widgets.vehicle_status = VehicleStatusWidget()
+
     def organize(self):
         super().organize()
 
@@ -198,7 +202,13 @@ class DebugTab(VideoTab):
         sidebar.addWidget(self.widgets.video_controls)
 
         sidebar.addWidget(self.widgets.select_files_button)
-        sidebar.addStretch()
+
+        sidebar.addWidget(header_label("Gazebo Controls"))
+        sidebar.addWidget(self.widgets.gazebo_control)
+
+        self.layouts.sidebar.addStretch()
+        self.layouts.sidebar.addWidget(self.widgets.arm_control)
+        self.layouts.sidebar.addWidget(self.widgets.vehicle_status)
 
     def select_files(self):
         """Run the system file selection dialog and emit results, to be recieved by VideoThread"""

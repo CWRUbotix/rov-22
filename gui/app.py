@@ -1,3 +1,4 @@
+import json
 import logging
 from collections import defaultdict
 
@@ -31,19 +32,29 @@ class App(QWidget):
     main_log_signal = pyqtSignal(str, int)
     debug_log_signal = pyqtSignal(str, int)
 
-    def __init__(self, video_sources):
+    def __init__(self, args):
         super().__init__()
         self.setWindowTitle("ROV Vision")
         self.resize(1280, 720)
-        # self.showFullScreen()
+
+        if args.fullscreen:
+            self.showFullScreen()
+
+        if args.maximize:
+            self.showMaximized()
+
+        # Create the video capture thread
+        with args.cameras as file:
+            json_data = json.load(file)
+        self.video_thread = VideoThread(json_data)
 
         # Dictionary to keep track of which keys are pressed. If a key is not in the dict, assume it is not pressed.
         self.keysDown = defaultdict(lambda: False)
 
         # Create a tab widget
         self.tabs = QTabWidget()
-        self.main_tab = MainTab(len(video_sources))
-        self.debug_tab = DebugTab(len(video_sources))
+        self.main_tab = MainTab(len(self.video_thread._video_sources))
+        self.debug_tab = DebugTab(len(self.video_thread._video_sources))
         self.image_tab = ImageDebugTab()
 
         self.tabs.resize(300, 200)
@@ -57,9 +68,6 @@ class App(QWidget):
 
         # Set the root layout to this vbox
         self.setLayout(vbox)
-
-        # Create the video capture thread
-        self.video_thread = VideoThread(video_sources)
 
         # Create VehicleControl object to handle the connection to the ROV
         self.vehicle = VehicleControl(port=14550)
@@ -99,18 +107,19 @@ class App(QWidget):
         self.video_thread.update_frames_signal.connect(self.update_image)
         self.video_thread.update_frames_signal.connect(self.task_scheduler.on_frame)
 
-        # Connect the arm/disarm gui buttons to the arm/disarm commands
-        self.main_tab.widgets.arm_control.arm_button.clicked.connect(self.vehicle.arm)
-        self.main_tab.widgets.arm_control.disarm_button.clicked.connect(self.vehicle.disarm)
-        self.vehicle.connected_signal.connect(self.main_tab.widgets.arm_control.on_connect)
-        self.vehicle.disconnected_signal.connect(self.main_tab.widgets.arm_control.on_disconnect)
-        self.vehicle.armed_signal.connect(self.main_tab.widgets.arm_control.on_arm)
-        self.vehicle.disarmed_signal.connect(self.main_tab.widgets.arm_control.on_disarm)
+        for tab in (self.main_tab, self.debug_tab):
+            # Connect the arm/disarm gui buttons to the arm/disarm commands
+            tab.widgets.arm_control.arm_button.clicked.connect(self.vehicle.arm)
+            tab.widgets.arm_control.disarm_button.clicked.connect(self.vehicle.disarm)
+            self.vehicle.connected_signal.connect(tab.widgets.arm_control.on_connect)
+            self.vehicle.disconnected_signal.connect(tab.widgets.arm_control.on_disconnect)
+            self.vehicle.armed_signal.connect(tab.widgets.arm_control.on_arm)
+            self.vehicle.disarmed_signal.connect(tab.widgets.arm_control.on_disarm)
 
-        # Connect the vehicle and task scheduler to the vehicle status widget
-        self.vehicle.connected_signal.connect(self.main_tab.widgets.vehicle_status.on_connect)
-        self.vehicle.disconnected_signal.connect(self.main_tab.widgets.vehicle_status.on_disconnect)
-        self.task_scheduler.change_task_signal.connect(self.main_tab.widgets.vehicle_status.on_task_change)
+            # Connect the vehicle and task scheduler to the vehicle status widget
+            self.vehicle.connected_signal.connect(tab.widgets.vehicle_status.on_connect)
+            self.vehicle.disconnected_signal.connect(tab.widgets.vehicle_status.on_disconnect)
+            self.task_scheduler.change_task_signal.connect(tab.widgets.vehicle_status.on_task_change)
 
         # Connect DebugTab's selecting files signal to video thread's on_select_filenames
         self.debug_tab.select_files_signal.connect(self.video_thread.on_select_filenames)
