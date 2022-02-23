@@ -38,14 +38,6 @@ class MapWreck():
 
         image = cv2.cvtColor(image, cv2.COLOR_BGRA2BGR)
 
-        # Resize image
-        scale_percent = 100 # percent of original size
-        width = int(image.shape[1] * scale_percent / 100)
-        height = int(image.shape[0] * scale_percent / 100)
-        dim = (width, height)
-  
-        # image = cv2.resize(image, dim, interpolation = cv2.INTER_AREA)
-
         return image
 
     def draw(self, event, x, y, flags, param):
