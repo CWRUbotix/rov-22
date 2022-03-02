@@ -1,14 +1,26 @@
 {
-    "gstreamer-record": [
+    "gstreamer-record-h264": [
         "udpsrc port=",
         "json.content",
         " caps=\"application/x-rtp, media=(string)video, clock-rate=(int)90000, encoding-name=(string)H264, payload=(int)96\" ! rtph264depay ! h264parse ! tee name=t t. ! queue ! flvmux ! filesink location=",
         "python.new_recording",
         " t. ! queue leaky=1 ! decodebin ! videoconvert ! appsink"
     ],
-    "gstreamer-display": [
+    "gstreamer-display-h264": [
         "udpsrc port=",
         "json.content",
         " caps=\"application/x-rtp, media=(string)video, clock-rate=(int)90000, encoding-name=(string)H264\" ! rtph264depay ! avdec_h264 ! videoconvert ! appsink"
+    ],
+    "gstreamer-record-jpeg": [
+        "udpsrc port=",
+        "json.content",
+        " caps=\"application/x-rtp, media=(string)video, clock-rate=(int)90000, encoding-name=(string)JPEG, payload=(int)26\" ! rtpjpegdepay ! jpegdec ! x264enc ! h264parse ! tee name=t t. ! queue ! flvmux ! filesink location=",
+        "python.new_recording",
+        " t. ! queue leaky=1 ! decodebin ! videoconvert ! appsink"
+    ],
+    "gstreamer-display-jpeg": [
+        "udpsrc port=",
+        "json.content",
+        " caps=\"application/x-rtp, media=(string)video, encoding-name=(string)JPEG\" ! rtpjpegdepay ! decodebin ! videoconvert ! appsink"
     ]
 }

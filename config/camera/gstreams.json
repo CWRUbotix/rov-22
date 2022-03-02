@@ -7,7 +7,7 @@
 		},
 		{
 			"api": "CAP_GSTREAMER",
-			"template": "gstreamer-record",
+			"template": "gstreamer-record-jpeg",
 			"content": "5600"
 		}
 	]

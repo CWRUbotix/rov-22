@@ -9,6 +9,10 @@ from cv2 import CAP_GSTREAMER
 from gui.data_classes import Frame, VideoSource
 from util import data_path, pipeline_templates_path
 
+from logger import root_logger
+
+logger = root_logger.getChild(__name__)
+
 
 class VideoThread(QThread):
     update_frames_signal = pyqtSignal(Frame)
@@ -50,7 +54,7 @@ class VideoThread(QThread):
                     # Go back 2 frames so when we read() we'll read back 1 frame
                     prev_frame -= 2
                 else:
-                    # If at beginning, just read 1st frame over and over
+                    # If a t beginning, just read 1st frame over and over
                     prev_frame = 0
 
                 capture.set(cv2.CAP_PROP_POS_FRAMES, prev_frame)
@@ -140,7 +144,9 @@ class VideoThread(QThread):
             for source in json_data["sources"]:
                 content = ""
                 
-                if not "template" in source:
+                if not "content" in source or not "api" in source:
+                    logger.error('Error reading config JSON: missing content or api fields')
+                elif not "template" in source:
                     content = source["content"]
                 elif source["template"] == "file":
                     content = os.path.join(data_path, source["content"])
@@ -154,6 +160,9 @@ class VideoThread(QThread):
                             content += section
                 else:
                     content = source["content"]
+
+                print(content)
+                print(getattr(cv2, source["api"]))
                 
                 if hasattr(cv2, source["api"]):
                     self._video_sources.append( VideoSource(content, getattr(cv2, source["api"])) )
