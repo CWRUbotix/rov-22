@@ -140,11 +140,20 @@ class MainTab(VideoTab):
         self.widgets.arm_control = ArmControlWidget()
         self.widgets.vehicle_status = VehicleStatusWidget()
 
+        # Create a new namespace to group all the buttons for starting tasks
+        self.widgets.task_buttons = SimpleNamespace()
+        self.widgets.task_buttons.no_button_docking = QPushButton("Dock (No button)")
+
     def organize(self):
         super().organize()
-        self.layouts.sidebar.addStretch()
-        self.layouts.sidebar.addWidget(self.widgets.arm_control)
-        self.layouts.sidebar.addWidget(self.widgets.vehicle_status)
+        sidebar = self.layouts.sidebar
+
+        sidebar.addWidget(header_label("Tasks"))
+        sidebar.addWidget(self.widgets.task_buttons.no_button_docking)
+
+        sidebar.addStretch()
+        sidebar.addWidget(self.widgets.arm_control)
+        sidebar.addWidget(self.widgets.vehicle_status)
 
 
 class DebugTab(VideoTab):
