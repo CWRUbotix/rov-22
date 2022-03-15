@@ -2,17 +2,8 @@
 
 class TransectImage():
 
-    def __init__(self, image, num):
-        self.image = image
+    def __init__(self, num, image):
         self.num = num
-
-    def image(self):
-        """Returns image"""
-
-        return self.image
-
-    def num(self):
-        """Returns num"""
-        return self.num
+        self.image = image
 
     
