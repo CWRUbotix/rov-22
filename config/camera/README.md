@@ -17,13 +17,15 @@
 ## Fields
 The concatenated items will be strung together in order to create a string that will be used as a gstreamer pipeline. Each item may be one of the following:
 - A string literal: this will just be pasted in verbatim
-- `python.new_recording`: this will be replaced with the path of a new recording file based on the current timestamp
+- `python.new_recording`: this will be replaced with the path of a new recording file based on the current timestamp, WITHOUT the file extension
 - `json.content`: this will be replaced with the value of the ```content``` field in the regular config file using this template
 
 ## Template List
 Add new template docs here as you make them.
-- `gstreamer-record`: ```content``` is the port of an input stream, to be both displayed and recorded
-- `gstreamer-display`: ```content``` is the port of an input stream, to be displayed only
+- `gstreamer-record-h264`: ```content``` is the port of an h264 input stream, to be both displayed and recorded to a .flv file
+- `gstreamer-display-h264`: ```content``` is the port of an h264 input stream, to be displayed only
+- `gstreamer-record-jpeg`: ```content``` is the port of a jpeg input stream, to be both displayed and recorded to a .mkv file
+- `gstreamer-display-jpeg`: ```content``` is the port of a jpeg input stream, to be displayed only
 
 # Regular Config Files
 ## General Format

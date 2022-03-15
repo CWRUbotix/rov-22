@@ -155,7 +155,7 @@ class VideoThread(QThread):
                         if section == "json.content":
                             content += source["content"]
                         elif section == "python.new_recording":
-                            content += datetime.datetime.now().strftime("recordings/%Y-%m-%d_%H%M%S.flv")
+                            content += datetime.datetime.now().strftime("recordings/%Y-%m-%d_%H%M%S")
                         else:
                             content += section
                 else:
