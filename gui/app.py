@@ -9,6 +9,7 @@ from gui.data_classes import Frame
 from gui.video_thread import VideoThread
 from gui.widgets.tabs import MainTab, DebugTab, ImageDebugTab, VideoTab
 from logger import root_logger
+from tasks.no_button_docking import NoButtonDocking
 from vehicle.vehicle_control import VehicleControl
 from tasks.scheduler import TaskScheduler
 from tasks.keyboard_control import KeyboardControl
@@ -76,6 +77,9 @@ class App(QWidget):
         self.task_scheduler = TaskScheduler(self.vehicle)
         self.task_scheduler.default_task = KeyboardControl(self.vehicle, self.keysDown)
 
+        # Create the autonomous tasks
+        self.no_button_docking_task = NoButtonDocking(self.vehicle)
+
         # Setup GUI logging
         gui_formatter = logging.Formatter("[{levelname}] {message}", style="{")
 
@@ -107,18 +111,19 @@ class App(QWidget):
         self.video_thread.update_frames_signal.connect(self.update_image)
         self.video_thread.update_frames_signal.connect(self.task_scheduler.on_frame)
 
-        # Connect the arm/disarm gui buttons to the arm/disarm commands
-        self.main_tab.widgets.arm_control.arm_button.clicked.connect(self.vehicle.arm)
-        self.main_tab.widgets.arm_control.disarm_button.clicked.connect(self.vehicle.disarm)
-        self.vehicle.connected_signal.connect(self.main_tab.widgets.arm_control.on_connect)
-        self.vehicle.disconnected_signal.connect(self.main_tab.widgets.arm_control.on_disconnect)
-        self.vehicle.armed_signal.connect(self.main_tab.widgets.arm_control.on_arm)
-        self.vehicle.disarmed_signal.connect(self.main_tab.widgets.arm_control.on_disarm)
+        for tab in (self.main_tab, self.debug_tab):
+            # Connect the arm/disarm gui buttons to the arm/disarm commands
+            tab.widgets.arm_control.arm_button.clicked.connect(self.vehicle.arm)
+            tab.widgets.arm_control.disarm_button.clicked.connect(self.vehicle.disarm)
+            self.vehicle.connected_signal.connect(tab.widgets.arm_control.on_connect)
+            self.vehicle.disconnected_signal.connect(tab.widgets.arm_control.on_disconnect)
+            self.vehicle.armed_signal.connect(tab.widgets.arm_control.on_arm)
+            self.vehicle.disarmed_signal.connect(tab.widgets.arm_control.on_disarm)
 
-        # Connect the vehicle and task scheduler to the vehicle status widget
-        self.vehicle.connected_signal.connect(self.main_tab.widgets.vehicle_status.on_connect)
-        self.vehicle.disconnected_signal.connect(self.main_tab.widgets.vehicle_status.on_disconnect)
-        self.task_scheduler.change_task_signal.connect(self.main_tab.widgets.vehicle_status.on_task_change)
+            # Connect the vehicle and task scheduler to the vehicle status widget
+            self.vehicle.connected_signal.connect(tab.widgets.vehicle_status.on_connect)
+            self.vehicle.disconnected_signal.connect(tab.widgets.vehicle_status.on_disconnect)
+            self.task_scheduler.change_task_signal.connect(tab.widgets.vehicle_status.on_task_change)
 
         # Connect DebugTab's selecting files signal to video thread's on_select_filenames
         self.debug_tab.select_files_signal.connect(self.video_thread.on_select_filenames)
@@ -129,6 +134,11 @@ class App(QWidget):
         self.debug_tab.widgets.video_controls.toggle_rewind_button.clicked.connect(self.video_thread.toggle_rewind)
         self.debug_tab.widgets.video_controls.prev_frame_button.clicked.connect(self.video_thread.prev_frame)
         self.debug_tab.widgets.video_controls.next_frame_button.clicked.connect(self.video_thread.next_frame)
+
+        # Connect the task buttons to the task they control
+        self.main_tab.widgets.task_buttons.no_button_docking.clicked.connect(
+            lambda: self.task_scheduler.start_task(self.no_button_docking_task)
+        )
 
     def keyPressEvent(self, event):
         """Sets keyboard keys to different actions"""

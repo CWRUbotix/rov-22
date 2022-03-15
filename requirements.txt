@@ -3,4 +3,4 @@ imutils
 PyQt5
 scikit-learn
 scikit-image
-pymavlink
+pymavlink==2.4.20
