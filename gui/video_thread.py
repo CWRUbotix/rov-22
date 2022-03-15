@@ -160,9 +160,6 @@ class VideoThread(QThread):
                             content += section
                 else:
                     content = source["content"]
-
-                print(content)
-                print(getattr(cv2, source["api"]))
                 
                 if hasattr(cv2, source["api"]):
                     self._video_sources.append( VideoSource(content, getattr(cv2, source["api"])) )

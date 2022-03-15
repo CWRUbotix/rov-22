@@ -26,7 +26,7 @@ except (FileNotFoundError, json.JSONDecodeError, KeyError):
     gazebo_path = path.join(parent_dir, 'gazebo_rov')
 ardusub_path = path.join(ardupilot_path, 'ArduSub')
 
-pipeline_templates_path = path.join(path.dirname(__file__), 'config', 'camera', 'pipeline_templates.json')
+pipeline_templates_path = path.join(path.dirname(__file__), 'config', 'camera', 'pipeline-templates.json')
 
 
 def config_parser(config_dir: str):
