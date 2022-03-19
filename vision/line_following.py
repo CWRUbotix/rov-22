@@ -2,7 +2,7 @@ import cv2 as cv
 import numpy as np
 
 #read the image
-img = cv.imread("D:/Rov 22/rov-vision-22/vision/red scarf.jpg")
+img = cv.imread("D:/Rov 22/rov-vision-22/vision/redcroc.jpg")
 
 #convert the BGR image to HSV colour space
 hsv = cv.cvtColor(img, cv.COLOR_BGR2HSV)
