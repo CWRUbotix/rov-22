@@ -1,12 +1,17 @@
 import os
 import cv2
 import json
+import datetime
 
 from PyQt5.QtCore import pyqtSignal, pyqtSlot, QThread
 from cv2 import CAP_GSTREAMER
 
 from gui.data_classes import Frame, VideoSource
-from util import data_path
+from util import data_path, pipeline_templates_path
+
+from logger import root_logger
+
+logger = root_logger.getChild(__name__)
 
 
 class VideoThread(QThread):
@@ -49,7 +54,7 @@ class VideoThread(QThread):
                     # Go back 2 frames so when we read() we'll read back 1 frame
                     prev_frame -= 2
                 else:
-                    # If at beginning, just read 1st frame over and over
+                    # If a t beginning, just read 1st frame over and over
                     prev_frame = 0
 
                 capture.set(cv2.CAP_PROP_POS_FRAMES, prev_frame)
@@ -124,7 +129,7 @@ class VideoThread(QThread):
                 self.load_json(json_data)
 
                 file.close()
-            else:
+            else:  # Regular file (not JSON)
                 self._video_sources.append(VideoSource(filename, cv2.CAP_FFMPEG))
 
         self._video_playing_flag = True
@@ -134,11 +139,27 @@ class VideoThread(QThread):
 
     def load_json(self, json_data):
         if json_data["sources"]:
+            pipeline_templates = json.load(open(pipeline_templates_path, 'r'))
+
             for source in json_data["sources"]:
-                api = cv2.CAP_FFMPEG
-                if source["api"] == "gstreamer":
-                    api = cv2.CAP_GSTREAMER
-                else:
-                    source["name"] = os.path.join(data_path, source["name"])
+                content = ""
                 
-                self._video_sources.append(VideoSource(source["name"], api))
+                if not "content" in source or not "api" in source:
+                    logger.error('Error reading config JSON: missing content or api fields')
+                elif not "template" in source:
+                    content = source["content"]
+                elif source["template"] == "file":
+                    content = os.path.join(data_path, source["content"])
+                elif source["template"] in pipeline_templates:
+                    for section in pipeline_templates[source["template"]]:
+                        if section == "json.content":
+                            content += source["content"]
+                        elif section == "python.new_recording":
+                            content += datetime.datetime.now().strftime("recordings/%Y-%m-%d_%H%M%S")
+                        else:
+                            content += section
+                else:
+                    content = source["content"]
+                
+                if hasattr(cv2, source["api"]):
+                    self._video_sources.append( VideoSource(content, getattr(cv2, source["api"])) )
