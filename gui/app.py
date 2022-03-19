@@ -7,6 +7,7 @@ from PyQt5.QtCore import pyqtSignal, pyqtSlot, Qt
 
 from gui.data_classes import Frame
 from gui.video_thread import VideoThread
+from gui.widgets.image_debug_widget import ImagesWidget
 from gui.widgets.tabs import MainTab, DebugTab, ImageDebugTab, VideoTab
 from logger import root_logger
 from vehicle.vehicle_control import VehicleControl
@@ -130,6 +131,10 @@ class App(QWidget):
         self.debug_tab.widgets.video_controls.toggle_rewind_button.clicked.connect(self.video_thread.toggle_rewind)
         self.debug_tab.widgets.video_controls.prev_frame_button.clicked.connect(self.video_thread.prev_frame)
         self.debug_tab.widgets.video_controls.next_frame_button.clicked.connect(self.video_thread.next_frame)
+
+        # Setup the debug image buttons to change the images
+        self.image_tab.widgets.image_controls.prev_image_button.clicked.connect(self.image_tab.prev_images)
+        self.image_tab.widgets.image_controls.next_image_button.clicked.connect(self.image_tab.next_images)
 
     def keyPressEvent(self, event):
         """Sets keyboard keys to different actions"""

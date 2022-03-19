@@ -32,7 +32,7 @@ class ImagesWidget(QGraphicsView):
                 pixmapItem.setOffset(IMAGE_SIZE * i, IMAGE_SIZE * j)
                 self.image_pixmaps.append(pixmapItem)
                 self.scene.addItem(pixmapItem)
-    
+        
     def set_folder(self, folder: str):
         self.folder = folder
         self.filenames = [os.path.join(self.folder, f) for f in os.listdir(self.folder) if os.path.isfile(os.path.join(self.folder, f))]
@@ -44,3 +44,11 @@ class ImagesWidget(QGraphicsView):
     def load_images(self):
         for i in range(16):
             self.image_pixmaps[i].setPixmap(convert_cv_qt(self.image_cache[i], IMAGE_SIZE, IMAGE_SIZE))
+
+    def next_image(self):
+        for i in range(16):
+            self.image_pixmaps[i].setPixmap(convert_cv_qt(self.image_cache[i+1], IMAGE_SIZE, IMAGE_SIZE))
+
+    def prev_image(self):
+        for i in range(16):
+            self.image_pixmaps[i].setPixmap(convert_cv_qt(self.image_cache[i-1], IMAGE_SIZE, IMAGE_SIZE))

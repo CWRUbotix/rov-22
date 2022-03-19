@@ -10,6 +10,7 @@ from gui.widgets.gazebo_control_widget import GazeboControlWidget
 from gui.widgets.vehicle_status_widget import VehicleStatusWidget
 from gui.widgets.image_debug_widget import ImagesWidget
 from gui.widgets.video_controls_widget import VideoControlsWidget
+from gui.widgets.image_controls_widget import ImageControlsWidget
 from gui.widgets.video_widgets import VideoArea
 from gui.data_classes import Frame, VideoSource
 from gui.widgets.arm_control_widget import ArmControlWidget
@@ -94,9 +95,23 @@ class ImageDebugTab(RootTab):
         self.widgets.images_widget.show()
         self.widgets.images_widget.set_folder(os.path.join(data_path, 'example-images', 'star'))
 
+        # Add image control buttons
+        image_controls = ImageControlsWidget()
+        self.widgets.image_controls = image_controls
+
     def organize(self):
         super().organize()
         self.layouts.main_vbox.addWidget(self.widgets.images_widget)
+        sidebar = self.layouts.sidebar
+        sidebar.addWidget(header_label("Image Controls"))
+        sidebar.addWidget(self.widgets.image_controls)
+        self.layouts.sidebar.addStretch()
+    
+    def prev_images(self):
+        self.widgets.images_widget.prev_image()
+
+    def next_images(self):
+        self.widgets.images_widget.next_image()
 
 
 class VideoTab(RootTab):
