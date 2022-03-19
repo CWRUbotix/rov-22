@@ -1,12 +1,14 @@
 {
 	"sources": [
 		{
-			"api": "gstreamer",
-			"name": "udpsrc port=5600 caps = \"application/x-rtp, media=(string)video, encoding-name=(string)JPEG, payload=(int)96\" ! rtpjpegdepay ! decodebin ! videoconvert ! appsink"
+			"api": "CAP_GSTREAMER",
+			"template": "gstreamer-display-jpeg",
+			"content": "5600"
 		},
 		{
-			"api": "gstreamer",
-			"name": "udpsrc port=5601 caps = \"application/x-rtp, media=(string)video, encoding-name=(string)JPEG, payload=(int)96\" ! rtpjpegdepay ! decodebin ! videoconvert ! appsink"
+			"api": "CAP_GSTREAMER",
+			"template": "gstreamer-display-jpeg",
+			"content": "5601"
 		}
 	]
 }
