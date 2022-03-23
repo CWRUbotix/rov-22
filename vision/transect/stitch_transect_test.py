@@ -26,7 +26,7 @@ class TestStitchTransect(unittest.TestCase):
             self.stitcher.set_image(i, image)
 
     def test2(self):
-        self.stitcher.find_grid()
+        self.stitcher.find_rectangle()
 
 if __name__ == "__main__":
     unittest.main()
