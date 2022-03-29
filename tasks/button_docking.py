@@ -18,6 +18,35 @@ STOP_WIDTH_FRACTION = 0.3
 STOP_HEIGHT_FRACTION = 0.3
 
 
+def get_button_contour(cv_img):
+    hsv = cv2.cvtColor(cv_img, cv2.COLOR_BGR2HSV)
+
+    # Mask out non-red stuff
+    lower = np.array([155,25,0])
+    upper = np.array([179,255,255])
+    mask = cv2.inRange(hsv, lower, upper)
+    masked = cv2.cvtColor(cv2.bitwise_and(hsv, hsv, mask=mask), cv2.COLOR_HSV2BGR)
+
+    # Get grayscale of red channel
+    gray = masked[:,:,2]
+    height, width = gray.shape  # calling this on the BGR will get (x, y, 3)
+
+    # Threshold it for a bitmap around redest stuff
+    ret, thresh = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)
+
+    # Find the largest contour
+    contours, hierarchy = cv2.findContours(thresh, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+    high_score = 0
+    best_contour = None
+    for contour in contours:
+        x,y,w,h = cv2.boundingRect(contour)
+        if w < width and h < height and w * h > high_score:
+            high_score = w * h
+            best_contour = contour
+    
+    return (best_contour, high_score)
+
+
 class ButtonDocking(BaseTask):
     """
     Fly forward, strafing/rotating to aim at large splotches of red, until:
@@ -41,7 +70,7 @@ class ButtonDocking(BaseTask):
         if self.button_pos != [-1, -1]:
             inputs = {
                 InputChannel.FORWARD:  FORWARD_SPEED,
-                InputChannel.LATERAL:  (self.keys_down[Qt.Key_D] - self.keys_down[Qt.Key_A]) * TRANSLATION_SENSITIVITY,
+                InputChannel.LATERAL:  0,
                 InputChannel.THROTTLE: self.vertical_move() * TRANSLATION_SENSITIVITY,
                 InputChannel.PITCH:    self.vertical_move() * ROTATIONAL_SENSITIVITY,
                 InputChannel.YAW:      self.horizontal_move() * ROTATIONAL_SENSITIVITY,
@@ -61,36 +90,14 @@ class ButtonDocking(BaseTask):
     
     def handle_frame(self, frame: Frame):
         """Recalculate button position info if possible whenever a new frame is recieved"""
-        hsv = cv2.cvtColor(frame.cv_img, cv2.COLOR_BGR2HSV)
-
-        # Mask out non-red stuff
-        lower = np.array([155,25,0])
-        upper = np.array([179,255,255])
-        mask = cv2.inRange(hsv, lower, upper)
-        masked = cv2.cvtColor(cv2.bitwise_and(hsv, hsv, mask=mask), cv2.COLOR_HSV2BGR)
-
-        # Get grayscale of red channel
-        gray = masked[:,:,2]
-
-        # Threshold it for a bitmap around redest stuff
-        ret, thresh = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)
-        height, width = thresh.shape  # yes, they're backwards, idk why
-
-        # Find the largest contour
-        contours, hierarchy = cv2.findContours(thresh, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-        high_score = 0
-        best_contour = None
-        for contour in contours:
-            x,y,w,h = cv2.boundingRect(contour)
-            if w < width and h < height and w * h > high_score:
-                high_score = w * h
-                best_contour = contour
+        best_contour, high_score = get_button_contour(frame.cv_img)
         
         # Calculate button position info if we found a good countour
         if high_score > 0:
             x,y,w,h = cv2.boundingRect(best_contour)
             self.button_pos = [x + w/2, y + h/2]
             self.button_dims = [w, h]
+            height, width, colors = frame.cv_img.shape
             self.image_dims = [width, height]
         
     def is_finished(self) -> bool:
