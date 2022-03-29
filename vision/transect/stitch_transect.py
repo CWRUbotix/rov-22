@@ -1,6 +1,8 @@
 import cv2
 import numpy as np
+import imutils
 from vision.transect.transect_image import TransectImage
+from vision.colors import *
 
 class Rectangle():
     def __init__(self, x, y, w, h):
@@ -64,6 +66,12 @@ class StitchTransect():
         for r in rectangles:
             cv2.rectangle(image, (r.x, r.y), (r.x + r.w, r.y + r.h), (0, 255, 0), 5)
 
-        cv2.imshow("Image", image)
+        cv2.imshow("Image", edges)
         cv2.waitKey(0)
+
+    def colors(self, id):
+        image = self.images.get(id).image
+        image = imutils.resize(image, 100)
+        
+        get_colors(image, 10)
 

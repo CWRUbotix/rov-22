@@ -5,6 +5,7 @@ from util import data_path
 
 from vision.transect.transect_image import TransectImage
 from vision.transect.stitch_transect import StitchTransect
+from vision.colors import *
 
 class TestStitchTransect(unittest.TestCase):
 
@@ -25,8 +26,16 @@ class TestStitchTransect(unittest.TestCase):
 
             self.stitcher.set_image(i, image)
 
-    def test2(self):
+    def test_find_rectangle(self):
         self.stitcher.find_rectangle()
 
+    def test_colors(self):
+        self.stitcher.colors(8)
+
 if __name__ == "__main__":
+    """
+    To run a specific test:
+    python3 vision/transect/stitch_transect_test.py TestStitchTransect.<name of test>
+    """
+
     unittest.main()
