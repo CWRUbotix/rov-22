@@ -30,7 +30,7 @@ class ButtonDocking(BaseTask):
         self.button_pos = [-1, -1]
         self.button_dims = [-1,-1]
         self.image_dims = [-1, -1]
-        self.start_time = None
+        self.start_time = 0
 
     def initialize(self):
         self.vehicle.stop_thrusters()
