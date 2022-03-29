@@ -3,33 +3,33 @@ import statistics
 import re
 from collections import defaultdict
 
-STEREO_BASELINE = 6  # cm
-FOCAL_LENGTH = 500  # cm, just a guess because the undistortion process probably screws with this
+STEREO_BASELINE = 2.375  # cm
+FOCAL_LENGTH = 1150  # cm, just a guess because the undistortion process probably screws with this
 RESOLUTION_X = 1280
 RESOLUTION_Y = 960
 
-FX = 500
-FY = 500
+FX = FOCAL_LENGTH
+FY = FOCAL_LENGTH
 CX = 640
 CY = 480
 
-ACTUAL = 32
+ACTUAL = 12.25
 
 
 def pixel_to_film_coords(point, fx, fy, cx, cy):
     return (
-        (point[0] - cx) ,
-        (point[1] - cy)
+        (point[0] - cx) / fx ,
+        (point[1] - cy) / fy
     )
 
 
 def get_point_camera_space(p1, p2):
-    film_coord1 = pixel_to_film_coords(p1, FX, FY, CX, CY)
-    film_coord2 = pixel_to_film_coords(p2, FX, FY, CX, CY)
+    film_coord1 = pixel_to_film_coords(p1, 1155, 1155, 687.588, 535.241)
+    film_coord2 = pixel_to_film_coords(p2, 1142, 1142, 702.712, 503.471)
     #print(str(film_coord1) + ',  ' + str(film_coord2))
 
     disparity = film_coord2[0] - film_coord1[0]
-    depth = FOCAL_LENGTH * STEREO_BASELINE / disparity
+    depth =  STEREO_BASELINE / disparity
 
     return (
         film_coord1[0] * STEREO_BASELINE / disparity,
@@ -39,7 +39,7 @@ def get_point_camera_space(p1, p2):
 
 
 if __name__ == "__main__":
-    with open("../data/stereo/gazebo1/pixels.txt") as data_file:
+    with open("../data/stereo/dualcam1/pixels.txt") as data_file:
         test_dict = defaultdict(lambda: {})
 
         for line in data_file.read().split("\n"):
