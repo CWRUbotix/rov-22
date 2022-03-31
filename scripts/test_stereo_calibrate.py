@@ -6,6 +6,8 @@ from os import path
 
 from util import data_path
 
+ACTUAL_LENGTH = 18.3
+
 directory = path.join(data_path, 'stereo-calibration')
 
 images = []
