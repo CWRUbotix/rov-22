@@ -16,6 +16,7 @@ class StitchTransect():
 
     def __init__(self):
         self.images = dict.fromkeys([1, 2, 3, 4, 5, 6, 7, 8], TransectImage)
+        self.rect_images = []
 
     def set_image(self, key, image):
         self.images[key] = image
@@ -120,10 +121,11 @@ class StitchTransect():
 
             rectangles.append(Rectangle(x, y, w, h, [box]))
 
-        # Draw rectangles on the image
-        for r in rectangles:
-            cv2.rectangle(image, (r.x, r.y), (r.x + r.w, r.y + r.h), (0, 255, 0), 5)
-            # cv2.drawContours(image, r.cnt, 0, (0, 255, 0), 10)
+        rect_image = image.copy()
+        self.rect_images.append(rect_image)
 
-        cv2.imshow("Image", image)
-        cv2.waitKey(0)
+        # Draw rectangles on the image
+        for r in rectangles:            
+            cv2.rectangle(rect_image, (r.x, r.y), (r.x + r.w, r.y + r.h), (0, 255, 0), 5)
+
+            # cv2.drawContours(image, r.cnt, 0, (0, 255, 0), 10)

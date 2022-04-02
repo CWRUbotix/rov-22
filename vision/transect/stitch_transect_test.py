@@ -36,6 +36,50 @@ class TestStitchTransect(unittest.TestCase):
     def colors(self):
         self.stitcher.colors(3)
 
+    def browse_images(self):
+        """
+        Browse through images with the 'a' and 'd' keys
+
+        :param file_path: path to text file to write the coordinates to
+        :param images_path: path to the images to look through
+        :param label: optional text printed before the mouse coordinates in the external file in the format: label/img_name
+        """
+
+        for key in self.stitcher.images:
+            self.stitcher.find_rectangle(key)
+
+        images_list = self.stitcher.rect_images
+
+        index = 0
+
+        window = "image"
+        cv2.namedWindow(window)
+        
+        # Display the images
+        while True:
+
+            image = images_list[index]
+            image_text = "Image: " + str(index+1)
+
+            image = cv2.putText(image, image_text, (100, 300), cv2.FONT_HERSHEY_SIMPLEX, 5, (0, 255, 0), 3, cv2.LINE_AA)
+
+            cv2.imshow(window, image)
+
+            k = cv2.waitKey(0) & 0xFF
+
+            # 'a' key to go back    
+            if k == 97 and index > 0:
+                index -= 1
+
+            # 'd' key to go forwards
+            elif k == 100 and index < len(images_list) - 1: 
+                index += 1
+
+            # 'q' to quit
+            elif k == 113: 
+                cv2.destroyAllWindows()
+                break
+
 if __name__ == "__main__":
     """
     To run a specific test:
