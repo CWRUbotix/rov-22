@@ -7,6 +7,7 @@ import cv2
 def centroid_histogram(clt):
     """Gets number of different clusters and returns a normalized histogram from number of pixels assigned to each cluster.
     For example: 'centroid_histogram(clusters)'"""
+
     num_labels = np.arange(0, len(np.unique(clt.labels_)) + 1)
     (hist, _) = np.histogram(clt.labels_, bins=num_labels)
 
@@ -16,10 +17,10 @@ def centroid_histogram(clt):
 
     return hist
 
-
 def plot_colors(hist, centroids):
     """Creates color bar window and plots the different colors of the image.
     For example: 'plot_colors(hist, clt.cluster_centers_)'"""
+
     # Dimensions of color bar window
     width = 500
     height = 50
@@ -40,7 +41,8 @@ def plot_colors(hist, centroids):
 def get_colors(image, clusters):
     """Gets the colors in an image and displays the histogram.
     For example: 'get_colors("coral", 8)'"""
-    cv2.imshow("Image", image)
+
+    # cv2.imshow("Image", image)
 
     image = image.reshape(image.shape[0] * image.shape[1], 3)
 
@@ -51,9 +53,9 @@ def get_colors(image, clusters):
     hist = centroid_histogram(clt)
     bar = plot_colors(hist, clt.cluster_centers_)
 
-    cv2.imshow("Colors", bar)
+    # cv2.imshow("Colors", bar)
 
-    cv2.waitKey(0)
-    cv2.destroyAllWindows()
+    # cv2.waitKey(0)
+    # cv2.destroyAllWindows()
 
     return centroids

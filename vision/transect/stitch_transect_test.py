@@ -26,11 +26,15 @@ class TestStitchTransect(unittest.TestCase):
 
             self.stitcher.set_image(i, image)
 
-    def test_find_rectangle(self):
-        self.stitcher.find_rectangle()
+    def find_rectangle(self):
+        self.stitcher.find_rectangle(1)
 
-    def test_colors(self):
-        self.stitcher.colors(8)
+    def find_rectangles(self):
+        for key in self.stitcher.images:
+            self.stitcher.find_rectangle(key)
+
+    def colors(self):
+        self.stitcher.colors(3)
 
 if __name__ == "__main__":
     """
