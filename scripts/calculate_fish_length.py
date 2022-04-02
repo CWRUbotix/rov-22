@@ -2,6 +2,7 @@ import math
 import statistics
 import re
 from collections import defaultdict
+from vision.stereo.params import StereoParameters
 
 STEREO_BASELINE = 2.375  # cm
 FOCAL_LENGTH = 1150  # cm, just a guess because the undistortion process probably screws with this
@@ -13,7 +14,7 @@ FY = FOCAL_LENGTH
 CX = 640
 CY = 480
 
-ACTUAL = 12.25
+ACTUAL = 31
 
 
 def pixel_to_film_coords(point, fx, fy, cx, cy):
@@ -39,7 +40,9 @@ def get_point_camera_space(p1, p2):
 
 
 if __name__ == "__main__":
-    with open("../data/stereo/dualcam1/pixels.txt") as data_file:
+    params = StereoParameters.load('stereo')
+
+    with open("../data/stereo/dualcam1filtered/test.txt") as data_file:
         test_dict = defaultdict(lambda: {})
 
         for line in data_file.read().split("\n"):
@@ -57,12 +60,16 @@ if __name__ == "__main__":
             left_points = v["left"]
             right_points = v["right"]
 
-            point1 = get_point_camera_space(left_points[0], right_points[0])
-            point2 = get_point_camera_space(left_points[1], right_points[1])
+            # point1 = get_point_camera_space(left_points[0], right_points[0])
+            # point2 = get_point_camera_space(left_points[1], right_points[1])
+
+            point1 = params.triangulate(left_points[0], right_points[0])
+            point2 = params.triangulate(left_points[1], right_points[1])
             #print(point1, point2)
 
-            x_diffs.append(point1[0] - point2[0])
-            fish_lengths.append(math.dist(point1, point2) - ACTUAL)
+            x_diffs.append(point2[0] - point1[0])
+            dist = math.dist(point1, point2) * 1.6909861571441303
+            fish_lengths.append(dist)
             #print(point2[0] - point1[0])
             print(f'{point1[0] - point2[0]} ,  {math.dist(point1, point2)}')
 
@@ -81,7 +88,7 @@ if __name__ == "__main__":
 
         import matplotlib.pyplot as plt
         plt.scatter(x_diffs, fish_lengths)
-        plt.hlines(-2, 0, max(x_diffs))
-        plt.hlines(2, 0, max(x_diffs))
+        plt.hlines(ACTUAL - 2, 0, max(x_diffs))
+        plt.hlines(ACTUAL + 2, 0, max(x_diffs))
         plt.show()
 

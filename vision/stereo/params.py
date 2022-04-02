@@ -26,6 +26,11 @@ class StereoParameters:
         left = self.rectify_single(left_half(img), Side.LEFT)
         right = self.rectify_single(right_half(img), Side.RIGHT)
         return np.concatenate(left, right, axis=1)
+    
+    def triangulate(self, point_l, point_r):
+        point = cv2.triangulatePoints(self.proj_l, self.proj_r, point_l, point_r).reshape(4)
+        point /= point[3]
+        return point[0:3]
 
 
     @staticmethod

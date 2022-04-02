@@ -44,8 +44,8 @@ class PixelSelector:
         kernel = np.array([[0, 0, 0], [-1, 0, 1], [0, 0, 0]])
 
         #kernel = np.array([[1, 4, 6, 4, 1], [4, 16, 24, 16, 4], [6, 24, -476, 24, 6], [4, 16, 24, 16, 4], [1, 4, 6, 4, 1]]) / -256
-        self.img_l = vertical_edge(self.img_l)
-        self.img_l = cv2.cvtColor(self.img_l, cv2.COLOR_GRAY2BGR)
+        # self.img_l = vertical_edge(self.img_l)
+        # self.img_l = cv2.cvtColor(self.img_l, cv2.COLOR_GRAY2BGR)
 
         self.img_width = self.img_l.shape[1]
         self.img_height = self.img_l.shape[0]
@@ -77,8 +77,9 @@ class PixelSelector:
                     self.view_size *= 2
                     self._clamp_view()
             elif key == ord('f'):
-                vals = self.img_l[ self.target_y, self.target_xl - 9 : self.target_xl + 10, 0]
-                print(vals)
+                # vals = self.img_l[ self.target_y, self.target_xl - 9 : self.target_xl + 10, 0]
+                # print(vals)
+                return self.target_xl, self.target_xr, self.target_y
             elif key == 27:
                 break
     

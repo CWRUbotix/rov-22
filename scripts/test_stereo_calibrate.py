@@ -1,5 +1,6 @@
 import os
 import math
+from vision.stereo.params import StereoParameters
 import cv2
 import numpy as np
 from os import path
@@ -38,21 +39,8 @@ img_ptsR = []
 obj_pts = []
 
 
-proj_l = np.array([[1149.734375, 0.0, 717.5405502319336, 0.0], [0.0, 1149.734375, 518.3698806762695, 0.0], [0.0, 0.0, 1.0, 0.0]])
-proj_r = np.array([[1149.734375, 0.0, 717.5405502319336, -4005.0020285217283], [0.0, 1149.734375, 518.3698806762695, 0.0], [0.0, 0.0, 1.0, 0.0]])
-
-Left_Stereo_Map0 = []
-Left_Stereo_Map1 = []
-Right_Stereo_Map0 = []
-Right_Stereo_Map1 = []
-
-cv_file = cv2.FileStorage("improved_params2.xml", cv2.FILE_STORAGE_READ)
-Left_Stereo_Map0 = cv_file.getNode("Left_Stereo_Map_x").mat()
-Left_Stereo_Map1 = cv_file.getNode("Left_Stereo_Map_y").mat()
-Right_Stereo_Map0 = cv_file.getNode("Right_Stereo_Map_x").mat()
-Right_Stereo_Map1 = cv_file.getNode("Right_Stereo_Map_y").mat()
-cv_file.release()
-
+params = StereoParameters.load('stereo')
+distances = []
 
 for i in range(len(images)):
     imgL = left_images[i]
@@ -63,8 +51,8 @@ for i in range(len(images)):
     outputL = imgL.copy()
     outputR = imgR.copy()
 
-    Left_nice= cv2.remap(imgL_gray,Left_Stereo_Map0,Left_Stereo_Map1, cv2.INTER_LANCZOS4, cv2.BORDER_CONSTANT, 0)
-    Right_nice= cv2.remap(imgR_gray,Right_Stereo_Map0,Right_Stereo_Map1, cv2.INTER_LANCZOS4, cv2.BORDER_CONSTANT, 0)
+    Left_nice= cv2.remap(imgL_gray,params.left_rectify_map[0],params.left_rectify_map[1], cv2.INTER_LANCZOS4, cv2.BORDER_CONSTANT, 0)
+    Right_nice= cv2.remap(imgR_gray,params.right_rectify_map[0],params.right_rectify_map[1], cv2.INTER_LANCZOS4, cv2.BORDER_CONSTANT, 0)
 
     retR, cornersR =  cv2.findChessboardCorners(Right_nice,(10,7),None)
     retL, cornersL = cv2.findChessboardCorners(Left_nice,(10,7),None)
@@ -82,13 +70,16 @@ for i in range(len(images)):
         #cv2.imshow('cornersL',Left_nice)
         #cv2.waitKey(0)
 
-        points3d = cv2.triangulatePoints(proj_l, proj_r, cornersL, cornersR)
+        points3d = cv2.triangulatePoints(params.proj_l, params.proj_r, cornersL, cornersR)
 
         points3d /= points3d[3,:]
         point1 = points3d[:,0]
         point2 = points3d[:,-1]
         distance = math.dist(points3d[:,0], points3d[:,-1])
         print(distance)
+        distances.append(distance)
 
-        
 
+avg = sum(distances) / len(distances)
+
+print(ACTUAL_LENGTH / avg)
