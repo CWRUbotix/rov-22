@@ -163,10 +163,12 @@ class MainTab(VideoTab):
 
     def organize(self):
         super().organize()
+        
         sidebar = self.layouts.sidebar
 
         sidebar.addWidget(header_label("Tasks"))
         sidebar.addWidget(self.widgets.task_buttons.no_button_docking)
+        sidebar.addWidget(self.widgets.map_wreck)
 
         sidebar.addStretch()
         sidebar.addWidget(self.widgets.arm_control)

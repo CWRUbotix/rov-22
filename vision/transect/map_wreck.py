@@ -38,6 +38,7 @@ class MapWreck():
 
         image = cv2.cvtColor(image, cv2.COLOR_BGRA2BGR)
 
+
         return image
 
     def draw(self, event, x, y, flags, param):
