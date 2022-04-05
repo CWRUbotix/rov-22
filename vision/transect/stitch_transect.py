@@ -33,15 +33,16 @@ class StitchTransect():
         hues = [i[0] for i in colors_found]
 
         blue = colors_found[self.color_index(hues, 120)]
-        yellow = colors_found[self.color_index(hues, 30)]
-
-        lower_blue, upper_blue = self.bounds(blue)
-        lower_yellow, upper_yellow = self.bounds(yellow)
-
+        lower_blue, upper_blue = self.color_bounds(blue)
         blue_mask = cv2.inRange(image, lower_blue, upper_blue)
-        yellow_mask = cv2.inRange(image, lower_yellow, upper_yellow)
+        mask = blue_mask
 
-        mask = blue_mask + yellow_mask
+        if id not in [3, 4, 5, 6]:
+            yellow = colors_found[self.color_index(hues, 30)]
+            lower_yellow, upper_yellow = self.color_bounds(yellow)
+            yellow_mask = cv2.inRange(image, lower_yellow, upper_yellow)
+            mask += yellow_mask
+
         mask = cv2.bitwise_not(mask)
         
         return mask
@@ -49,9 +50,9 @@ class StitchTransect():
     def color_index(self, hues, color_hue):
         return hues.index(min(hues, key=lambda x:abs(x - color_hue)))
 
-    def bounds(self, color):
-        lower_bound = np.array([color[0]-50, color[1]-50, color[2]-100])
-        upper_bound = np.array([color[0]+50, color[1]+50, color[2]+100])
+    def color_bounds(self, color):
+        lower_bound = np.array([color[0]-50, color[1]-50, color[2]-90])
+        upper_bound = np.array([color[0]+50, color[1]+50, color[2]+90])
 
         return lower_bound, upper_bound
 
@@ -68,10 +69,10 @@ class StitchTransect():
         edges2 = imutils.resize(edges2, width, height)
 
         edges = edges1 + edges2
-
+        
         # Find all the lines in the image
         lines = np.zeros_like(image)
-        all_lines = cv2.HoughLinesP(edges, 1, np.pi/180, 100, minLineLength=400, maxLineGap=100)
+        all_lines = cv2.HoughLinesP(edges, 1, np.pi/180, 100, minLineLength=400, maxLineGap=300)
         
         if all_lines is not None:
             for points in all_lines:
@@ -90,7 +91,12 @@ class StitchTransect():
         height, width = image.shape[:2]
         image_area = height * width
 
+        rect_image = image.copy()
+        self.rect_images.append(rect_image)
+
         contours, _ = cv2.findContours(lines, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+        cv2.drawContours(rect_image, contours, -1, (255, 0, 0), 5)
+
 
         for c in contours:
             area = cv2.contourArea(c)
@@ -104,12 +110,12 @@ class StitchTransect():
             hull_area = cv2.contourArea(hull)
             solidity = float(area)/hull_area
 
-            if solidity < .9:
+            if solidity < .9: 
                 continue
 
             # Filter out rectangles with irregular width to height ratio
             (x, y, w, h) = cv2.boundingRect(c)
-            dim_error = (abs(w - h)/w)  # Error between width and height
+            dim_error = (abs(w - h)/w) 
 
             if dim_error > .8:
                 continue
@@ -121,11 +127,12 @@ class StitchTransect():
 
             rectangles.append(Rectangle(x, y, w, h, [box]))
 
-        rect_image = image.copy()
-        self.rect_images.append(rect_image)
+        if rectangles:
+            # Draw rectangles on the image
+            print(f"Rect {id}: {len(rectangles)} rectangle(s) found")
 
-        # Draw rectangles on the image
-        for r in rectangles:            
-            cv2.rectangle(rect_image, (r.x, r.y), (r.x + r.w, r.y + r.h), (0, 255, 0), 5)
-
-            # cv2.drawContours(image, r.cnt, 0, (0, 255, 0), 10)
+            for r in rectangles:            
+                # cv2.drawContours(rect_image, contours, -1, (255, 0, 0), 5)
+                cv2.rectangle(rect_image, (r.x, r.y), (r.x + r.w, r.y + r.h), (0, 255, 0), 10)
+        else:
+            print(f"Rect {id}: no rectangles found")

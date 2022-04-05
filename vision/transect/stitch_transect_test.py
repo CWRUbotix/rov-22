@@ -18,8 +18,10 @@ class TestStitchTransect(unittest.TestCase):
         # Set image for each square in the stticher
         for i in range(1, 9):
 
+            test_set = 2
+
             subfolder_path = os.path.join(folder_A, str(i))
-            image_name = os.listdir(subfolder_path)[0]
+            image_name = os.listdir(subfolder_path)[test_set]
             complete_path = os.path.join(subfolder_path, image_name)
 
             image = TransectImage(i, cv2.imread(complete_path))
@@ -29,21 +31,15 @@ class TestStitchTransect(unittest.TestCase):
     def find_rectangle(self):
         self.stitcher.find_rectangle(1)
 
-    def find_rectangles(self):
-        for key in self.stitcher.images:
-            self.stitcher.find_rectangle(key)
-
     def colors(self):
         self.stitcher.colors(3)
 
     def browse_images(self):
         """
         Browse through images with the 'a' and 'd' keys
-
-        :param file_path: path to text file to write the coordinates to
-        :param images_path: path to the images to look through
-        :param label: optional text printed before the mouse coordinates in the external file in the format: label/img_name
         """
+
+        print("Starting k means color clustering...")
 
         for key in self.stitcher.images:
             self.stitcher.find_rectangle(key)
