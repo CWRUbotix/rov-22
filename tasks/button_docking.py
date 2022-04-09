@@ -53,9 +53,8 @@ class ButtonDocking(BaseTask):
         - the red fills a fixed amount of the frame or
         - a fixed amount of time passes
     """
-    def __init__(self, vehicle: VehicleControl, keys_down):
+    def __init__(self, vehicle: VehicleControl):
         super().__init__(vehicle)
-        self.keys_down = keys_down
         self.button_pos = [-1, -1]
         self.button_dims = [-1,-1]
         self.image_dims = [-1, -1]

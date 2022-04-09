@@ -80,7 +80,7 @@ class App(QWidget):
 
         # Create the autonomous tasks
         self.no_button_docking_task = NoButtonDocking(self.vehicle)
-        self.button_docking_task = ButtonDocking(self.vehicle, self.keysDown)
+        self.button_docking_task = ButtonDocking(self.vehicle)
 
         # Setup GUI logging
         gui_formatter = logging.Formatter("[{levelname}] {message}", style="{")
