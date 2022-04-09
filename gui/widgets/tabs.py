@@ -145,6 +145,7 @@ class MainTab(VideoTab):
         # Create a new namespace to group all the buttons for starting tasks
         self.widgets.task_buttons = SimpleNamespace()
         self.widgets.task_buttons.no_button_docking = QPushButton("Dock (No button)")
+        self.widgets.task_buttons.button_docking = QPushButton("Dock (Yes button)")
 
     def organize(self):
         super().organize()
@@ -153,6 +154,7 @@ class MainTab(VideoTab):
 
         sidebar.addWidget(header_label("Tasks"))
         sidebar.addWidget(self.widgets.task_buttons.no_button_docking)
+        sidebar.addWidget(self.widgets.task_buttons.button_docking)
         sidebar.addWidget(self.widgets.map_wreck)
 
         sidebar.addStretch()
