@@ -1,19 +1,26 @@
 import subprocess
 import os
+from vision.transect.map_wreck import MapWreck
 
 from PyQt5.QtWidgets import QWidget, QHBoxLayout, QPushButton
+from PyQt5.QtCore import QThread
 from logger import root_logger
 from util import vision_path
 
 logger = root_logger.getChild(__name__)
-script_path = os.path.join(vision_path, "vision", "transect", "map_wreck.py") 
 
-def map_wreck():
-    logger.debug("Opening map wreck window")
+class MapWreckThread(QThread):
 
-    subprocess.Popen(["python", script_path])
+    def __init__(self):
+        super().__init__()
+
+    def run(self):
+        logger.debug("Starting map wreck thread")
+        mapper = MapWreck()
+        mapper.show_canvas()
 
 class MapWreckWidget(QWidget):
+
     def __init__(self):
         super().__init__()
 
@@ -22,6 +29,12 @@ class MapWreckWidget(QWidget):
 
         self.pause_button = QPushButton("Map Wreck", self)
 
-        self.pause_button.clicked.connect(map_wreck)
+        self.pause_button.clicked.connect(self.map_wreck)
 
         self.root_layout.addWidget(self.pause_button)
+
+        self.map_thread = MapWreckThread()
+    
+    def map_wreck(self):
+        if not self.map_thread.isRunning():
+            self.map_thread.start()
