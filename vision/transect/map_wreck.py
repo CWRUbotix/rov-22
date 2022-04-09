@@ -77,15 +77,13 @@ class MapWreck():
         window = "Map Wreck"
 
         while True:
-
-            cv2.setMouseCallback(window, self.draw)
-
             if self.drawing == False:
                 cv2.imshow(window, self.canvas)
 
             else:
                 cv2.imshow(window, self.preview)
 
+            cv2.setMouseCallback(window, self.draw)
             cv2.setWindowProperty(window, cv2.WND_PROP_TOPMOST, 1)
 
             key = cv2.waitKey(1) & 0xFF
