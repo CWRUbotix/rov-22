@@ -16,6 +16,7 @@ from gui.data_classes import Frame, VideoSource
 from gui.widgets.arm_control_widget import ArmControlWidget
 from gui.decorated_functions import dropdown
 from gui.widgets.map_wreck_widget import MapWreckWidget
+from gui.widgets.wreck_length_widget import WreckLengthWidget
 
 # Temporary imports for basic image debug tab
 import os
@@ -156,6 +157,7 @@ class MainTab(VideoTab):
         self.widgets.arm_control = ArmControlWidget()
         self.widgets.vehicle_status = VehicleStatusWidget()
         self.widgets.map_wreck = MapWreckWidget()
+        self.widgets.wreck_length = WreckLengthWidget()
 
         # Create a new namespace to group all the buttons for starting tasks
         self.widgets.task_buttons = SimpleNamespace()
@@ -169,6 +171,7 @@ class MainTab(VideoTab):
         sidebar.addWidget(header_label("Tasks"))
         sidebar.addWidget(self.widgets.task_buttons.no_button_docking)
         sidebar.addWidget(self.widgets.map_wreck)
+        sidebar.addWidget(self.widgets.wreck_length)
 
         sidebar.addStretch()
         sidebar.addWidget(self.widgets.arm_control)
