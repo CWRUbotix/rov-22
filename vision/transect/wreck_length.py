@@ -46,12 +46,13 @@ class WreckLength():
         if event == cv2.EVENT_LBUTTONDOWN:
             if self.drawing == False:
                 # Save mouse position of the first four clicks
-                self.clickList.append([x,y])
+                if self.crop == False:
+                    self.clickList.append([x,y])
                 print(len(self.clickList))
-                if len(self.clickList) >= 2:
+                if len(self.clickList) >= 4:
                     if self.crop == True:
                         # Find perspective transform matrix
-                        src = np.float32([[self.clickList[0][0], self.clickList[1][1]], [self.clickList[1][0], self.clickList[1][1]], [self.clickList[0][0], self.clickList[0][1]], [self.clickList[1][0], self.clickList[0][1]]])
+                        src = np.float32([[self.clickList[3][0], self.clickList[3][1]], [self.clickList[2][0], self.clickList[2][1]], [self.clickList[0][0], self.clickList[0][1]], [self.clickList[1][0], self.clickList[1][1]]])
                         dst = np.float32([[0, self.IMAGE_SIZE], [self.IMAGE_SIZE, self.IMAGE_SIZE], [0, 0], [self.IMAGE_SIZE, 0]])
                         matrix = cv2.getPerspectiveTransform(src, dst)
                         # Perspective transform original image
@@ -63,7 +64,10 @@ class WreckLength():
             else:
                 # Draw the line on the actual canvas
                 self.preview = self.canvas.copy()
-                cv2.rectangle(self.preview, (self.clickList[0][0],self.clickList[0][1]), (self.clickList[1][0], self.clickList[1][1]), (0, 0, 0), 5)
+                for x in range (0,3):
+                    cv2.line(self.preview, (self.clickList[x][0],self.clickList[x][1]),(self.clickList[x+1][0],self.clickList[x+1][1]), self.line_color, thickness= 6)
+                cv2.line(self.preview, (self.clickList[3][0],self.clickList[3][1]),(self.clickList[0][0],self.clickList[0][1]), self.line_color, thickness= 6)
+                #cv2.rectangle(self.preview, (self.clickList[0][0],self.clickList[0][1]), (self.clickList[2][0], self.clickList[2][1]), (0, 0, 0), 5)
                 cv2.imshow('image', self.preview)
                 cv2.waitKey(0)
                 cv2.destroyAllWindows()
