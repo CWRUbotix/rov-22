@@ -26,6 +26,7 @@ class KeyboardControl(BaseTask):
 
     def periodic(self):
         """Set vehicle inputs based on pressed keys"""
+        # Possible values for each input: -sensitivity, 0, +sensitivity
         inputs = {
             InputChannel.FORWARD:  (self.keys_down[Qt.Key_W] - self.keys_down[Qt.Key_S]) * TRANSLATION_SENSITIVITY,
             InputChannel.LATERAL:  (self.keys_down[Qt.Key_D] - self.keys_down[Qt.Key_A]) * TRANSLATION_SENSITIVITY,

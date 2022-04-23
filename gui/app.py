@@ -9,6 +9,7 @@ from gui.data_classes import Frame
 from gui.video_thread import VideoThread
 from gui.widgets.tabs import MainTab, DebugTab, ImageDebugTab, VideoTab
 from logger import root_logger
+from tasks.button_docking import ButtonDocking
 from tasks.no_button_docking import NoButtonDocking
 from vehicle.vehicle_control import VehicleControl
 from tasks.scheduler import TaskScheduler
@@ -85,6 +86,7 @@ class App(QWidget):
 
         # Create the autonomous tasks
         self.no_button_docking_task = NoButtonDocking(self.vehicle)
+        self.button_docking_task = ButtonDocking(self.vehicle)
 
         # Setup GUI logging
         gui_formatter = logging.Formatter("[{levelname}] {message}", style="{")
@@ -144,6 +146,9 @@ class App(QWidget):
         # Connect the task buttons to the task they control
         self.main_tab.widgets.task_buttons.no_button_docking.clicked.connect(
             lambda: self.task_scheduler.start_task(self.no_button_docking_task)
+        )
+        self.main_tab.widgets.task_buttons.button_docking.clicked.connect(
+            lambda: self.task_scheduler.start_task(self.button_docking_task)
         )
 
     def keyPressEvent(self, event):
