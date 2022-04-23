@@ -13,7 +13,8 @@ from tasks.no_button_docking import NoButtonDocking
 from vehicle.vehicle_control import VehicleControl
 from tasks.scheduler import TaskScheduler
 from tasks.keyboard_control import KeyboardControl
-
+from tasks.controller_drive import ControllerDrive
+from controller.controller import get_active_controller
 from util import data_path
 
 # The name of the logger will be included in debug messages, so set it to the name of the file to make the log traceable
@@ -52,6 +53,10 @@ class App(QWidget):
         # Dictionary to keep track of which keys are pressed. If a key is not in the dict, assume it is not pressed.
         self.keysDown = defaultdict(lambda: False)
 
+        # Instance of controller
+        self.controller = get_active_controller()
+        self.controller.start_monitoring()
+
         # Create a tab widget
         self.tabs = QTabWidget()
         self.main_tab = MainTab(len(self.video_thread._video_sources))
@@ -75,7 +80,8 @@ class App(QWidget):
 
         # Setup the task scheduling thread
         self.task_scheduler = TaskScheduler(self.vehicle)
-        self.task_scheduler.default_task = KeyboardControl(self.vehicle, self.keysDown)
+        # self.task_scheduler.default_task = KeyboardControl(self.vehicle, self.keysDown)
+        self.task_scheduler.default_task = ControllerDrive(self.vehicle, self.controller)
 
         # Create the autonomous tasks
         self.no_button_docking_task = NoButtonDocking(self.vehicle)
