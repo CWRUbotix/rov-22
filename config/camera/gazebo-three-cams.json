@@ -1,0 +1,19 @@
+{
+	"sources": [
+		{
+			"api": "CAP_GSTREAMER",
+			"template": "gstreamer-display-jpeg",
+			"content": "5600"
+		},
+		{
+			"api": "CAP_GSTREAMER",
+			"template": "gstreamer-display-jpeg",
+			"content": "5601"
+		},
+		{
+			"api": "CAP_GSTREAMER",
+			"template": "gstreamer-display-jpeg",
+			"content": "5602"
+		}
+	]
+}

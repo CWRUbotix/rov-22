@@ -11,6 +11,8 @@ logger = root_logger.getChild(__name__)
 
 TIMEOUT = 2  # Seconds without a message before we assume the connection's lost
 
+BACKWARD_CAM_INDICES = (2,)
+
 
 class InputChannel(enum.Enum):
     PITCH = 1

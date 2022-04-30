@@ -143,10 +143,10 @@ class VideoThread(QThread):
 
             for source in json_data["sources"]:
                 content = ""
-                
-                if not "content" in source or not "api" in source:
+
+                if "content" not in source or not "api" in source:
                     logger.error('Error reading config JSON: missing content or api fields')
-                elif not "template" in source:
+                elif "template" not in source:
                     content = source["content"]
                 elif source["template"] == "file":
                     content = os.path.join(data_path, source["content"])
@@ -160,6 +160,6 @@ class VideoThread(QThread):
                             content += section
                 else:
                     content = source["content"]
-                
+
                 if hasattr(cv2, source["api"]):
-                    self._video_sources.append( VideoSource(content, getattr(cv2, source["api"])) )
+                    self._video_sources.append(VideoSource(content, getattr(cv2, source["api"])))

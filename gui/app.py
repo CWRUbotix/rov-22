@@ -56,7 +56,8 @@ class App(QWidget):
 
         # Instance of controller
         self.controller = get_active_controller()
-        self.controller.start_monitoring()
+        if self.controller is not None:
+            self.controller.start_monitoring()
 
         # Create a tab widget
         self.tabs = QTabWidget()
@@ -81,8 +82,11 @@ class App(QWidget):
 
         # Setup the task scheduling thread
         self.task_scheduler = TaskScheduler(self.vehicle)
-        # self.task_scheduler.default_task = KeyboardControl(self.vehicle, self.keysDown)
-        self.task_scheduler.default_task = ControllerDrive(self.vehicle, self.controller)
+        if self.controller is not None:
+            self.task_scheduler.default_task = ControllerDrive(self.vehicle, self.controller, self.get_big_video_index)
+        else:
+            self.task_scheduler.default_task = KeyboardControl(self.vehicle, self.keysDown, self.get_big_video_index)
+
 
         # Create the autonomous tasks
         self.no_button_docking_task = NoButtonDocking(self.vehicle)
@@ -178,6 +182,13 @@ class App(QWidget):
     def closeEvent(self, event):
         self.video_thread.stop()
         event.accept()
+
+    def get_big_video_index(self):
+        tab = self.tabs.currentWidget()
+        if isinstance(tab, VideoTab):
+            return tab.widgets.video_area.get_big_video_cam_index()
+        else:
+            return None
 
     @pyqtSlot(Frame)
     def update_image(self, frame: Frame):
