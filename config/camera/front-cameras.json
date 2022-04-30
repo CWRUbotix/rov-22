@@ -1,0 +1,9 @@
+{
+	"sources": [
+		{
+			"api": "CAP_GSTREAMER",
+			"template": "gstreamer-display-jpeg",
+			"content": "5600"
+		}
+	]
+}

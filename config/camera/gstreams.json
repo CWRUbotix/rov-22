@@ -1,0 +1,14 @@
+{
+	"sources": [
+		{
+			"api": "CAP_FFMPEG",
+			"template": "file",
+			"content": "example-streams/1.mp4"
+		},
+		{
+			"api": "CAP_GSTREAMER",
+			"template": "gstreamer-record-jpeg",
+			"content": "5600"
+		}
+	]
+}
