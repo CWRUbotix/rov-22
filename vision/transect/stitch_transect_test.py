@@ -18,7 +18,7 @@ class TestStitchTransect(unittest.TestCase):
         # Set image for each square in the stticher
         for i in range(1, 9):
 
-            test_set = 2
+            test_set = 0
 
             subfolder_path = os.path.join(folder_A, str(i))
             image_name = os.listdir(subfolder_path)[test_set]
@@ -79,7 +79,7 @@ class TestStitchTransect(unittest.TestCase):
 if __name__ == "__main__":
     """
     To run a specific test:
-    python3 vision/transect/stitch_transect_test.py TestStitchTransect.<name of test>
+    python3 vision/transect/stitch_transect_test.py TestStitchTransect.browse_images
     """
 
     unittest.main()
