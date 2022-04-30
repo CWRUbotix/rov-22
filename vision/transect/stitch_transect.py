@@ -35,23 +35,25 @@ class StitchTransect():
         # Make the blue mask
         blue = colors_found[self.color_index(hues, 120)]
 
-        lower_blue = np.array([blue[0]-50, blue[1]-50, blue[2]-90])
-        upper_blue = np.array([blue[0]+50, blue[1]+50, blue[2]+90])
+        lower_blue = np.array([blue[0]-20, 0, 0])
+        upper_blue = np.array([blue[0]+20, 255, 255])
 
-        blue_mask = cv2.inRange(image, lower_blue, upper_blue)
+        blue_mask = cv2.inRange(hsv_image, lower_blue, upper_blue)
         mask = blue_mask
 
-        # Yellow mask for specific squares
         if id not in [3, 4, 5, 6]:
-            yellow = colors_found[self.color_index(hues, 60)]
+            yellow = colors_found[self.color_index(hues, 20)]
 
-            lower_yellow = np.array([yellow[0]-50, yellow[1]-50, yellow[2]-50])
-            upper_yellow = np.array([yellow[0]+50, yellow[1]+50, yellow[2]+50])
+            lower_yellow = np.array([yellow[0], 0, 0])
+            upper_yellow = np.array([yellow[0]+80, 255, 255])
 
-            yellow_mask = cv2.inRange(image, lower_yellow, upper_yellow)
+            yellow_mask = cv2.inRange(hsv_image, lower_yellow, upper_yellow)
+
             mask += yellow_mask
 
-        mask = cv2.bitwise_not(mask)
+        # Resize mask to size of original image
+        height, width, _ = image.shape
+        mask = cv2.resize(mask, (width, height))
 
         return mask
 
@@ -61,21 +63,26 @@ class StitchTransect():
     def find_rectangle(self, id):
         image = self.images.get(id).image
 
+        # gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        # blur = cv2.GaussianBlur(gray,(1,1),1000)
+        # edges1 = cv2.Canny(blur, 50, 150, apertureSize=3)
+
+        # mask = self.colors(id)
+        # edges2 = cv2.Canny(mask, 50, 150, apertureSize=3)
+
+        # edges = edges1 + edges2
+
         gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-        blur = cv2.GaussianBlur(gray,(1,1),1000)
-        edges1 = cv2.Canny(blur, 50, 150, apertureSize=3)
+        _, thresh = cv2.threshold(gray, 120, 255, cv2.THRESH_BINARY_INV)
+        # _, thresh = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY_INV | cv2.THRESH_OTSU)
 
         mask = self.colors(id)
-        edges2 = cv2.Canny(mask, 50, 150, apertureSize=3)
 
-        height, width = edges1.shape
-        edges2 = imutils.resize(edges2, width, height)
-
-        edges = edges1 + edges2
+        combined = thresh # + mask (works better without mask for some reason...)
 
         # Find all the lines in the image
         lines = np.zeros_like(image)
-        all_lines = cv2.HoughLinesP(edges, 1, np.pi/180, 100, minLineLength=400, maxLineGap=300)
+        all_lines = cv2.HoughLinesP(combined, 1, np.pi/180, 100, minLineLength=400, maxLineGap=300)
         
         if all_lines is not None:
             for points in all_lines:
