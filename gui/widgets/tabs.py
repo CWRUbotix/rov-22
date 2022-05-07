@@ -5,6 +5,7 @@ from PyQt5 import QtCore
 from PyQt5.QtCore import pyqtSignal, pyqtSlot
 from PyQt5.QtGui import QColor, QTextCursor, QFont
 from PyQt5.QtWidgets import QComboBox, QFileDialog, QHBoxLayout, QLabel, QPushButton, QVBoxLayout, QWidget, QTextEdit, QFrame
+from gui.widgets.debug_filter_widget import DebugFilterWidget
 
 from gui.widgets.gazebo_control_widget import GazeboControlWidget
 from gui.widgets.vehicle_status_widget import VehicleStatusWidget
@@ -13,7 +14,7 @@ from gui.widgets.video_controls_widget import VideoControlsWidget
 from gui.widgets.video_widgets import VideoArea
 from gui.data_classes import Frame, VideoSource
 from gui.widgets.arm_control_widget import ArmControlWidget
-from gui.decorated_functions import dropdown
+from gui.debug_filter_functions import filter_dropdown
 from gui.widgets.map_wreck_widget import MapWreckWidget
 
 # Temporary imports for basic image debug tab
@@ -175,15 +176,18 @@ class DebugTab(VideoTab):
         super().init_widgets()
 
         # Creating combo_box and adding the functions
-        combo_box = QComboBox()
+        # combo_box = QComboBox()
 
-        for func_name in dropdown.func_dictionary.keys():
-            combo_box.addItem(func_name)
+        # for func_name in filter_dropdown.func_dictionary.keys():
+        #     combo_box.addItem(func_name)
 
-        combo_box.currentTextChanged.connect(self.update_current_filter)
-        self.update_current_filter(combo_box.currentText())
+        # combo_box.currentTextChanged.connect(self.update_current_filter)
+        # self.update_current_filter(combo_box.currentText())
 
-        self.widgets.filter_dropdown = combo_box
+        # self.widgets.filter_dropdown = combo_box
+
+        debug_filter = DebugFilterWidget()
+        self.widgets.debug_filter = debug_filter
 
         # Add video control buttons
         video_controls = VideoControlsWidget()
@@ -206,7 +210,7 @@ class DebugTab(VideoTab):
         sidebar = self.layouts.sidebar
 
         sidebar.addWidget(header_label("Filter"))
-        sidebar.addWidget(self.widgets.filter_dropdown)
+        sidebar.addWidget(self.widgets.debug_filter)
 
         sidebar.addWidget(header_label("Video Controls"))
         sidebar.addWidget(self.widgets.video_controls)
@@ -231,22 +235,22 @@ class DebugTab(VideoTab):
     def handle_frame(self, frame: Frame):
         # Apply the selected filter from the dropdown
         if frame.cam_index == self.widgets.video_area.get_big_video_cam_index():
-            frame.cv_img = self.apply_filter(frame.cv_img)
+            frame.cv_img = self.widgets.debug_filter.apply_filter(frame.cv_img)
 
         super().handle_frame(frame)
 
-    def update_current_filter(self, text):
-        """
-        Calls the function selected in the dropdown menu
-        :param text: Name of the function to call
-        """
+    # def update_current_filter(self, text):
+    #     """
+    #     Calls the function selected in the dropdown menu
+    #     :param text: Name of the function to call
+    #     """
 
-        self.current_filter = text
+    #     self.current_filter = text
 
-    def apply_filter(self, frame: Frame):
-        """
-        Applies filter from the dropdown menu to the given frame
-        :param frame: frame to apply filter to
-        :return: frame with filter applied
-        """
-        return dropdown.func_dictionary.get(self.current_filter)(frame)
+    # def apply_filter(self, frame: Frame):
+    #     """
+    #     Applies filter from the dropdown menu to the given frame
+    #     :param frame: frame to apply filter to
+    #     :return: frame with filter applied
+    #     """
+    #     return filter_dropdown.func_dictionary.get(self.current_filter)(frame)

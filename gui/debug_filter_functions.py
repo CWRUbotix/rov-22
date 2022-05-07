@@ -1,13 +1,13 @@
 import cv2
-from gui.decorator import Decorator
+from gui.debug_filter import DebugFilter
 import numpy as np
 from PIL import Image
 from tasks.button_docking import get_button_contour
 
-dropdown = Decorator()
+filter_dropdown = DebugFilter()
 
 
-@dropdown(name="None")
+@filter_dropdown(name="None")
 def none(image):
     """
     Returns the given image
@@ -17,7 +17,7 @@ def none(image):
     return image
 
 
-@dropdown(name="Gray")
+@filter_dropdown(name="Gray")
 def convert_to_gray(image):
     """
     Converts the given image to grayscale
@@ -26,7 +26,7 @@ def convert_to_gray(image):
     """
     return cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
-@dropdown(name="Mask for Red")
+@filter_dropdown(name="Mask for Red")
 def mask_for_red(image):
     """
     Draws a green rectangle around the red button
