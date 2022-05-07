@@ -175,17 +175,7 @@ class DebugTab(VideoTab):
     def init_widgets(self):
         super().init_widgets()
 
-        # Creating combo_box and adding the functions
-        # combo_box = QComboBox()
-
-        # for func_name in filter_dropdown.func_dictionary.keys():
-        #     combo_box.addItem(func_name)
-
-        # combo_box.currentTextChanged.connect(self.update_current_filter)
-        # self.update_current_filter(combo_box.currentText())
-
-        # self.widgets.filter_dropdown = combo_box
-
+        # Add filter dropdown
         debug_filter = DebugFilterWidget()
         self.widgets.debug_filter = debug_filter
 
@@ -238,19 +228,3 @@ class DebugTab(VideoTab):
             frame.cv_img = self.widgets.debug_filter.apply_filter(frame.cv_img)
 
         super().handle_frame(frame)
-
-    # def update_current_filter(self, text):
-    #     """
-    #     Calls the function selected in the dropdown menu
-    #     :param text: Name of the function to call
-    #     """
-
-    #     self.current_filter = text
-
-    # def apply_filter(self, frame: Frame):
-    #     """
-    #     Applies filter from the dropdown menu to the given frame
-    #     :param frame: frame to apply filter to
-    #     :return: frame with filter applied
-    #     """
-    #     return filter_dropdown.func_dictionary.get(self.current_filter)(frame)

@@ -6,7 +6,6 @@ from tasks.button_docking import get_button_contour
 
 filter_dropdown = DebugFilter()
 
-
 @filter_dropdown(name="None")
 def none(image):
     """
