@@ -145,7 +145,6 @@ class XboxController(Controller):
         self.MAX_TRIG_VAL = 1024
 
     class JoystickAxis(Controller.JoystickAxis):
-        pass
         LeftStickX = "ABS_X"
         LeftStickY = "ABS_Y"
         RightStickX = "ABS_RX"
@@ -154,12 +153,10 @@ class XboxController(Controller):
         DPadY = "ABS_HAT0Y"
 
     class Trigger(Controller.Trigger):
-        pass
         LeftTrigger = "ABS_Z"
         RightTrigger = "ABS_RZ"
 
     class Button(Controller.Button):
-        pass
         LeftBumper = "BTN_TL"
         RightBumper = "BTN_TR"
         A = "BTN_SOUTH"
@@ -203,8 +200,9 @@ def get_active_controller():
         name = device.name.lower()
         if "steam" in name:
             return SteamController()
-        if "xbox" in name:
+        if "xbox" in name or "microsoft" in name:
             return XboxController()
+    return None
 
 
 if __name__ == '__main__':
