@@ -1,6 +1,7 @@
+import typing as t
 import enum
 import time
-import typing as t
+import socket
 
 from PyQt5.QtCore import pyqtSignal, QObject
 from pymavlink import mavutil, mavlink
@@ -12,6 +13,9 @@ logger = root_logger.getChild(__name__)
 TIMEOUT = 2  # Seconds without a message before we assume the connection's lost
 
 BACKWARD_CAM_INDICES = (2,)
+
+HOST = "192.168.2.2"  # The server's hostname or IP address
+PORT = 60000  # The port used by the server
 
 
 class InputChannel(enum.Enum):
@@ -28,6 +32,15 @@ class InputChannel(enum.Enum):
     VIDEO_SWITCH = 11
 
 
+class Relay(enum.Enum):
+    PVC_FRONT = 0  # Hardware pin
+    CLAW_FRONT = 1
+    PVC_BACK = 2
+    CLAW_BACK = 3
+    MAGNET = 4
+    LIGHTS = 5
+
+
 class VehicleControl(QObject):
     connected_signal = pyqtSignal()
     disconnected_signal = pyqtSignal()
@@ -41,6 +54,9 @@ class VehicleControl(QObject):
         self.armed = False
 
         self.link = mavutil.mavlink_connection(f'udpin:0.0.0.0:{port}')
+
+        self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.socket.setblocking(False)
 
     def update(self):
         msg = self.link.wait_heartbeat(blocking=False)
@@ -68,9 +84,11 @@ class VehicleControl(QObject):
 
     def arm(self) -> None:
         self.link.arducopter_arm()
+        self.socket.connect_ex((HOST, PORT))
         logger.info("Arm command sent")
 
     def disarm(self) -> None:
+        self.turn_off_relays()
         self.link.arducopter_disarm()
         logger.info("Disarm command sent")
 
@@ -126,5 +144,18 @@ class VehicleControl(QObject):
         })
         logger.debug("Thrusters stopped")
 
-    def update_relays(self, relay_number: int, state: bool):
-        pass
+    def set_relay(self, relay: Relay, state: bool):
+        if not self.is_connected() or (not self.is_armed() and state):
+            return
+
+        logger.debug(f"Setting relay {relay.value} to {state}")
+
+        try:
+            self.socket.sendall(bytes([relay.value, int(state)]))
+        except Exception:
+            logger.error(f"Error in socket message sending")
+
+    def turn_off_relays(self):
+        for relay in Relay:
+            self.set_relay(relay, False)
+

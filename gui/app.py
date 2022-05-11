@@ -11,12 +11,11 @@ from gui.widgets.tabs import MainTab, DebugTab, ImageDebugTab, VideoTab
 from logger import root_logger
 from tasks.button_docking import ButtonDocking
 from tasks.no_button_docking import NoButtonDocking
-from vehicle.vehicle_control import VehicleControl
+from vehicle.vehicle_control import VehicleControl, Relay
 from tasks.scheduler import TaskScheduler
 from tasks.keyboard_control import KeyboardControl
 from tasks.controller_drive import ControllerDrive
 from controller.controller import get_active_controller
-from util import data_path
 
 # The name of the logger will be included in debug messages, so set it to the name of the file to make the log traceable
 logger = root_logger.getChild(__name__)
@@ -54,11 +53,6 @@ class App(QWidget):
         # Dictionary to keep track of which keys are pressed. If a key is not in the dict, assume it is not pressed.
         self.keysDown = defaultdict(lambda: False)
 
-        # Instance of controller
-        self.controller = get_active_controller()
-        if self.controller is not None:
-            self.controller.start_monitoring()
-
         # Create a tab widget
         self.tabs = QTabWidget()
         self.main_tab = MainTab(len(self.video_thread._video_sources))
@@ -80,13 +74,17 @@ class App(QWidget):
         # Create VehicleControl object to handle the connection to the ROV
         self.vehicle = VehicleControl(port=14550)
 
+        # Creat an instance of controller
+        self.controller = get_active_controller(self.main_tab.widgets.video_area.get_big_video_cam_index)
+        if self.controller is not None:
+            self.controller.start_monitoring()
+
         # Setup the task scheduling thread
         self.task_scheduler = TaskScheduler(self.vehicle)
         if self.controller is not None:
             self.task_scheduler.default_task = ControllerDrive(self.vehicle, self.controller, self.get_big_video_index)
         else:
             self.task_scheduler.default_task = KeyboardControl(self.vehicle, self.keysDown, self.get_big_video_index)
-
 
         # Create the autonomous tasks
         self.no_button_docking_task = NoButtonDocking(self.vehicle)
@@ -137,6 +135,10 @@ class App(QWidget):
             self.vehicle.disconnected_signal.connect(tab.widgets.vehicle_status.on_disconnect)
             self.task_scheduler.change_task_signal.connect(tab.widgets.vehicle_status.on_task_change)
 
+            # Register the change big video method with the controller
+            if self.controller is not None:
+                self.controller.register_camera_callback(tab.widgets.video_area.set_as_big_video)
+
         # Connect DebugTab's selecting files signal to video thread's on_select_filenames
         self.debug_tab.select_files_signal.connect(self.video_thread.on_select_filenames)
 
@@ -154,6 +156,43 @@ class App(QWidget):
         self.main_tab.widgets.task_buttons.button_docking.clicked.connect(
             lambda: self.task_scheduler.start_task(self.button_docking_task)
         )
+
+        # Connect the main video area big cam changed signal to the manipulator control prompts
+        self.main_tab.widgets.video_area.big_video_changed_signal.connect(self.main_tab.show_prompts_for_cam)
+
+        for relay_button in (
+            self.main_tab.widgets.front_deployer_button,
+            self.main_tab.widgets.front_claw_button,
+            self.main_tab.widgets.back_deployer_button,
+            self.main_tab.widgets.back_claw_button,
+            self.main_tab.widgets.magnet_button,
+            self.main_tab.widgets.lights_button,
+        ):
+            self.vehicle.armed_signal.connect(relay_button.enable_click)
+            self.vehicle.disarmed_signal.connect(relay_button.on_disarm)
+            self.vehicle.disconnected_signal.connect(relay_button.on_disarm)
+
+        # Connect the manipulator buttons to their manipulators
+        self.main_tab.widgets.front_deployer_button.state_change_signal.connect(
+            lambda state: self.vehicle.set_relay(Relay.PVC_FRONT, state))
+        self.main_tab.widgets.front_claw_button.state_change_signal.connect(
+            lambda state: self.vehicle.set_relay(Relay.CLAW_FRONT, state))
+        self.main_tab.widgets.back_deployer_button.state_change_signal.connect(
+            lambda state: self.vehicle.set_relay(Relay.PVC_BACK, state))
+        self.main_tab.widgets.back_claw_button.state_change_signal.connect(
+            lambda state: self.vehicle.set_relay(Relay.CLAW_BACK, state))
+        self.main_tab.widgets.magnet_button.state_change_signal.connect(
+            lambda state: self.vehicle.set_relay(Relay.MAGNET, state))
+        self.main_tab.widgets.lights_button.state_change_signal.connect(
+            lambda state: self.vehicle.set_relay(Relay.LIGHTS, state))
+
+        if self.controller is not None:
+            self.controller.register_relay_callback(Relay.PVC_FRONT, self.main_tab.widgets.front_deployer_button.toggle)
+            self.controller.register_relay_callback(Relay.CLAW_FRONT, self.main_tab.widgets.front_claw_button.toggle)
+            self.controller.register_relay_callback(Relay.PVC_BACK, self.main_tab.widgets.back_deployer_button.toggle)
+            self.controller.register_relay_callback(Relay.CLAW_BACK, self.main_tab.widgets.back_claw_button.toggle)
+            self.controller.register_relay_callback(Relay.MAGNET, self.main_tab.widgets.magnet_button.toggle)
+            self.controller.register_relay_callback(Relay.LIGHTS, self.main_tab.widgets.lights_button.toggle)
 
     def keyPressEvent(self, event):
         """Sets keyboard keys to different actions"""
