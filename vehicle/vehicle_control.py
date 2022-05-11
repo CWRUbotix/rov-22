@@ -51,8 +51,9 @@ class VehicleControl(QObject):
 
             self.last_msg_time = time.time()
             msg_dict = msg.to_dict()
+            logger.info('MESSAGE: ' + str(msg_dict))
 
-            armed = msg_dict.get("system_status", None) == mavlink.MAV_STATE_ACTIVE
+            armed = msg_dict.get("base_mode", None) & 0x80 == 0x80
 
             if armed != self.armed:
                 if armed:
@@ -124,3 +125,6 @@ class VehicleControl(QObject):
             InputChannel.ROLL: 0,
         })
         logger.debug("Thrusters stopped")
+
+    def update_relays(self, relay_number: int, state: bool):
+        pass
