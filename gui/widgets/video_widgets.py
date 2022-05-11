@@ -9,25 +9,28 @@ from gui.data_classes import Frame
 
 
 class VideoArea(QWidget):
+    big_video_changed_signal = pyqtSignal(int)
+
     def __init__(self, num_video_widgets):
         super().__init__()
 
-        self.root_layout = QVBoxLayout(self)
+        self.root_layout = QHBoxLayout(self)
         self.setLayout(self.root_layout)
 
-        self.small_videos_layout = QHBoxLayout()
+        self.small_videos_layout = QVBoxLayout()
         self.small_videos_layout.setContentsMargins(0, 0, 0, 0)
 
-        # Create VideoWidgets with click events and add them to horizontal_layout
-        self.video_widgets = []
+        big_video = VideoWidget(0, True)
+        self.root_layout.addWidget(big_video, 5)
+
+        # Create the small VideoWidgets with click events and add them to horizontal_layout
+        self.video_widgets = [big_video]
         for i in range(0, num_video_widgets):
-            self.video_widgets.append(VideoWidget(i, i == 0))
-            if i == 0:  # Big video
-                self.root_layout.addWidget(self.video_widgets[i], 5)
-            else:       # Small videos
-                self.video_widgets[i].update_big_video_signal.connect(self.set_as_big_video)
-                self.small_videos_layout.addWidget(self.video_widgets[i])
-        
+            video = VideoWidget(i, False)
+            self.video_widgets.append(video)
+            video.update_big_video_signal.connect(self.set_as_big_video)
+            self.small_videos_layout.addWidget(video, 1)
+
         self.root_layout.addLayout(self.small_videos_layout, 2)
     
     def get_big_video_cam_index(self):
@@ -48,11 +51,8 @@ class VideoArea(QWidget):
     @pyqtSlot(int)
     def set_as_big_video(self, cam_index: int):
         """Swap the video with the given cam_index and the big video"""
-        for video_widget in self.video_widgets:
-            if video_widget.cam_index == cam_index:
-                video_widget.cam_index = self.video_widgets[0].cam_index
-        
         self.video_widgets[0].cam_index = cam_index
+        self.big_video_changed_signal.emit(cam_index)
 
 
 class VideoWidget(QLabel):

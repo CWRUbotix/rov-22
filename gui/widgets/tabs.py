@@ -3,8 +3,9 @@ from types import SimpleNamespace
 
 from PyQt5 import QtCore
 from PyQt5.QtCore import pyqtSignal, pyqtSlot
-from PyQt5.QtGui import QColor, QTextCursor, QFont
-from PyQt5.QtWidgets import QComboBox, QFileDialog, QHBoxLayout, QLabel, QPushButton, QVBoxLayout, QWidget, QTextEdit, QFrame
+from PyQt5.QtGui import QColor, QTextCursor, QFont, QPixmap
+from PyQt5.QtWidgets import QComboBox, QFileDialog, QHBoxLayout, QLabel, QPushButton, QVBoxLayout, QWidget, QTextEdit, \
+    QFrame, QGridLayout
 
 from gui.widgets.gazebo_control_widget import GazeboControlWidget
 from gui.widgets.vehicle_status_widget import VehicleStatusWidget
@@ -15,6 +16,9 @@ from gui.data_classes import Frame, VideoSource
 from gui.widgets.arm_control_widget import ArmControlWidget
 from gui.decorated_functions import dropdown
 from gui.widgets.map_wreck_widget import MapWreckWidget
+from gui.widgets.relay_toggle_button import RelayToggleButton
+
+from vehicle.vehicle_control import BACKWARD_CAM_INDICES
 
 # Temporary imports for basic image debug tab
 import os
@@ -133,7 +137,13 @@ def header_label(text: str) -> QLabel:
 
 
 class MainTab(VideoTab):
+
     def __init__(self, num_video_streams):
+        self.right_bumper_image = QPixmap("gui/resources/XboxSeriesX_RB.png")
+        self.left_bumper_image = QPixmap("gui/resources/XboxSeriesX_LB.png")
+        self.x_button_image = QPixmap("gui/resources/XboxSeriesX_X.png")
+        self.y_button_image = QPixmap("gui/resources/XboxSeriesX_Y.png")
+
         super().__init__(num_video_streams)
 
     def init_widgets(self):
@@ -141,6 +151,12 @@ class MainTab(VideoTab):
         self.widgets.arm_control = ArmControlWidget()
         self.widgets.vehicle_status = VehicleStatusWidget()
         self.widgets.map_wreck = MapWreckWidget()
+        self.widgets.front_deployer_button = RelayToggleButton("Front Deployer", control_prompt_image=self.left_bumper_image)
+        self.widgets.front_claw_button = RelayToggleButton("Front Claw", control_prompt_image=self.right_bumper_image)
+        self.widgets.back_deployer_button = RelayToggleButton("Back Deployer", control_prompt_image=self.left_bumper_image)
+        self.widgets.back_claw_button = RelayToggleButton("Back Claw", control_prompt_image=self.right_bumper_image)
+        self.widgets.magnet_button = RelayToggleButton("Magnet", control_prompt_image=self.x_button_image)
+        self.widgets.lights_button = RelayToggleButton("Lights", control_prompt_image=self.y_button_image)
 
         # Create a new namespace to group all the buttons for starting tasks
         self.widgets.task_buttons = SimpleNamespace()
@@ -157,9 +173,41 @@ class MainTab(VideoTab):
         sidebar.addWidget(self.widgets.task_buttons.button_docking)
         sidebar.addWidget(self.widgets.map_wreck)
 
+        sidebar.addWidget(header_label("Manipulators"))
+        manipulator_grid = QGridLayout()
+        self.layouts.manipulator_grid = manipulator_grid
+
+        for i, button in enumerate((
+            self.widgets.front_deployer_button,
+            self.widgets.front_claw_button,
+            self.widgets.back_deployer_button,
+            self.widgets.back_claw_button,
+            self.widgets.magnet_button,
+            self.widgets.lights_button
+        )):
+            # Add control prompt to the first column
+            manipulator_grid.addWidget(button.control_prompt, i, 0, alignment=QtCore.Qt.AlignCenter)
+
+            # Add toggle button to the second column
+            manipulator_grid.addWidget(button, i, 1)
+
+        self.show_prompts_for_cam(0)
+
+        manipulator_grid.setColumnStretch(0, 1)
+        manipulator_grid.setColumnStretch(1, 5)
+        sidebar.addLayout(manipulator_grid)
+
         sidebar.addStretch()
         sidebar.addWidget(self.widgets.arm_control)
         sidebar.addWidget(self.widgets.vehicle_status)
+
+    def show_prompts_for_cam(self, index):
+        facing_backward = index in BACKWARD_CAM_INDICES
+
+        self.widgets.front_deployer_button.control_prompt.setVisible(not facing_backward)
+        self.widgets.front_claw_button.control_prompt.setVisible(not facing_backward)
+        self.widgets.back_deployer_button.control_prompt.setVisible(facing_backward)
+        self.widgets.back_claw_button.control_prompt.setVisible(facing_backward)
 
 
 class DebugTab(VideoTab):

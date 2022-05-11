@@ -31,7 +31,6 @@ class ControllerDrive(BaseTask):
             for channel in (InputChannel.FORWARD, InputChannel.LATERAL, InputChannel.PITCH, InputChannel.ROLL):
                 inputs[channel] *= -1
 
-
         self.vehicle.set_rc_inputs(inputs)
 
     def end(self):

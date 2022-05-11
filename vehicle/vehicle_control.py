@@ -87,8 +87,8 @@ class VehicleControl(QObject):
         logger.info("Arm command sent")
 
     def disarm(self) -> None:
+        self.turn_off_relays()
         self.link.arducopter_disarm()
-        self.socket.close()
         logger.info("Disarm command sent")
 
     def is_connected(self) -> bool:
@@ -144,8 +144,17 @@ class VehicleControl(QObject):
         logger.debug("Thrusters stopped")
 
     def set_relay(self, relay: Relay, state: bool):
+        if not self.is_connected() or (not self.is_armed() and state):
+            return
+
+        logger.debug(f"Setting relay {relay.value} to {state}")
+
         try:
             self.socket.sendall(bytes([relay.value, int(state)]))
-        except Exception as e:
+        except Exception:
             logger.error(f"Error in socket message sending")
+
+    def turn_off_relays(self):
+        for relay in Relay:
+            self.set_relay(relay, False)
 
