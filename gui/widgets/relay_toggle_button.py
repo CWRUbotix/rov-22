@@ -25,8 +25,9 @@ class RelayToggleButton(QPushButton):
             self.relay_off()
 
     def toggle(self):
-        super().toggle()
-        self.send_state()
+        if self.isEnabled():
+            super().toggle()
+            self.send_state()
 
     def relay_off(self):
         self.setChecked(False)

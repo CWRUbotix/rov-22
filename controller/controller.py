@@ -212,19 +212,20 @@ class XboxController(Controller):
             super()._handle_event(event)
 
     def get_vehicle_inputs(self):
-        roll_mode = self.get(XboxController.Button.LeftBumper)
+        roll_mode = self.get(XboxController.Button.A)
 
         return {
             InputChannel.FORWARD: -self.get(
                 XboxController.JoystickAxis.LeftStickY) * TRANSLATION_SENSITIVITY,
-            InputChannel.LATERAL: self.get(XboxController.JoystickAxis.LeftStickX) * TRANSLATION_SENSITIVITY,
+            InputChannel.LATERAL: 0 if roll_mode else self.get(
+                XboxController.JoystickAxis.LeftStickX) * TRANSLATION_SENSITIVITY,
             InputChannel.THROTTLE: (self.get(XboxController.Trigger.RightTrigger) -
                                     self.get(XboxController.Trigger.LeftTrigger)) * TRANSLATION_SENSITIVITY,
             InputChannel.PITCH: self.get(XboxController.JoystickAxis.RightStickY) * ROTATIONAL_SENSITIVITY,
-            InputChannel.YAW: 0 if roll_mode else self.get(
+            InputChannel.YAW: self.get(
                 XboxController.JoystickAxis.RightStickX) * ROTATIONAL_SENSITIVITY,
-            InputChannel.ROLL: 0 if not roll_mode else self.get(
-                XboxController.JoystickAxis.RightStickX) * ROTATIONAL_SENSITIVITY,
+            InputChannel.ROLL: 0 if not roll_mode else -self.get(
+                XboxController.JoystickAxis.LeftStickX) * ROTATIONAL_SENSITIVITY,
         }
 
     def check_for_camera_change(self, event):
