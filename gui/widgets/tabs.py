@@ -1,3 +1,4 @@
+from gui.widgets.mode_button import ModeButton
 import logging
 from types import SimpleNamespace
 
@@ -158,6 +159,10 @@ class MainTab(VideoTab):
         self.widgets.magnet_button = RelayToggleButton("Magnet", control_prompt_image=self.x_button_image)
         self.widgets.lights_button = RelayToggleButton("Lights", control_prompt_image=self.y_button_image)
 
+        self.widgets.manual_button = ModeButton("Manual", "MANUAL")
+        self.widgets.stabilize_button = ModeButton("Stabilize", "STABILIZE")
+        self.widgets.depth_hold_button = ModeButton("Depth Hold", "ALT_HOLD")
+
         # Create a new namespace to group all the buttons for starting tasks
         self.widgets.task_buttons = SimpleNamespace()
         self.widgets.task_buttons.no_button_docking = QPushButton("Dock (No button)")
@@ -196,6 +201,12 @@ class MainTab(VideoTab):
         manipulator_grid.setColumnStretch(0, 1)
         manipulator_grid.setColumnStretch(1, 5)
         sidebar.addLayout(manipulator_grid)
+
+        mode_grid = QGridLayout()
+        mode_grid.addWidget(self.widgets.manual_button, 0, 0, alignment=QtCore.Qt.AlignCenter)
+        mode_grid.addWidget(self.widgets.stabilize_button, 0, 1, alignment=QtCore.Qt.AlignCenter)
+        mode_grid.addWidget(self.widgets.depth_hold_button, 0, 2, alignment=QtCore.Qt.AlignCenter)
+        sidebar.addLayout(mode_grid)
 
         sidebar.addStretch()
         sidebar.addWidget(self.widgets.arm_control)

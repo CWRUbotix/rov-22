@@ -3,7 +3,7 @@ import enum
 import time
 import socket
 
-from PyQt5.QtCore import pyqtSignal, QObject
+from PyQt5.QtCore import pyqtSignal, pyqtSlot, QObject
 from pymavlink import mavutil, mavlink
 
 from logger import root_logger
@@ -46,17 +46,23 @@ class VehicleControl(QObject):
     disconnected_signal = pyqtSignal()
     armed_signal = pyqtSignal()
     disarmed_signal = pyqtSignal()
+    mode_signal = pyqtSignal(str)
+    set_mode_signal = pyqtSignal(str)
 
     def __init__(self, port):
         super().__init__()
         self.last_msg_time = None
         self.connected = False
         self.armed = False
+        self.mode_id = None
+        self.mode = None
 
         self.link = mavutil.mavlink_connection(f'udpin:0.0.0.0:{port}')
 
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.socket.setblocking(False)
+
+        self.set_mode_signal.connect(self.set_mode)
 
     def update(self):
         msg = self.link.wait_heartbeat(blocking=False)
@@ -73,9 +79,24 @@ class VehicleControl(QObject):
             if armed != self.armed:
                 if armed:
                     self.armed_signal.emit()
+                    print('Try:', list(self.link.mode_mapping().keys()))
                 else:
                     self.disarmed_signal.emit()
-            self.armed = armed
+                self.armed = armed
+            
+            mode_id = msg_dict.get("custom_mode")
+            if mode_id != self.mode_id:
+                mode = None
+                for m, m_id in self.link.mode_mapping().items():
+                    if m_id == mode_id:
+                        mode = m
+                        break
+                
+                self.mode_id = mode_id
+                self.mode = mode
+                logger.info(f'New Mode: {mode}')
+                self.mode_signal.emit(mode)
+
         else:
             if self.connected and time.time() - self.last_msg_time > TIMEOUT:
                 self.disconnected_signal.emit()
@@ -142,6 +163,15 @@ class VehicleControl(QObject):
             InputChannel.ROLL: 0,
         })
         logger.debug("Thrusters stopped")
+    
+    @pyqtSlot(str)
+    def set_mode(self, mode: str):
+        logger.info(f'Setting mode: {mode}')
+        if mode in self.link.mode_mapping():
+            mode_id = self.link.mode_mapping()[mode]
+            self.link.set_mode(mode_id)
+        else:
+            logger.info(f"Unknown mode: {mode}")
 
     def set_relay(self, relay: Relay, state: bool):
         if not self.is_connected() or (not self.is_armed() and state):
