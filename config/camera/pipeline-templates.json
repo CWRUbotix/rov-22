@@ -21,6 +21,6 @@
     "gstreamer-display-jpeg": [
         "udpsrc port=",
         "json.content",
-        " caps=\"application/x-rtp, media=(string)video, encoding-name=(string)JPEG\" ! rtpjpegdepay ! decodebin ! videoconvert ! appsink"
+        " caps=\"application/x-rtp, media=(string)video, encoding-name=(string)JPEG\" ! rtpjpegdepay ! decodebin ! videoflip method=rotate-180 ! videoconvert ! appsink sync=false"
     ]
 }

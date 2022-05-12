@@ -3,6 +3,11 @@
 		{
 			"api": "CAP_GSTREAMER",
 			"template": "gstreamer-display-jpeg",
+			"content": "5002"
+		},
+		{
+			"api": "CAP_GSTREAMER",
+			"template": "gstreamer-display-jpeg",
 			"content": "5001"
 		}
 	]

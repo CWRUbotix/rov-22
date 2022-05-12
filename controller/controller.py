@@ -8,7 +8,7 @@ from enum import Enum
 if __name__ != "__main__":
     from vehicle.vehicle_control import InputChannel, Relay, BACKWARD_CAM_INDICES
 
-TRANSLATION_SENSITIVITY = 0.1
+TRANSLATION_SENSITIVITY = 0.5
 ROTATIONAL_SENSITIVITY = 0.5
 
 FRONT_CAMERA_INDEX = 0
@@ -102,10 +102,10 @@ class Controller:
         """Process an event and call the switch camera callbacks if appropriate"""
         pass
 
-    def register_relay_callback(self, relay: Relay, callback):
+    def register_relay_callback(self, relay: 'Relay', callback):
         self.toggle_relay_callbacks.append((relay, callback))
 
-    def call_relay_callbacks(self, relay: Relay):
+    def call_relay_callbacks(self, relay: 'Relay'):
         for r, callback in self.toggle_relay_callbacks:
             if r == relay:
                 callback()
@@ -257,7 +257,7 @@ def get_active_controller(get_big_video_index):
         name = device.name.lower()
         if "steam" in name:
             return SteamController(get_big_video_index)
-        if "xbox" in name or "microsoft" in name:
+        if "xbox" in name or "microsoft" in name or 'x-box' in name:
             return XboxController(get_big_video_index)
     return None
 

@@ -12,7 +12,7 @@ logger = root_logger.getChild(__name__)
 
 TIMEOUT = 2  # Seconds without a message before we assume the connection's lost
 
-BACKWARD_CAM_INDICES = (2,)
+BACKWARD_CAM_INDICES = (1,)
 
 HOST = "192.168.2.2"  # The server's hostname or IP address
 PORT = 60000  # The port used by the server
@@ -33,11 +33,11 @@ class InputChannel(enum.Enum):
 
 
 class Relay(enum.Enum):
-    PVC_FRONT = 0  # Hardware pin
-    CLAW_FRONT = 1
+    PVC_FRONT = 1  # Hardware pin
+    CLAW_FRONT = 4
     PVC_BACK = 2
     CLAW_BACK = 3
-    MAGNET = 4
+    MAGNET = 0
     LIGHTS = 5
 
 
@@ -67,7 +67,7 @@ class VehicleControl(QObject):
 
             self.last_msg_time = time.time()
             msg_dict = msg.to_dict()
-            logger.info('MESSAGE: ' + str(msg_dict))
+            #logger.info('MESSAGE: ' + str(msg_dict))
 
             armed = msg_dict.get("base_mode", None) & 0x80 == 0x80
 
@@ -152,8 +152,8 @@ class VehicleControl(QObject):
 
         try:
             self.socket.sendall(bytes([relay.value, int(state)]))
-        except Exception:
-            logger.error(f"Error in socket message sending")
+        except Exception as e:
+            logger.error(f"Error in socket message sending: {e}")
 
     def turn_off_relays(self):
         for relay in Relay:
