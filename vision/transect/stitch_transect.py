@@ -1,16 +1,9 @@
 import cv2
+from cv2 import waitKey
 import numpy as np
 import imutils
 from vision.transect.transect_image import TransectImage
 from vision.colors import *
-
-class Rectangle():
-    def __init__(self, x, y, w, h, cnt):
-        self.x = x
-        self.y = y
-        self.w = w
-        self.h = h
-        self.cnt = cnt
 
 class StitchTransect():
 
@@ -21,128 +14,49 @@ class StitchTransect():
     def set_image(self, key, image):
         self.images[key] = image
 
-    def colors(self, id):
-        image = self.images.get(id).image
+    def get_matches(self, img1_gray, img2_gray):
+        orb = cv2.ORB_create(nfeatures=1000)
+        kp1, desc1 = orb.detectAndCompute(img1_gray, None)
+        kp2, desc2 = orb.detectAndCompute(img2_gray, None)
 
-        resized_image = imutils.resize(image, 100)
-        
-        hsv_image = cv2.cvtColor(resized_image, cv2.COLOR_BGR2HSV)
+        matcher = cv2.BFMatcher(cv2.NORM_HAMMING)
+        matches = matcher.knnMatch(desc1, desc2, k=2)
 
-        colors_found = get_colors(hsv_image, 10)
+        good_matches = []
+        for match_1, match_2 in matches:
+            if match_1.distance < 0.6 * match_2.distance:
+                good_matches.append(match_1)
 
-        hues = [i[0] for i in colors_found]
+        draw_params = dict(matchColor=(0,255,0),
+                            singlePointColor=None,
+                            flags=2)
 
-        # Make the blue mask
-        blue = colors_found[self.color_index(hues, 120)]
+        img3 = cv2.drawMatches(img1_gray,kp1, img2_gray,kp2, good_matches,None,**draw_params)
+        # cv2.imshow("original_image_drawMatches.jpg", img3)
+        # cv2.waitKey(0)
 
-        lower_blue = np.array([blue[0]-20, 0, 0])
-        upper_blue = np.array([blue[0]+20, 255, 255])
+        good_kp1 = []
+        good_kp2 = []
 
-        blue_mask = cv2.inRange(hsv_image, lower_blue, upper_blue)
-        mask = blue_mask
+        for match in good_matches:
+            good_kp1.append(kp1[match.queryIdx].pt) # keypoint in image A
+            good_kp2.append(kp2[match.trainIdx].pt) # matching keypoint in image B
 
-        if id not in [3, 4, 5, 6]:
-            yellow = colors_found[self.color_index(hues, 20)]
+        return np.array(good_kp1), np.array(good_kp2)    
 
-            lower_yellow = np.array([yellow[0], 0, 0])
-            upper_yellow = np.array([yellow[0]+80, 255, 255])
+    def stitch_pair(self, img1, img2):
+        img1_gray = cv2.cvtColor(img1, cv2.COLOR_BGR2GRAY)
+        img2_gray = cv2.cvtColor(img2, cv2.COLOR_BGR2GRAY)
 
-            yellow_mask = cv2.inRange(hsv_image, lower_yellow, upper_yellow)
+        matches1, matches2 = self.get_matches(img1, img2)
 
-            mask += yellow_mask
+        h_mat, mask = cv2.findHomography(matches1, matches2, cv2.RANSAC, ransacReprojThreshold=2.0)
 
-        # Resize mask to size of original image
-        height, width, _ = image.shape
-        mask = cv2.resize(mask, (width, height))
+        canvas = cv2.warpPerspective(img2, h_mat, (img1.shape[1] + img2.shape[1], img1.shape[0]))
+        canvas[:, 0:img1.shape[1], :] = img1[:, :, :]
 
-        return mask
+        cv2.imshow("final", canvas)
+        cv2.waitKey(0)
 
-    def color_index(self, hues, color_hue):
-        return hues.index(min(hues, key=lambda x:abs(x - color_hue)))
-
-    def find_rectangle(self, id):
-        image = self.images.get(id).image
-
-        # gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-        # blur = cv2.GaussianBlur(gray,(1,1),1000)
-        # edges1 = cv2.Canny(blur, 50, 150, apertureSize=3)
-
-        # mask = self.colors(id)
-        # edges2 = cv2.Canny(mask, 50, 150, apertureSize=3)
-
-        # edges = edges1 + edges2
-
-        gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-        _, thresh = cv2.threshold(gray, 120, 255, cv2.THRESH_BINARY_INV)
-        # _, thresh = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY_INV | cv2.THRESH_OTSU)
-
-        mask = self.colors(id)
-
-        combined = thresh # + mask (works better without mask for some reason...)
-
-        # Find all the lines in the image
-        lines = np.zeros_like(image)
-        all_lines = cv2.HoughLinesP(combined, 1, np.pi/180, 100, minLineLength=400, maxLineGap=300)
-        
-        if all_lines is not None:
-            for points in all_lines:
-                x1, y1, x2, y2 = points[0]
-                cv2.line(lines, (x1, y1), (x2, y2), (0, 255, 0), 2)
-
-        # Make the lines thicker
-        ksize2 = 10
-        kernel = np.ones((ksize2, ksize2))
-        lines = cv2.dilate(lines, kernel, iterations=4)
-        lines = cv2.cvtColor(lines, cv2.COLOR_BGR2GRAY)
-
-        # Find the rectangles in the frame
-        rectangles = []
-
-        height, width = image.shape[:2]
-        image_area = height * width
-
-        rect_image = image.copy()
-        self.rect_images.append(rect_image)
-
-        contours, _ = cv2.findContours(lines, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-        # cv2.drawContours(rect_image, contours, -1, (255, 0, 0), 5)
-
-        for c in contours:
-            area = cv2.contourArea(c)
-
-            # Filter out small rectangles
-            if area < image_area * .1:
-                continue
-
-            # Filter out irregular contours
-            hull = cv2.convexHull(c)
-            hull_area = cv2.contourArea(hull)
-            solidity = float(area)/hull_area
-
-            if solidity < .9: 
-                continue
-
-            # Filter out rectangles with irregular width to height ratio
-            (x, y, w, h) = cv2.boundingRect(c)
-            dim_error = (abs(w - h)/w) 
-
-            if dim_error > .8:
-                continue
-
-            # Add rect to rectangles list
-            rect = cv2.minAreaRect(c)
-            box = cv2.boxPoints(rect)
-            box = np.int0(box)
-
-            rectangles.append(Rectangle(x, y, w, h, [box]))
-
-        if rectangles:
-            # Draw rectangles on the image
-            print(f"Rect {id}: {len(rectangles)} rectangle(s) found")
-
-            for r in rectangles:            
-                cv2.drawContours(rect_image, contours, -1, (255, 0, 0), 5)
-                cv2.drawContours(rect_image, r.cnt, 0, (0, 255, 0), 10)
-                # cv2.rectangle(rect_image, (r.x, r.y), (r.x + r.w, r.y + r.h), (0, 255, 0), 10)
-        else:
-            print(f"Rect {id}: no rectangles found")
+    def stitch(self):
+        self.stitch_pair(self.images[1].image, self.images[2].image)

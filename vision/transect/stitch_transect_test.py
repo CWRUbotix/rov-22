@@ -18,7 +18,7 @@ class TestStitchTransect(unittest.TestCase):
         # Set image for each square in the stticher
         for i in range(1, 9):
 
-            test_set = 1 # Change this number to change the testing set
+            test_set = 7 # Change this number to change the testing set
 
             subfolder_path = os.path.join(folder_A, str(i))
             image_name = os.listdir(subfolder_path)[test_set]
@@ -76,10 +76,13 @@ class TestStitchTransect(unittest.TestCase):
                 cv2.destroyAllWindows()
                 break
 
+    def stitch(self):
+        self.stitcher.stitch()
+
 if __name__ == "__main__":
     """
     To run a specific test:
-    python3 vision/transect/stitch_transect_test.py TestStitchTransect.browse_images
+    python3 vision/transect/stitch_transect_test.py TestStitchTransect.stitch
     """
 
     unittest.main()
