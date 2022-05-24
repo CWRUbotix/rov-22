@@ -3,6 +3,7 @@ import cv2
 from cv2 import waitKey
 import numpy as np
 import imutils
+import math
 from vision.transect.transect_image import TransectImage
 from vision.colors import *
 
@@ -91,6 +92,9 @@ class StitchTransect():
 
         cv2.line(image, (int(x1), 0), (int(x2), height), (255, 0, 0), 10)
 
+        x1_b = x1
+        x2_b = x2
+
         # RED
         horizontal_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (50,1))
         horizontal_mask = cv2.morphologyEx(red_mask, cv2.MORPH_OPEN, horizontal_kernel, iterations=1)
@@ -105,11 +109,9 @@ class StitchTransect():
             dy = y2 - y1 
             angle = abs(atan2(dy,dx))
 
-            # Skip if line isn't horizontal
-            if abs(angle - .1)/.1 > 1:
+            # Skip if line isn't close to horizontal
+            if not math.isclose(angle, 0, abs_tol=.15):
                 continue
-
-            # Skip if line isn't a right angle with the blue line ...
 
             # Extend the line to the edges of the screen
             delta_x = x2 - x1
@@ -121,6 +123,18 @@ class StitchTransect():
                 # y = mx + b -> solve for y
                 y1 = slope * x1 + y_intercept
                 y2 = slope * x2 + y_intercept
+
+            # Skip if line isn't orthogonal with the blue line 
+            vec_b = np.array([x1_b - x2_b, 0 - height])
+            vec_r = np.array([0 - width, y1 - y2])
+
+            unit_vec_b = vec_b / np.linalg.norm(vec_b)
+            unit_vec_r = vec_r / np.linalg.norm(vec_r)
+
+            dot_prod = abs(np.dot(unit_vec_b, unit_vec_r))
+
+            if not math.isclose(dot_prod, 0, abs_tol=.1):
+                continue
 
             cv2.line(image, (0, int(y1)), (width, int(y2)), (0, 0, 255), 10)
 
