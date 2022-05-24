@@ -1,3 +1,4 @@
+from math import atan2
 import cv2
 from cv2 import waitKey
 import numpy as np
@@ -21,63 +22,106 @@ class StitchTransect():
 
         self.images[key] = trans_img
 
-    def blue_mask(self, image):
+    def color_masks(self, image):
         hsv_image = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
-        
-        # Resizing to make kmeans color clustering run faster
-        hsv_resized = imutils.resize(hsv_image, 100)
-        colors_found = get_colors(hsv_resized, 10)
 
         # Make the blue mask
-        hues = [i[0] for i in colors_found]
-
-        BLUE_HSV_VAL = 120
-        blue = colors_found[self.color_index(hues, BLUE_HSV_VAL)]
-
-        lower_blue = np.array([blue[0]-20, 0, 0])
-        upper_blue = np.array([blue[0]+20, 255, 255])
+        lower_blue = np.array([100, 0, 0])
+        upper_blue = np.array([120, 255, 255])
 
         blue_mask = cv2.inRange(hsv_image, lower_blue, upper_blue)
 
-        return blue_mask
+        # Make the red mask
+        lower_red = np.array([0,50,50])
+        upper_red = np.array([10,255,255])
+        red_mask1 = cv2.inRange(hsv_image, lower_red, upper_red)
 
-    def color_index(self, hues, color_hue):
-        return hues.index(min(hues, key=lambda x:abs(x - color_hue)))
+        lower_red = np.array([170,50,50])
+        upper_red = np.array([180,255,255])
+        red_mask2 = cv2.inRange(hsv_image, lower_red, upper_red)
 
-    def stitch(self, id):
-        image = self.images[id].image
-        blue_mask = self.blue_mask(image)
+        red_mask = red_mask1 + red_mask2
 
-        # Find all the lines in the image
-        lines = np.zeros_like(image)
-        all_lines = cv2.HoughLinesP(blue_mask, 1, np.pi/180, 100, minLineLength=1000, maxLineGap=300)
+        return blue_mask, red_mask
 
-        point1 = []
-        point2 = []
+    def lines_image(self, mask):
+        all_lines = cv2.HoughLinesP(mask, 1, np.pi/180, 100, minLineLength=1000, maxLineGap=300)
+
+        coords1 = []
+        coords2 = []
 
         if all_lines is not None:
             for points in all_lines:
                 x1, y1, x2, y2 = points[0]
 
-                point1.append((x1, y1))
-                point2.append((x2, y2))
+                coords1.append((x1, y1))
+                coords2.append((x2, y2))
 
-                # cv2.line(lines, (x1, y1), (x2, y2), (0, 255, 0), 2)
+        return coords1, coords2
 
-        # Find the average line
-        x1, y1 = [sum(x)/len(x) for x in zip(*point1)]
-        x2, y2 = [sum(x)/len(x) for x in zip(*point2)]
+    def stitch(self, id):
+        image = self.images[id].image
+        blue_mask, red_mask = self.color_masks(image)
 
-        # Extend the line to the edges of the screen
         height, width, _ = image.shape
 
-        slope = (y2 - y1)/(x2 - x1)
-        y_intercept = y1 - slope * x1
+        vertical_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (1,50))
+        vertical_mask = cv2.morphologyEx(blue_mask, cv2.MORPH_OPEN, vertical_kernel, iterations=1)
 
-        # y = mx + b -> solve for x
-        x1 = (0 - y_intercept)/slope
-        x2 = (height - y_intercept)/slope
+        coords1_b, coords2_b = self.lines_image(vertical_mask)
 
-        cv2.line(lines, (int(x1), 0), (int(x2), int(height)), (255, 0, 0), 10)
+        # Find the average line
+        x1, y1 = [sum(x)/len(x) for x in zip(*coords1_b)]
+        x2, y2 = [sum(x)/len(x) for x in zip(*coords2_b)]
 
-        self.all_images.append(lines)
+        # Extend the line to the edges of the screen
+        delta_x = x2 - x1
+
+        if delta_x != 0:
+            slope = (y2 - y1)/delta_x
+            y_intercept = y1 - slope * x1
+    
+            # y = mx + b -> solve for x
+            x1 = (0 - y_intercept)/slope
+            x2 = (height - y_intercept)/slope
+
+        dx = x2 - x1
+        dy = height - 0 
+        angle_b = abs(atan2(dy,dx))
+
+        cv2.line(image, (int(x1), 0), (int(x2), height), (255, 0, 0), 10)
+
+        # RED
+        horizontal_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (50,1))
+        horizontal_mask = cv2.morphologyEx(red_mask, cv2.MORPH_OPEN, horizontal_kernel, iterations=1)
+
+        coords1_r, coords2_r = self.lines_image(horizontal_mask)
+
+        for i in range(len(coords1_r)):
+            x1, y1 = coords1_r[i]
+            x2, y2 = coords2_r[i]
+
+            dx = x2 - x1
+            dy = y2 - y1 
+            angle = abs(atan2(dy,dx))
+
+            # Skip if line isn't horizontal
+            if abs(angle - .1)/.1 > 1:
+                continue
+
+            # Skip if line isn't a right angle with the blue line ...
+
+            # Extend the line to the edges of the screen
+            delta_x = x2 - x1
+
+            if delta_x != 0:
+                slope = (y2 - y1)/delta_x
+                y_intercept = y1 - slope * x1
+        
+                # y = mx + b -> solve for y
+                y1 = slope * x1 + y_intercept
+                y2 = slope * x2 + y_intercept
+
+            cv2.line(image, (0, int(y1)), (width, int(y2)), (0, 0, 255), 10)
+
+        self.all_images.append(image)
