@@ -9,54 +9,75 @@ class StitchTransect():
 
     def __init__(self):
         self.images = dict.fromkeys([1, 2, 3, 4, 5, 6, 7, 8], TransectImage)
-        self.rect_images = []
+        self.all_images = []
 
-    def set_image(self, key, image):
-        self.images[key] = image
+    def set_image(self, key, trans_img):
+        # If the image is horizontal, flip it to be vertical
+        # TEMPORARY FIX DELETE BEFORE COMPETITION
+        height, width, _ = trans_img.image.shape
 
-    def get_matches(self, img1_gray, img2_gray):
-        orb = cv2.ORB_create(nfeatures=1000)
-        kp1, desc1 = orb.detectAndCompute(img1_gray, None)
-        kp2, desc2 = orb.detectAndCompute(img2_gray, None)
+        if width > height:
+            trans_img.image = cv2.rotate(trans_img.image, cv2.ROTATE_90_COUNTERCLOCKWISE)
 
-        matcher = cv2.BFMatcher(cv2.NORM_HAMMING)
-        matches = matcher.knnMatch(desc1, desc2, k=2)
+        self.images[key] = trans_img
 
-        good_matches = []
-        for match_1, match_2 in matches:
-            if match_1.distance < 0.6 * match_2.distance:
-                good_matches.append(match_1)
+    def blue_mask(self, image):
+        hsv_image = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
+        
+        # Resizing to make kmeans color clustering run faster
+        hsv_resized = imutils.resize(hsv_image, 100)
+        colors_found = get_colors(hsv_resized, 10)
 
-        draw_params = dict(matchColor=(0,255,0),
-                            singlePointColor=None,
-                            flags=2)
+        # Make the blue mask
+        hues = [i[0] for i in colors_found]
 
-        img3 = cv2.drawMatches(img1_gray,kp1, img2_gray,kp2, good_matches,None,**draw_params)
-        # cv2.imshow("original_image_drawMatches.jpg", img3)
-        # cv2.waitKey(0)
+        BLUE_HSV_VAL = 120
+        blue = colors_found[self.color_index(hues, BLUE_HSV_VAL)]
 
-        good_kp1 = []
-        good_kp2 = []
+        lower_blue = np.array([blue[0]-20, 0, 0])
+        upper_blue = np.array([blue[0]+20, 255, 255])
 
-        for match in good_matches:
-            good_kp1.append(kp1[match.queryIdx].pt) # keypoint in image A
-            good_kp2.append(kp2[match.trainIdx].pt) # matching keypoint in image B
+        blue_mask = cv2.inRange(hsv_image, lower_blue, upper_blue)
 
-        return np.array(good_kp1), np.array(good_kp2)    
+        return blue_mask
 
-    def stitch_pair(self, img1, img2):
-        img1_gray = cv2.cvtColor(img1, cv2.COLOR_BGR2GRAY)
-        img2_gray = cv2.cvtColor(img2, cv2.COLOR_BGR2GRAY)
+    def color_index(self, hues, color_hue):
+        return hues.index(min(hues, key=lambda x:abs(x - color_hue)))
 
-        matches1, matches2 = self.get_matches(img1, img2)
+    def stitch(self, id):
+        image = self.images[id].image
+        blue_mask = self.blue_mask(image)
 
-        h_mat, mask = cv2.findHomography(matches1, matches2, cv2.RANSAC, ransacReprojThreshold=2.0)
+        # Find all the lines in the image
+        lines = np.zeros_like(image)
+        all_lines = cv2.HoughLinesP(blue_mask, 1, np.pi/180, 100, minLineLength=1000, maxLineGap=300)
 
-        canvas = cv2.warpPerspective(img2, h_mat, (img1.shape[1] + img2.shape[1], img1.shape[0]))
-        canvas[:, 0:img1.shape[1], :] = img1[:, :, :]
+        point1 = []
+        point2 = []
 
-        cv2.imshow("final", canvas)
-        cv2.waitKey(0)
+        if all_lines is not None:
+            for points in all_lines:
+                x1, y1, x2, y2 = points[0]
 
-    def stitch(self):
-        self.stitch_pair(self.images[1].image, self.images[2].image)
+                point1.append((x1, y1))
+                point2.append((x2, y2))
+
+                # cv2.line(lines, (x1, y1), (x2, y2), (0, 255, 0), 2)
+
+        # Find the average line
+        x1, y1 = [sum(x)/len(x) for x in zip(*point1)]
+        x2, y2 = [sum(x)/len(x) for x in zip(*point2)]
+
+        # Extend the line to the edges of the screen
+        height, width, _ = image.shape
+
+        slope = (y2 - y1)/(x2 - x1)
+        y_intercept = y1 - slope * x1
+
+        # y = mx + b -> solve for x
+        x1 = (0 - y_intercept)/slope
+        x2 = (height - y_intercept)/slope
+
+        cv2.line(lines, (int(x1), 0), (int(x2), int(height)), (255, 0, 0), 10)
+
+        self.all_images.append(lines)
