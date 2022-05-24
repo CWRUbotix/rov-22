@@ -28,16 +28,19 @@ class TestStitchTransect(unittest.TestCase):
 
             self.stitcher.set_image(i, image)
 
-    def find_rectangle(self):
-        self.stitcher.find_rectangle(1)
+    def stitch(self):
+        """Test on one image"""
 
-    def colors(self):
-        self.stitcher.colors(3)
+        id = 1
+
+        self.stitcher.stitch(id)
+        image = self.stitcher.all_images[id]
+
+        cv2.imshow("Image", image)
+        cv2.waitKey(0)
 
     def browse_images(self):
-        """
-        Browse through images with the 'a' and 'd' keys
-        """
+        """Browse through images with the 'a' and 'd' keys"""
 
         print("Starting k means color clustering...")
 
@@ -80,7 +83,7 @@ class TestStitchTransect(unittest.TestCase):
 if __name__ == "__main__":
     """
     To run a specific test:
-    python3 vision/transect/stitch_transect_test.py TestStitchTransect.browse_images
+    python3 vision/transect/stitch_transect_test.py TestStitchTransect.stitch
     """
 
     unittest.main()
