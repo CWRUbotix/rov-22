@@ -1,4 +1,4 @@
-class Decorator:
+class DebugFilter:
     """
     Tracks decorated functions to be used in the dropdown menu for testing
     """
