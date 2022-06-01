@@ -4,14 +4,12 @@ import unittest
 from util import data_path
 
 from vision.transect.transect_image import TransectImage
-from vision.transect.stitch_transect import StitchTransect
+from vision.transect.stitch_transect import *
 from vision.colors import *
 
 class TestStitchTransect(unittest.TestCase):
 
     def setUp(self):
-        self.stitcher = StitchTransect()
-
         # Path to folder with test images
         folder_A = os.path.join(data_path, "transect", "stitching", "A")
 
@@ -26,15 +24,15 @@ class TestStitchTransect(unittest.TestCase):
 
             image = TransectImage(i, cv2.imread(complete_path))
 
-            self.stitcher.set_image(i, image)
+            stitcher.set_image(i, image)
 
     def stitch(self):
         """Test on one image"""
 
         id = 1
 
-        self.stitcher.stitch(id)
-        image = self.stitcher.all_images[id]
+        stitcher.stitch(id)
+        image = stitcher.all_images[id]
 
         cv2.imshow("Image", image)
         cv2.waitKey(0)
@@ -44,11 +42,12 @@ class TestStitchTransect(unittest.TestCase):
 
         print("Starting k means color clustering...")
 
-        for key in self.stitcher.images:
-            self.stitcher.stitch(key)
+        for key in stitcher.images:
+            image = stitcher.images[key].image
+            stitch(image)
             print(f"Finished with image {key}/8")
 
-        images_list = self.stitcher.all_images
+        images_list = stitcher.all_images
 
         index = 0
 

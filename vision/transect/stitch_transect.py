@@ -1,4 +1,5 @@
 import cv2
+from cv2 import Stitcher
 import numpy as np
 import math
 
@@ -22,216 +23,217 @@ class StitchTransect():
 
         self.images[key] = trans_img
 
-    def color_masks(self, image):
-        """
-        Given an image, returns the blue and red color masks
+stitcher = StitchTransect()
 
-        @param image: input image
-        @return blue_mask, red_mask: the corresponding color masks
-        """
+def color_masks(image):
+    """
+    Given an image, returns the blue and red color masks
 
-        hsv_image = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
+    @param image: input image
+    @return blue_mask, red_mask: the corresponding color masks
+    """
 
-        # Make the blue mask
-        lower_blue = np.array([100, 0, 0])
-        upper_blue = np.array([120, 255, 255])
+    hsv_image = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
 
-        blue_mask = cv2.inRange(hsv_image, lower_blue, upper_blue)
+    # Make the blue mask
+    lower_blue = np.array([100, 0, 0])
+    upper_blue = np.array([120, 255, 255])
 
-        # Make the red mask
-        lower_red = np.array([0,50,50])
-        upper_red = np.array([10,255,255])
-        red_mask1 = cv2.inRange(hsv_image, lower_red, upper_red)
+    blue_mask = cv2.inRange(hsv_image, lower_blue, upper_blue)
 
-        lower_red = np.array([170,50,50])
-        upper_red = np.array([180,255,255])
-        red_mask2 = cv2.inRange(hsv_image, lower_red, upper_red)
+    # Make the red mask
+    lower_red = np.array([0,50,50])
+    upper_red = np.array([10,255,255])
+    red_mask1 = cv2.inRange(hsv_image, lower_red, upper_red)
 
-        red_mask = red_mask1 + red_mask2
+    lower_red = np.array([170,50,50])
+    upper_red = np.array([180,255,255])
+    red_mask2 = cv2.inRange(hsv_image, lower_red, upper_red)
 
-        return blue_mask, red_mask
+    red_mask = red_mask1 + red_mask2
 
-    def line_coords(self, mask):
-        """
-        Given a color mask, performs line detection and returns two lists of coordinates that represent the endpoints of lines
+    return blue_mask, red_mask
 
-        @param mask: color mask to use for line detection
-        @return coords1, coords2
-        """
+def line_coords( mask):
+    """
+    Given a color mask, performs line detection and returns two lists of coordinates that represent the endpoints of lines
 
-        all_lines = cv2.HoughLinesP(mask, 1, np.pi/180, 500, minLineLength=1000, maxLineGap=300)
+    @param mask: color mask to use for line detection
+    @return coords1, coords2
+    """
 
-        coords1 = []
-        coords2 = []
+    all_lines = cv2.HoughLinesP(mask, 1, np.pi/180, 500, minLineLength=1000, maxLineGap=300)
 
-        if all_lines is not None:
-            for points in all_lines:
-                x1, y1, x2, y2 = points[0]
+    coords1 = []
+    coords2 = []
 
-                coords1.append((x1, y1))
-                coords2.append((x2, y2))
+    if all_lines is not None:
+        for points in all_lines:
+            x1, y1, x2, y2 = points[0]
 
-        return coords1, coords2
+            coords1.append((x1, y1))
+            coords2.append((x2, y2))
 
-    def updated_cluster(self, line, clusters, tol):
-        """
-        Adds the given line to the appropriate cluster and returns the new cluster
+    return coords1, coords2
 
-        @param line: line to add
-        @param clusters: the current cluster list
-        @param tol: tolerance for determining closeness to other clusters
-        @returns: updated cluster
-        """
+def updated_cluster(line, clusters, tol):
+    """
+    Adds the given line to the appropriate cluster and returns the new cluster
 
-        # If clusters is empty add the computed avg line
-        if not clusters:
-            clusters.append(line)
-            return clusters
+    @param line: line to add
+    @param clusters: the current cluster list
+    @param tol: tolerance for determining closeness to other clusters
+    @returns: updated cluster
+    """
 
-        potential = []
-
-        min = np.Inf
-        min_index = 0
-
-        # Check if computed line fits in an existing cluster
-        for i in range(len(clusters)):
-            curr_line = clusters[i]
-
-            # if line.is_close(curr_line, tol) and line.distance(curr_line) < 500:
-            if line.distance(curr_line) < 500:
-                potential.append(i)
-
-        if not potential:
-            clusters.append(line)
-            return clusters
-
-        min = np.Inf
-        min_index = 0
-
-        for i in range(len(potential)):
-            curr_line = clusters[i]
-
-            if line.distance(curr_line) < min:
-                min_index = potential[i]
-
-        line_avg = line.average_line(clusters[min_index])
-        clusters[min_index] = line_avg
-
+    # If clusters is empty add the computed avg line
+    if not clusters:
+        clusters.append(line)
         return clusters
 
-    def line_clusters(self, lines, tol):
-        """
-        Finds clusters of lines that are close to each other and turns them into a single line
+    potential = []
 
-        @param coords1: list of line start points
-        @param coords2: list of line end points
-        @return: list of start points and list of end points of the average line from each cluster
-        """
+    min = np.Inf
+    min_index = 0
 
-        clusters = []
+    # Check if computed line fits in an existing cluster
+    for i in range(len(clusters)):
+        curr_line = clusters[i]
 
-        for line in lines:
-            clusters = self.updated_cluster(line, clusters, tol)
+        # if line.is_close(curr_line, tol) and line.distance(curr_line) < 500:
+        if line.distance(curr_line) < 500:
+            potential.append(i)
 
+    if not potential:
+        clusters.append(line)
         return clusters
 
-    def eroded_mask(self, mask):
-        kernel = np.ones((30, 30), np.uint8)
-        eroded = cv2.erode(mask, kernel) 
+    min = np.Inf
+    min_index = 0
 
-        kernel = np.ones((100, 100), np.uint8)
-        dilated = cv2.dilate(eroded, kernel)
+    for i in range(len(potential)):
+        curr_line = clusters[i]
 
-        new_mask = cv2.bitwise_and(mask, cv2.bitwise_not(dilated)) 
+        if line.distance(curr_line) < min:
+            min_index = potential[i]
 
-        return new_mask
+    line_avg = line.average_line(clusters[min_index])
+    clusters[min_index] = line_avg
 
-    def blue_poles(self, image, mask):
-        """
+    return clusters
+
+def line_clusters(lines, tol):
+    """
+    Finds clusters of lines that are close to each other and turns them into a single line
+
+    @param coords1: list of line start points
+    @param coords2: list of line end points
+    @return: list of start points and list of end points of the average line from each cluster
+    """
+
+    clusters = []
+
+    for line in lines:
+        clusters = updated_cluster(line, clusters, tol)
+
+    return clusters
+
+def eroded_mask(mask):
+    kernel = np.ones((30, 30), np.uint8)
+    eroded = cv2.erode(mask, kernel) 
+
+    kernel = np.ones((100, 100), np.uint8)
+    dilated = cv2.dilate(eroded, kernel)
+
+    new_mask = cv2.bitwise_and(mask, cv2.bitwise_not(dilated)) 
+
+    return new_mask
+
+def blue_poles(image, mask):
+    """
+    
+    """
+
+    vertical_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (1,50))
+    vertical_mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, vertical_kernel, iterations=1)
+
+    coords1_b, coords2_b = line_coords(vertical_mask)
+    blue_lines = Line.new_lines(coords1_b, coords2_b)
+
+    blue_extended = []
+    for line in blue_lines:
+        blue_extended.append(line.extended_line(image))
+
+    blue_clusters = line_clusters(blue_extended, tol=1)
+    print(len(blue_clusters))
+
+    for line in blue_clusters:
+        final_line = line.extended_line(image)
+        # cv2.line(image, final_line.start, final_line.end, (255, 0, 0), 10)
+
+    return final_line
+
+def red_string(image, mask, blue_line):
+    """
+    
+    """
+
+    eroded = eroded_mask(mask)
+
+    horizontal_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (50,1))
+    horizontal_mask = cv2.morphologyEx(eroded, cv2.MORPH_OPEN, horizontal_kernel, iterations=1)
+
+    coords1_r, coords2_r = line_coords(horizontal_mask)
+
+    red_lines = Line.new_lines(coords1_r, coords2_r)
+
+    red_extended = []
+    for line in red_lines:
+        red_extended.append(line.extended_line(image))
+
+    red_lines = []
+
+    for line in red_extended:
+        # Skip if line isn't close to horizontal
+        if not math.isclose(abs(line.angle), 0, abs_tol=.15):
+            continue
+
+        # Skip if line isn't orthogonal with the blue line 
+        if not line.is_orthogonal(blue_line, tol=.09):
+            continue
+
+        red_lines.append(line)
+
+    red_clusters = line_clusters(red_lines, tol=.5)
+
+    final_lines = []
+
+    count = 0
+    for line in red_clusters:
+        extended = line.extended_line(image)
+        final_lines.append(extended)
         
-        """
+        count += 1
+    print(count)
 
-        vertical_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (1,50))
-        vertical_mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, vertical_kernel, iterations=1)
+    return final_lines
 
-        coords1_b, coords2_b = self.line_coords(vertical_mask)
-        blue_lines = Line.new_lines(coords1_b, coords2_b)
+def stitch(image):
+    """
+    
+    """
 
-        blue_extended = []
-        for line in blue_lines:
-            blue_extended.append(line.extended_line(image))
+    blue_mask, red_mask = color_masks(image)
 
-        blue_clusters = self.line_clusters(blue_extended, tol=1)
-        print(len(blue_clusters))
+    # Find the blue pole
+    blue_line = blue_poles(image, blue_mask)
 
-        for line in blue_clusters:
-            final_line = line.extended_line(image)
-            # cv2.line(image, final_line.start, final_line.end, (255, 0, 0), 10)
+    # Finding the red string
+    red_lines = red_string(image, red_mask, blue_line)
 
-        return final_line
+    image = Line.draw_lines(image, [blue_line], color=(255, 0 ,0))
+    image = Line.draw_lines(image, red_lines, color=(0, 0 ,255))
 
-    def red_string(self, image, mask, blue_line):
-        """
-        
-        """
+    # Image stitching...
 
-        eroded_mask = self.eroded_mask(mask)
-
-        horizontal_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (50,1))
-        horizontal_mask = cv2.morphologyEx(eroded_mask, cv2.MORPH_OPEN, horizontal_kernel, iterations=1)
-
-        coords1_r, coords2_r = self.line_coords(horizontal_mask)
-
-        red_lines = Line.new_lines(coords1_r, coords2_r)
-
-        red_extended = []
-        for line in red_lines:
-            red_extended.append(line.extended_line(image))
-
-        red_lines = []
-
-        for line in red_extended:
-            # Skip if line isn't close to horizontal
-            if not math.isclose(abs(line.angle), 0, abs_tol=.15):
-                continue
-
-            # Skip if line isn't orthogonal with the blue line 
-            if not line.is_orthogonal(blue_line, tol=.09):
-                continue
-
-            red_lines.append(line)
-
-        red_clusters = self.line_clusters(red_lines, tol=.5)
-
-        final_lines = []
-
-        count = 0
-        for line in red_clusters:
-            extended = line.extended_line(image)
-            final_lines.append(extended)
-            
-            count += 1
-        print(count)
-
-        return final_lines
-
-    def stitch(self, id):
-        """
-        
-        """
-
-        image = self.images[id].image
-        blue_mask, red_mask = self.color_masks(image)
-
-        # Find the blue pole
-        blue_line = self.blue_poles(image, blue_mask)
-
-        # Finding the red string
-        red_lines = self.red_string(image, red_mask, blue_line)
-
-        image = Line.draw_lines(image, [blue_line], color=(255, 0 ,0))
-        image = Line.draw_lines(image, red_lines, color=(0, 0 ,255))
-
-        # Image stitching...
-
-        self.all_images.append(image)
+    stitcher.all_images.append(image)
