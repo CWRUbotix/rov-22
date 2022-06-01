@@ -21,7 +21,6 @@ class Line():
         @return: new Line
         """
 
-
         x1, y1 = start
         x2, y2 = end
 
@@ -53,6 +52,23 @@ class Line():
             lines.append(Line.of(coords1[i], coords2[i]))
 
         return lines
+
+    @classmethod
+    def draw_lines(cls, image, lines, color=(0, 255,0), thickness=10):
+        """
+        Draws the Lines on an image
+        
+        @param image: image to draw the lines on
+        @param lines: list of Lines to draw
+        @param color: color of the lines
+        @param thickness: thickness of the lines
+        @return: image with lines drawn on
+        """
+
+        for line in lines:
+            cv2.line(image, line.start, line.end, color, thickness)
+
+        return image
 
     def is_close(self, other, tol):
         """

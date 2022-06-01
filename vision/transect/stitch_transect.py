@@ -59,7 +59,7 @@ class StitchTransect():
         @return coords1, coords2
         """
 
-        all_lines = cv2.HoughLinesP(mask, 1, np.pi/180, 100, minLineLength=1000, maxLineGap=300)
+        all_lines = cv2.HoughLinesP(mask, 1, np.pi/180, 500, minLineLength=1000, maxLineGap=300)
 
         coords1 = []
         coords2 = []
@@ -135,6 +135,17 @@ class StitchTransect():
 
         return clusters
 
+    def eroded_mask(self, mask):
+        kernel = np.ones((30, 30), np.uint8)
+        eroded = cv2.erode(mask, kernel) 
+
+        kernel = np.ones((100, 100), np.uint8)
+        dilated = cv2.dilate(eroded, kernel)
+
+        new_mask = cv2.bitwise_and(mask, cv2.bitwise_not(dilated)) 
+
+        return new_mask
+
     def stitch(self, id):
         """
         
@@ -169,8 +180,10 @@ class StitchTransect():
         blue_line = line
 
         # Finding the red lines
+        eroded_mask = self.eroded_mask(red_mask)
+
         horizontal_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (50,1))
-        horizontal_mask = cv2.morphologyEx(red_mask, cv2.MORPH_OPEN, horizontal_kernel, iterations=1)
+        horizontal_mask = cv2.morphologyEx(eroded_mask, cv2.MORPH_OPEN, horizontal_kernel, iterations=1)
 
         coords1_r, coords2_r = self.line_coords(horizontal_mask)
 
@@ -180,23 +193,27 @@ class StitchTransect():
         for line in red_lines:
             red_extended.append(line.extended_line(image))
 
-        red_clusters = self.line_clusters(red_extended, tol=.5)
-        
-        count = 0
+        red_lines = []
 
-        for line in red_clusters:
-            extended = line.extended_line(image)
-
+        for line in red_extended:
             # Skip if line isn't close to horizontal
-            if not math.isclose(abs(extended.angle), 0, abs_tol=.15):
+            if not math.isclose(abs(line.angle), 0, abs_tol=.15):
                 continue
 
             # Skip if line isn't orthogonal with the blue line 
             if not line.is_orthogonal(blue_line, tol=.09):
                 continue
 
-            count += 1
+            red_lines.append(line)
+
+        red_clusters = self.line_clusters(red_lines, tol=.5)
+
+        count = 0
+        for line in red_clusters:
+            extended = line.extended_line(image)
+            
             cv2.line(image, extended.start, extended.end, (0, 0, 255), 10)
+            count += 1
 
         print(count)
         self.all_images.append(image)

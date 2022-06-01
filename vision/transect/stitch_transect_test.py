@@ -15,10 +15,10 @@ class TestStitchTransect(unittest.TestCase):
         # Path to folder with test images
         folder_A = os.path.join(data_path, "transect", "stitching", "A")
 
-        # Set image for each square in the stticher
+        # Set image for each square in the stitcher
         for i in range(1, 9):
 
-            test_set = 5 # Change this number to change the testing set
+            test_set = 3 # Change this number to change the testing set
 
             subfolder_path = os.path.join(folder_A, str(i))
             image_name = os.listdir(subfolder_path)[test_set]
@@ -83,7 +83,7 @@ class TestStitchTransect(unittest.TestCase):
 if __name__ == "__main__":
     """
     To run a specific test:
-    python3 vision/transect/stitch_transect_test.py TestStitchTransect.stitch
+    python3 vision/transect/stitch_transect_test.py TestStitchTransect.browse_images
     """
 
     unittest.main()
