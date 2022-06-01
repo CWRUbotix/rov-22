@@ -1,6 +1,7 @@
 from PyQt5.QtCore import Qt
 from tasks.base_task import BaseTask
-from vehicle.vehicle_control import VehicleControl, InputChannel, BACKWARD_CAM_INDICES
+from vehicle.constants import InputChannel, BACKWARD_CAM_INDICES
+from vehicle.vehicle_control import VehicleControl
 
 TRANSLATION_SENSITIVITY = 0.2
 ROTATIONAL_SENSITIVITY = 1.0

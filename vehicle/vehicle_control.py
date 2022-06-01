@@ -1,12 +1,13 @@
-import typing as t
 import enum
+import typing as t
 import time
 import socket
 
 from PyQt5.QtCore import pyqtSignal, pyqtSlot, QObject
-from pymavlink import mavutil, mavlink
+from pymavlink import mavutil
 
 from logger import root_logger
+from vehicle.constants import InputChannel, Relay
 
 logger = root_logger.getChild(__name__)
 
@@ -16,29 +17,6 @@ BACKWARD_CAM_INDICES = (1,)
 
 HOST = "192.168.2.2"  # The server's hostname or IP address
 PORT = 60000  # The port used by the server
-
-
-class InputChannel(enum.Enum):
-    PITCH = 1
-    ROLL = 2
-    THROTTLE = 3  # Translation on the Z axis
-    YAW = 4
-    FORWARD = 5
-    LATERAL = 6
-    PAN_CAMERA = 7
-    TILT_CAMERA = 8
-    LIGHTS_1 = 9
-    LIGHTS_2 = 10
-    VIDEO_SWITCH = 11
-
-
-class Relay(enum.Enum):
-    PVC_FRONT = 1  # Hardware pin
-    CLAW_FRONT = 4
-    PVC_BACK = 2
-    CLAW_BACK = 3
-    MAGNET = 0
-    LIGHTS = 5
 
 
 class VehicleControl(QObject):
@@ -188,4 +166,3 @@ class VehicleControl(QObject):
     def turn_off_relays(self):
         for relay in Relay:
             self.set_relay(relay, False)
-

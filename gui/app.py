@@ -15,7 +15,7 @@ from vehicle.vehicle_control import VehicleControl, Relay
 from tasks.scheduler import TaskScheduler
 from tasks.keyboard_control import KeyboardControl
 from tasks.controller_drive import ControllerDrive
-from controller.controller import get_active_controller
+from controller.controller import get_active_controller, get_active_controller_type
 
 # The name of the logger will be included in debug messages, so set it to the name of the file to make the log traceable
 logger = root_logger.getChild(__name__)
@@ -55,7 +55,7 @@ class App(QWidget):
 
         # Create a tab widget
         self.tabs = QTabWidget()
-        self.main_tab = MainTab(len(self.video_thread._video_sources))
+        self.main_tab = MainTab(len(self.video_thread._video_sources), get_active_controller_type())
         self.debug_tab = DebugTab(len(self.video_thread._video_sources))
         self.image_tab = ImageDebugTab()
 

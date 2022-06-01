@@ -1,5 +1,6 @@
 from gui.widgets.mode_button import ModeButton
 import logging
+from collections import defaultdict
 from types import SimpleNamespace
 
 from PyQt5 import QtCore
@@ -8,6 +9,7 @@ from PyQt5.QtGui import QColor, QTextCursor, QFont, QPixmap
 from PyQt5.QtWidgets import QComboBox, QFileDialog, QHBoxLayout, QLabel, QPushButton, QVBoxLayout, QWidget, QTextEdit, \
     QFrame, QGridLayout
 
+from controller.controller import XboxController, PS5Controller
 from gui.widgets.gazebo_control_widget import GazeboControlWidget
 from gui.widgets.vehicle_status_widget import VehicleStatusWidget
 from gui.widgets.image_debug_widget import ImagesWidget
@@ -19,7 +21,7 @@ from gui.decorated_functions import dropdown
 from gui.widgets.map_wreck_widget import MapWreckWidget
 from gui.widgets.relay_toggle_button import RelayToggleButton
 
-from vehicle.vehicle_control import BACKWARD_CAM_INDICES
+from vehicle.constants import BACKWARD_CAM_INDICES
 
 # Temporary imports for basic image debug tab
 import os
@@ -34,6 +36,22 @@ CONSOLE_TEXT_COLORS = {
 }
 
 HEADER_FONT = QFont("Sans Serif", 12)
+
+CONTROLLER_ICONS = {
+    None: defaultdict(lambda: None),  # Every key will be none
+    XboxController: {
+        "deployer": "gui/resources/XboxSeriesX_LB.png",
+        "claw": "gui/resources/XboxSeriesX_RB.png",
+        "magnet": "gui/resources/XboxSeriesX_X.png",
+        "lights": "gui/resources/XboxSeriesX_Y.png"
+    },
+    PS5Controller: {
+        "deployer": "gui/resources/PS5_L1.png",
+        "claw": "gui/resources/PS5_R1.png",
+        "magnet": "gui/resources/PS5_Square.png",
+        "lights": "gui/resources/PS5_Triangle.png"
+    },
+}
 
 
 class RootTab(QWidget):
@@ -139,11 +157,12 @@ def header_label(text: str) -> QLabel:
 
 class MainTab(VideoTab):
 
-    def __init__(self, num_video_streams):
-        self.right_bumper_image = QPixmap("gui/resources/XboxSeriesX_RB.png")
-        self.left_bumper_image = QPixmap("gui/resources/XboxSeriesX_LB.png")
-        self.x_button_image = QPixmap("gui/resources/XboxSeriesX_X.png")
-        self.y_button_image = QPixmap("gui/resources/XboxSeriesX_Y.png")
+    def __init__(self, num_video_streams, controller_type):
+        icons_dict = CONTROLLER_ICONS[controller_type]
+        self.deployer_image = QPixmap(icons_dict["deployer"])
+        self.claw_image = QPixmap(icons_dict["claw"])
+        self.magnet_image = QPixmap(icons_dict["magnet"])
+        self.lights_image = QPixmap(icons_dict["lights"])
 
         super().__init__(num_video_streams)
 
@@ -152,12 +171,12 @@ class MainTab(VideoTab):
         self.widgets.arm_control = ArmControlWidget()
         self.widgets.vehicle_status = VehicleStatusWidget()
         self.widgets.map_wreck = MapWreckWidget()
-        self.widgets.front_deployer_button = RelayToggleButton("Front Deployer", control_prompt_image=self.left_bumper_image)
-        self.widgets.front_claw_button = RelayToggleButton("Front Claw", control_prompt_image=self.right_bumper_image)
-        self.widgets.back_deployer_button = RelayToggleButton("Back Deployer", control_prompt_image=self.left_bumper_image)
-        self.widgets.back_claw_button = RelayToggleButton("Back Claw", control_prompt_image=self.right_bumper_image)
-        self.widgets.magnet_button = RelayToggleButton("Magnet", control_prompt_image=self.x_button_image)
-        self.widgets.lights_button = RelayToggleButton("Lights", control_prompt_image=self.y_button_image)
+        self.widgets.front_deployer_button = RelayToggleButton("Front Deployer", control_prompt_image=self.deployer_image)
+        self.widgets.front_claw_button = RelayToggleButton("Front Claw", control_prompt_image=self.claw_image)
+        self.widgets.back_deployer_button = RelayToggleButton("Back Deployer", control_prompt_image=self.deployer_image)
+        self.widgets.back_claw_button = RelayToggleButton("Back Claw", control_prompt_image=self.claw_image)
+        self.widgets.magnet_button = RelayToggleButton("Magnet", control_prompt_image=self.magnet_image)
+        self.widgets.lights_button = RelayToggleButton("Lights", control_prompt_image=self.lights_image)
 
         self.widgets.manual_button = ModeButton("Manual", "MANUAL")
         self.widgets.stabilize_button = ModeButton("Stabilize", "STABILIZE")

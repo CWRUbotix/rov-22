@@ -1,24 +1,25 @@
 import time
 import typing as t
+from abc import abstractmethod
+
 from inputs import get_gamepad, devices
 import math
 import threading
 from enum import Enum
 
-if __name__ != "__main__":
-    from vehicle.vehicle_control import InputChannel, Relay, BACKWARD_CAM_INDICES
+from vehicle.constants import InputChannel, Relay, BACKWARD_CAM_INDICES
 
 TRANSLATION_SENSITIVITY = 0.5
 ROTATIONAL_SENSITIVITY = 0.5
-
-FRONT_CAMERA_INDEX = 0
-BOTTOM_CAMERA_INDEX = 1
-BACK_CAMERA_INDEX = 2
 
 
 def apply_curve(value, exponential):
     value = min(max(value, -1), 1)  # clamp the joystick input from -1 to 1
     return math.copysign(abs(value) ** exponential, value)
+
+
+def map_range(val, base_range, new_range):
+    return (val - base_range[0]) / (base_range[1] - base_range[0]) * (new_range[1] - new_range[0]) + new_range[0]
 
 
 class Controller:
@@ -32,8 +33,8 @@ class Controller:
         pass
 
     def __init__(self, get_big_video_index, joystick_curve_exponential=2, trigger_curve_exponential=2):
-        self.MAX_JOY_VAL = None
-        self.MAX_TRIG_VAL = None
+        self.JOY_RANGE = None
+        self.TRIG_RANGE = None
 
         self.switch_camera_callbacks = []
         self.toggle_relay_callbacks = []
@@ -65,17 +66,17 @@ class Controller:
 
     def _handle_event(self, event):
         code = event.code
-        if "SYN" in code:
+        if "SYN" in code or code == "MSC_SCAN":
             return
         if code in self.joystick_axis_codes:
             self.joystick_axes[self.JoystickAxis(
-                code)] = event.state / self.MAX_JOY_VAL  # normalize between -1 and 1
+                code)] = map_range(event.state, self.JOY_RANGE, (-1, 1))  # normalize between -1 and 1
         elif code in self.trigger_codes:
-            self.triggers[self.Trigger(code)] = event.state / self.MAX_TRIG_VAL
+            self.triggers[self.Trigger(code)] = map_range(event.state, self.TRIG_RANGE, (0, 1))
         elif code in self.button_codes:
             self.buttons[self.Button(code)] = bool(event.state)
         else:
-            print(f"Unrecognized: {code}")
+            print(f"Unrecognized: {code} {event.state}")
 
         self.check_for_camera_change(event)
         self.check_for_relay_toggle(event)
@@ -88,8 +89,9 @@ class Controller:
         if isinstance(control, self.Button):
             return self.buttons.get(control, False)
 
+    @abstractmethod
     def get_vehicle_inputs(self):
-        raise Exception("Abstract method get_vehicle_inputs() was not overriden")
+        pass
 
     def register_camera_callback(self, callback):
         self.switch_camera_callbacks.append(callback)
@@ -102,10 +104,10 @@ class Controller:
         """Process an event and call the switch camera callbacks if appropriate"""
         pass
 
-    def register_relay_callback(self, relay: 'Relay', callback):
+    def register_relay_callback(self, relay: Relay, callback):
         self.toggle_relay_callbacks.append((relay, callback))
 
-    def call_relay_callbacks(self, relay: 'Relay'):
+    def call_relay_callbacks(self, relay: Relay):
         for r, callback in self.toggle_relay_callbacks:
             if r == relay:
                 callback()
@@ -118,8 +120,8 @@ class Controller:
 class SteamController(Controller):
     def __init__(self, get_big_video_index):
         super().__init__(get_big_video_index)
-        self.MAX_JOY_VAL = 32768
-        self.MAX_TRIG_VAL = 256
+        self.JOY_RANGE = (-32767, 32768)
+        self.TRIG_RANGE = (0, 256)
 
     class JoystickAxis(Controller.JoystickAxis):
         ThumbstickX = "ABS_X"
@@ -175,8 +177,8 @@ class SteamController(Controller):
 class XboxController(Controller):
     def __init__(self, get_big_video_index):
         super().__init__(get_big_video_index)
-        self.MAX_JOY_VAL = 32768
-        self.MAX_TRIG_VAL = 1024
+        self.JOY_RANGE = (-32767, 32768)
+        self.TRIG_RANGE = (0, 1024)
 
     class JoystickAxis(Controller.JoystickAxis):
         LeftStickX = "ABS_X"
@@ -224,7 +226,7 @@ class XboxController(Controller):
             InputChannel.PITCH: self.get(XboxController.JoystickAxis.RightStickY) * ROTATIONAL_SENSITIVITY,
             InputChannel.YAW: self.get(
                 XboxController.JoystickAxis.RightStickX) * ROTATIONAL_SENSITIVITY,
-            InputChannel.ROLL: 0 if not roll_mode else -self.get(
+            InputChannel.ROLL: 0 if not roll_mode else self.get(
                 XboxController.JoystickAxis.LeftStickX) * ROTATIONAL_SENSITIVITY,
         }
 
@@ -241,25 +243,120 @@ class XboxController(Controller):
         if not event.state:
             return
         if event.code == self.Button.LeftBumper.value:
-            self.call_relay_callbacks(Relay.PVC_BACK if self.get_big_video_index() in BACKWARD_CAM_INDICES else Relay.PVC_FRONT)
+            self.call_relay_callbacks(
+                Relay.PVC_BACK if self.get_big_video_index() in BACKWARD_CAM_INDICES else Relay.PVC_FRONT)
         elif event.code == self.Button.RightBumper.value:
-            self.call_relay_callbacks(Relay.CLAW_BACK if self.get_big_video_index() in BACKWARD_CAM_INDICES else Relay.CLAW_FRONT)
+            self.call_relay_callbacks(
+                Relay.CLAW_BACK if self.get_big_video_index() in BACKWARD_CAM_INDICES else Relay.CLAW_FRONT)
         elif event.code == self.Button.X.value:
             self.call_relay_callbacks(Relay.MAGNET)
         elif event.code == self.Button.Y.value:
             self.call_relay_callbacks(Relay.LIGHTS)
 
 
-def get_active_controller(get_big_video_index):
+class PS5Controller(Controller):
+    def __init__(self, get_big_video_index):
+        super().__init__(get_big_video_index)
+        self.JOY_RANGE = (0, 256)
+        self.TRIG_RANGE = (0, 256)
+
+    class JoystickAxis(Controller.JoystickAxis):
+        LeftStickX = "ABS_X"
+        LeftStickY = "ABS_Y"
+        RightStickX = "ABS_Z"
+        RightStickY = "ABS_RZ"
+        DPadX = "ABS_HAT0X"
+        DPadY = "ABS_HAT0Y"
+
+    class Trigger(Controller.Trigger):
+        LeftTrigger = "ABS_RX"
+        RightTrigger = "ABS_RY"
+
+    class Button(Controller.Button):
+        X = "BTN_EAST"
+        Triangle = "BTN_NORTH"
+        Square = "BTN_SOUTH"
+        Circle = "BTN_C"
+        LeftBumper = "BTN_WEST"
+        RightBumper = "BTN_Z"
+        LeftTrigger = "BTN_TL"
+        RightTrigger = "BTN_TR"
+        LeftStick = "BTN_SELECT"
+        RightStick = "BTN_START"
+        PlayStation = "BTN_MODE"
+        Microphone = "BTN_THUMBR"
+        Touchpad = "BTN_THUMBL"
+        Create = "BTN_TL2"
+        Options = "BTN_TR2"
+
+    def get_vehicle_inputs(self):
+        roll_mode = self.get(self.Button.X)
+
+        return {
+            InputChannel.FORWARD: -self.get(
+                self.JoystickAxis.LeftStickY) * TRANSLATION_SENSITIVITY,
+            InputChannel.LATERAL: 0 if roll_mode else self.get(
+                self.JoystickAxis.LeftStickX) * TRANSLATION_SENSITIVITY,
+            InputChannel.THROTTLE: (self.get(self.Trigger.RightTrigger) -
+                                    self.get(self.Trigger.LeftTrigger)) * TRANSLATION_SENSITIVITY,
+            InputChannel.PITCH: self.get(self.JoystickAxis.RightStickY) * ROTATIONAL_SENSITIVITY,
+            InputChannel.YAW: self.get(
+                self.JoystickAxis.RightStickX) * ROTATIONAL_SENSITIVITY,
+            InputChannel.ROLL: 0 if not roll_mode else self.get(
+                self.JoystickAxis.LeftStickX) * ROTATIONAL_SENSITIVITY,
+        }
+
+    def _handle_event(self, event):
+        # The PS Dpad is special because it is an axis with range -1 to 1
+        if event.code in (self.JoystickAxis.DPadX.value, self.JoystickAxis.DPadY.value):
+            self.joystick_axes[self.JoystickAxis(event.code)] = event.state
+            self.check_for_camera_change(event)
+        else:
+            super()._handle_event(event)
+
+    def check_for_camera_change(self, event):
+        if event.code == self.JoystickAxis.DPadX.value and event.state != 0:
+            self.call_camera_callbacks(1)
+        if event.code == self.JoystickAxis.DPadY.value:
+            if event.state == -1:
+                self.call_camera_callbacks(0)
+            elif event.state == 1:
+                self.call_camera_callbacks(2)
+
+    def check_for_relay_toggle(self, event):
+        if not event.state:
+            return
+        if event.code == self.Button.LeftBumper.value:
+            self.call_relay_callbacks(
+                Relay.PVC_BACK if self.get_big_video_index() in BACKWARD_CAM_INDICES else Relay.PVC_FRONT)
+        elif event.code == self.Button.RightBumper.value:
+            self.call_relay_callbacks(
+                Relay.CLAW_BACK if self.get_big_video_index() in BACKWARD_CAM_INDICES else Relay.CLAW_FRONT)
+        elif event.code == self.Button.Square.value:
+            self.call_relay_callbacks(Relay.MAGNET)
+        elif event.code == self.Button.Triangle.value:
+            self.call_relay_callbacks(Relay.LIGHTS)
+
+
+def get_active_controller_type():
     if len(devices.gamepads) == 0:
         return None
     for device in devices.gamepads:
         name = device.name.lower()
+        if "sony" in name:
+            return PS5Controller
+        if "xbox" in name or "x-box" in name or "microsoft" in name:
+            return XboxController
         if "steam" in name:
-            return SteamController(get_big_video_index)
-        if "xbox" in name or "microsoft" in name or 'x-box' in name:
-            return XboxController(get_big_video_index)
-    return None
+            return SteamController
+
+
+def get_active_controller(get_big_video_index):
+    controller_class = get_active_controller_type()
+
+    if controller_class is None:
+        return None
+    return controller_class(get_big_video_index)
 
 
 if __name__ == '__main__':
