@@ -13,9 +13,7 @@ class ModeButton(QPushButton):
         self.mode = mode
 
         self.setFixedHeight(80)
-        #self.setCheckable(True)
         self.clicked.connect(self.on_click)
-        #self.disable_click()
 
         self.control_prompt = QLabel()
         self.control_prompt.setFixedHeight(80)
