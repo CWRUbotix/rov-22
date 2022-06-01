@@ -146,18 +146,13 @@ class StitchTransect():
 
         return new_mask
 
-    def stitch(self, id):
+    def blue_poles(self, image, mask):
         """
         
         """
 
-        image = self.images[id].image
-
-        # Finding the blue pole
-        blue_mask, red_mask = self.color_masks(image)
-
         vertical_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (1,50))
-        vertical_mask = cv2.morphologyEx(blue_mask, cv2.MORPH_OPEN, vertical_kernel, iterations=1)
+        vertical_mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, vertical_kernel, iterations=1)
 
         coords1_b, coords2_b = self.line_coords(vertical_mask)
         blue_lines = Line.new_lines(coords1_b, coords2_b)
@@ -171,16 +166,16 @@ class StitchTransect():
 
         for line in blue_clusters:
             final_line = line.extended_line(image)
+            # cv2.line(image, final_line.start, final_line.end, (255, 0, 0), 10)
 
-            # start = tuple(int(num) for num in final_line.start)
-            # end = tuple(int(num) for num in final_line.end)
+        return final_line
 
-            cv2.line(image, final_line.start, final_line.end, (255, 0, 0), 10)
+    def red_string(self, image, mask, blue_line):
+        """
+        
+        """
 
-        blue_line = line
-
-        # Finding the red lines
-        eroded_mask = self.eroded_mask(red_mask)
+        eroded_mask = self.eroded_mask(mask)
 
         horizontal_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (50,1))
         horizontal_mask = cv2.morphologyEx(eroded_mask, cv2.MORPH_OPEN, horizontal_kernel, iterations=1)
@@ -208,12 +203,35 @@ class StitchTransect():
 
         red_clusters = self.line_clusters(red_lines, tol=.5)
 
+        final_lines = []
+
         count = 0
         for line in red_clusters:
             extended = line.extended_line(image)
+            final_lines.append(extended)
             
-            cv2.line(image, extended.start, extended.end, (0, 0, 255), 10)
             count += 1
-
         print(count)
+
+        return final_lines
+
+    def stitch(self, id):
+        """
+        
+        """
+
+        image = self.images[id].image
+        blue_mask, red_mask = self.color_masks(image)
+
+        # Find the blue pole
+        blue_line = self.blue_poles(image, blue_mask)
+
+        # Finding the red string
+        red_lines = self.red_string(image, red_mask, blue_line)
+
+        image = Line.draw_lines(image, [blue_line], color=(255, 0 ,0))
+        image = Line.draw_lines(image, red_lines, color=(0, 0 ,255))
+
+        # Image stitching...
+
         self.all_images.append(image)
