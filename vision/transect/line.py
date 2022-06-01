@@ -65,8 +65,11 @@ class Line():
         @return: image with lines drawn on
         """
 
-        for line in lines:
-            cv2.line(image, line.start, line.end, color, thickness)
+        if type(lines) != list:
+            cv2.line(image, lines.start, lines.end, color, thickness)
+        else:
+            for line in lines:
+                cv2.line(image, line.start, line.end, color, thickness)
 
         return image
 

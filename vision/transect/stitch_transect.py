@@ -149,7 +149,7 @@ def eroded_mask(mask):
 
     return new_mask
 
-def blue_poles(image, mask):
+def vertical_line(image, mask):
     """
     
     """
@@ -158,30 +158,27 @@ def blue_poles(image, mask):
     vertical_mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, vertical_kernel, iterations=1)
 
     coords1_b, coords2_b = line_coords(vertical_mask)
-    blue_lines = Line.new_lines(coords1_b, coords2_b)
+    lines = Line.new_lines(coords1_b, coords2_b)
 
-    blue_extended = []
-    for line in blue_lines:
-        blue_extended.append(line.extended_line(image))
+    extended = []
+    for line in lines:
+        extended.append(line.extended_line(image))
 
-    blue_clusters = line_clusters(blue_extended, tol=1)
-    print(len(blue_clusters))
+    clusters = line_clusters(extended, tol=1)
+    print(len(clusters))
 
-    for line in blue_clusters:
+    for line in clusters:
         final_line = line.extended_line(image)
-        # cv2.line(image, final_line.start, final_line.end, (255, 0, 0), 10)
 
     return final_line
 
-def red_string(image, mask, blue_line):
+def horizontal_lines(image, mask, blue_line):
     """
     
     """
 
-    eroded = eroded_mask(mask)
-
     horizontal_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (50,1))
-    horizontal_mask = cv2.morphologyEx(eroded, cv2.MORPH_OPEN, horizontal_kernel, iterations=1)
+    horizontal_mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, horizontal_kernel, iterations=1)
 
     coords1_r, coords2_r = line_coords(horizontal_mask)
 
@@ -226,13 +223,17 @@ def stitch(image):
     blue_mask, red_mask = color_masks(image)
 
     # Find the blue pole
-    blue_line = blue_poles(image, blue_mask)
+    blue_line = vertical_line(image, blue_mask)
 
     # Finding the red string
-    red_lines = red_string(image, red_mask, blue_line)
+    red_eroded = eroded_mask(red_mask) 
 
-    image = Line.draw_lines(image, [blue_line], color=(255, 0 ,0))
-    image = Line.draw_lines(image, red_lines, color=(0, 0 ,255))
+    red_lines_v = vertical_line(image, red_eroded)
+    red_lines_h = horizontal_lines(image, red_eroded, blue_line)
+
+    image = Line.draw_lines(image, blue_line, color=(255, 0 ,0))
+    image = Line.draw_lines(image, red_lines_v, color=(0, 0 ,255))
+    image = Line.draw_lines(image, red_lines_h, color=(0, 0 ,255))
 
     # Image stitching...
 

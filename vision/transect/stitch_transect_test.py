@@ -16,7 +16,7 @@ class TestStitchTransect(unittest.TestCase):
         # Set image for each square in the stitcher
         for i in range(1, 9):
 
-            test_set = 3 # Change this number to change the testing set
+            test_set = 1 # Change this number to change the testing set
 
             subfolder_path = os.path.join(folder_A, str(i))
             image_name = os.listdir(subfolder_path)[test_set]
