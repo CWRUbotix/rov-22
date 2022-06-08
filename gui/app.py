@@ -1,6 +1,8 @@
+import datetime
 import json
 import logging
 from collections import defaultdict
+import cv2
 
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QTabWidget
 from PyQt5.QtCore import pyqtSignal, pyqtSlot, Qt
@@ -219,6 +221,9 @@ class App(QWidget):
 
         elif event.key() == Qt.Key_T:
             self.video_thread.toggle_rewind()
+        
+        elif event.key() == Qt.Key_C:
+            self.capture_image()
 
     def keyReleaseEvent(self, event):
         if self.keysDown[event.key()]:
@@ -235,6 +240,13 @@ class App(QWidget):
             return tab.widgets.video_area.get_big_video_cam_index()
         else:
             return None
+    
+    def get_active_frame(self):
+        return self.video_thread._cur_frames[self.get_big_video_index()]
+    
+    def capture_image(self):
+        filename = datetime.datetime.now().strftime("recordings/%Y-%m-%d_%H%M%S") + '.png'
+        cv2.imwrite(filename, self.get_active_frame())
 
     @pyqtSlot(Frame)
     def update_image(self, frame: Frame):

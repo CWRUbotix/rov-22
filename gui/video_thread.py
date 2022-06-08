@@ -25,6 +25,7 @@ class VideoThread(QThread):
 
         self._video_sources = []
         self._captures = []
+        self._cur_frames = []
         self._rewind = False
 
         self.load_json(json_data)
@@ -33,6 +34,7 @@ class VideoThread(QThread):
         """Initialize video capturers from self._video_sources"""
         for source in self._video_sources:
             self._captures.append(cv2.VideoCapture(source.filename, source.api_preference))
+            self._cur_frames.append(None)
 
     def _emit_frames(self):
         """Emit next/prev frames on the pyqtSignal to be received by video widgets"""
@@ -63,6 +65,7 @@ class VideoThread(QThread):
             ret, cv_img = capture.read()
             if ret:
                 self.update_frames_signal.emit(Frame(cv_img, index))
+                self._cur_frames[index] = cv_img
 
     def run(self):
         self._prepare_captures()
