@@ -25,6 +25,122 @@ class StitchTransect():
 
 stitcher = StitchTransect()
 
+class Rectangle():
+    def __init__(self, x, y, w, h, cnt):
+        self.x = x
+        self.y = y
+        self.w = w
+        self.h = h
+        self.cnt = cnt
+
+def color_mask(key):
+
+    image = stitcher.images[key].image
+
+    hsv_image = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
+
+    # Make the blue mask
+    lower_blue = np.array([100, 0, 0])
+    upper_blue = np.array([120, 255, 255])
+
+    blue_mask = cv2.inRange(hsv_image, lower_blue, upper_blue)
+
+    # Make the red mask
+    lower_red = np.array([0,50,50])
+    upper_red = np.array([10,255,255])
+    red_mask1 = cv2.inRange(hsv_image, lower_red, upper_red)
+
+    lower_red = np.array([170,50,50])
+    upper_red = np.array([180,255,255])
+    red_mask2 = cv2.inRange(hsv_image, lower_red, upper_red)
+
+    red_mask = red_mask1 + red_mask2
+    red_mask = eroded_mask(red_mask) 
+
+    mask = blue_mask + red_mask
+
+    if key in [1, 2, 7, 8]:
+        lower_yellow = np.array([22, 93, 0])
+        upper_yellow = np.array([45, 255, 255])
+
+        yellow_mask = cv2.inRange(hsv_image, lower_yellow, upper_yellow)
+        mask += yellow_mask
+
+    return mask
+
+def new_method(key):
+    image = stitcher.images[key].image
+
+    mask = color_mask(key)
+
+    all_lines = cv2.HoughLinesP(mask, 1, np.pi/180, 500, minLineLength=1000, maxLineGap=300)
+
+    lines = np.zeros_like(image)
+
+    if all_lines is not None:
+        for points in all_lines:
+            x1, y1, x2, y2 = points[0]
+
+            cv2.line(lines, (x1, y1), (x2, y2), color=(0, 255, 0), thickness=10)
+
+    ksize2 = 10
+    kernel = np.ones((ksize2, ksize2))
+    lines = cv2.dilate(lines, kernel, iterations=4)
+    lines = cv2.cvtColor(lines, cv2.COLOR_BGR2GRAY)
+
+    # Find the rectangles in the frame
+    rectangles = []
+
+    height, width = image.shape[:2]
+    image_area = height * width
+
+    rect_image = image.copy()
+
+    contours, _ = cv2.findContours(lines, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+    cv2.drawContours(rect_image, contours, -1, (255, 0, 0), 5)
+
+    for c in contours:
+        area = cv2.contourArea(c)
+
+        # Filter out small rectangles
+        if area < image_area * .1:
+            continue
+
+        # Filter out irregular contours
+        hull = cv2.convexHull(c)
+        hull_area = cv2.contourArea(hull)
+        solidity = float(area)/hull_area
+
+        # if solidity < .9: 
+        #     continue
+
+        # Filter out rectangles with irregular width to height ratio
+        (x, y, w, h) = cv2.boundingRect(c)
+        dim_error = (abs(w - h)/w) 
+
+        if dim_error > .8:
+            continue
+
+        # Add rect to rectangles list
+        rect = cv2.minAreaRect(c)
+        box = cv2.boxPoints(rect)
+        box = np.int0(box)
+
+        rectangles.append(Rectangle(x, y, w, h, [box]))
+
+    if rectangles:
+        # Draw rectangles on the image
+        print(f"Rect {id}: {len(rectangles)} rectangle(s) found")
+
+        for r in rectangles:            
+            # cv2.drawContours(rect_image, contours, -1, (255, 0, 0), 5)
+            cv2.rectangle(rect_image, (r.x, r.y), (r.x + r.w, r.y + r.h), (0, 255, 0), 10)
+    else:
+        print(f"Rect {id}: no rectangles found")
+
+    cv2.imshow("", rect_image)
+    cv2.waitKey(0)
+
 def color_masks(image):
     """
     Given an image, returns the blue and red color masks
