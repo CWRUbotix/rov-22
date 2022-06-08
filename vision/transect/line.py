@@ -204,6 +204,33 @@ class Line():
 
         return math.isclose(dot_prod, 0, abs_tol=tol)
 
+    @classmethod
+    def intersection(cls, line1, line2):
+        """
+        Returns the intersection point of line1 to line2
+
+        @param line1: first line to compare to
+        @param line2: second line to compare to
+        @return: point of intersection
+        """
+
+        if line1.m == 0:
+            x, _ = line1.start
+            y = line2.m * x + line2.b
+
+            return int(x), int(y)
+
+        if (line1.m - line2.m) != 0:
+            x = (line1.b - line2.b) / (line2.m - line1.m)
+        else:
+            x = 0
+
+        # print(f"{line1.m} * {x} + {line1.b}")
+        
+        y = line1.m * x + line1.b
+
+        return int(x), int(y)
+
     def to_string(self):
         """
         Returns a string representation of this Line

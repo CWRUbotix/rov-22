@@ -2,6 +2,7 @@ import cv2
 from cv2 import Stitcher
 import numpy as np
 import math
+import imutils
 
 from vision.transect.transect_image import TransectImage
 from vision.colors import *
@@ -11,7 +12,6 @@ class StitchTransect():
 
     def __init__(self):
         self.images = dict.fromkeys([1, 2, 3, 4, 5, 6, 7, 8], TransectImage)
-        self.all_images = []
 
     def set_image(self, key, trans_img):
         # If the image is horizontal, flip it to be vertical
@@ -215,10 +215,12 @@ def horizontal_lines(image, mask, blue_line):
 
     return final_lines
 
-def stitch(image):
+def set_lines(key):
     """
     
     """
+
+    image = stitcher.images[key].image
 
     blue_mask, red_mask = color_masks(image)
 
@@ -228,13 +230,82 @@ def stitch(image):
     # Finding the red string
     red_eroded = eroded_mask(red_mask) 
 
-    red_lines_v = vertical_line(image, red_eroded)
+    red_line_v = vertical_line(image, red_eroded)
     red_lines_h = horizontal_lines(image, red_eroded, blue_line)
 
-    image = Line.draw_lines(image, blue_line, color=(255, 0 ,0))
-    image = Line.draw_lines(image, red_lines_v, color=(0, 0 ,255))
-    image = Line.draw_lines(image, red_lines_h, color=(0, 0 ,255))
+    # Set lines for the current TransectImage
+    trans_img = stitcher.images[key]
+
+    trans_img.vertical_lines = [blue_line, red_line_v]
+    trans_img.horizontal_lines = red_lines_h
+
+    image = Line.draw_lines(image, blue_line, color=(255, 0, 0))
+    image = Line.draw_lines(image, red_line_v, color=(0, 0, 255))
+    image = Line.draw_lines(image, red_lines_h, color=(0, 0, 255))
+
+    # x, y = Line.intersection(trans_img.blue_line, trans_img.red_lines_h[0])
+
+    # image = cv2.circle(image, (x,y), radius=0, color=(0, 0, 0), thickness=-1)
+
+def compare_coords(point1, point2):
+    x1, y1 = point1
+    x2, y2 = point2
+
+    if x1 == x2 and y1 == y2:
+        return 0
+
+    
+
+def stitch():
+    
+    for key in stitcher.images:
+        if key == 6:
+            trans_img = stitcher.images[key]
+            image = trans_img.image
+
+            x1, y1 = Line.intersection(trans_img.vertical_lines[0], trans_img.horizontal_lines[0])
+            x2, y2 = Line.intersection(trans_img.vertical_lines[0], trans_img.horizontal_lines[1])
+            x3, y3 = Line.intersection(trans_img.vertical_lines[1], trans_img.horizontal_lines[0])
+            x4, y4 = Line.intersection(trans_img.vertical_lines[1], trans_img.horizontal_lines[1])
+
+            coords = [(x1, y1), (x2, y2), (x3, y3), (x4, y4)]
+            print(coords)
+
+            top_left = None
+            top_right = None
+            bottom_left = None
+            bottom_right = None
+
+            # Figure out which coordinate is for which corner
+            coords.sort(key=lambda coord: coord[1])
+            
+            upper = [coords[0], coords[1]]
+            lower = [coords[2], coords[3]]
+
+            upper.sort(key=lambda coord: coord[0])
+            lower.sort(key=lambda coord: coord[0])
+
+            x1, y1 = upper[0] # top left
+            x2, y2 = upper[1] # top right
+            x3, y3 = lower[0] # bottom left
+            x4, y4 = lower[1] # bottom right
+
+            image = cv2.circle(image, (x1, y1), radius=0, color=(0, 255, 0), thickness=50)
+            image = cv2.circle(image, (x2, y2), radius=0, color=(0, 255, 0), thickness=50)
+            image = cv2.circle(image, (x3, y3), radius=0, color=(0, 255, 0), thickness=50)
+            image = cv2.circle(image, (x4, y4), radius=0, color=(0, 255, 0), thickness=50)
+
+            height, width, _ = image.shape
+
+            src = np.float32([[x1, y1], [x2, y2], [x3, y3], [x4, x4]])
+            dst = np.float32([[0, 0], [width, 0], [0, height], [width, height]])
+            matrix = cv2.getPerspectiveTransform(src, dst)
+            
+            # Perspective transform original image
+            warped = cv2.warpPerspective(image, matrix, (width, height))
+
+            # resized = imutils.resize(warped, width=800)
+            cv2.imshow('warped', warped)
+            cv2.waitKey(0)
 
     # Image stitching...
-
-    stitcher.all_images.append(image)

@@ -16,7 +16,7 @@ class TestStitchTransect(unittest.TestCase):
         # Set image for each square in the stitcher
         for i in range(1, 9):
 
-            test_set = 1 # Change this number to change the testing set
+            test_set = 7 # Change this number to change the testing set
 
             subfolder_path = os.path.join(folder_A, str(i))
             image_name = os.listdir(subfolder_path)[test_set]
@@ -29,13 +29,9 @@ class TestStitchTransect(unittest.TestCase):
     def stitch(self):
         """Test on one image"""
 
-        id = 1
-
-        stitcher.stitch(id)
-        image = stitcher.all_images[id]
-
-        cv2.imshow("Image", image)
-        cv2.waitKey(0)
+        for key in stitcher.images:
+            new_method(key)
+            # print(f"Finished with image {key}/8")
 
     def browse_images(self):
         """Browse through images with the 'a' and 'd' keys"""
@@ -43,11 +39,15 @@ class TestStitchTransect(unittest.TestCase):
         print("Starting k means color clustering...")
 
         for key in stitcher.images:
-            image = stitcher.images[key].image
-            stitch(image)
+            set_lines(key)
             print(f"Finished with image {key}/8")
 
-        images_list = stitcher.all_images
+        stitch()
+
+        images_list = []
+
+        for key in stitcher.images:
+            images_list.append(stitcher.images[key].image)
 
         index = 0
 
