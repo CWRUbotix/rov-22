@@ -18,7 +18,7 @@ class VehicleStatusWidget(QLabel):
                      f"Task: {'None' if self.task == '' else self.task}"
                      )
 
-    def on_task_change(self, new_task: ""):
+    def on_task_change(self, new_task):
         self.task = new_task
         self.update_text()
 

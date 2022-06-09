@@ -25,6 +25,7 @@ class VideoThread(QThread):
 
         self._video_sources = []
         self._captures = []
+        self._cur_frames = []
         self._rewind = False
 
         self.load_json(json_data)
@@ -33,6 +34,7 @@ class VideoThread(QThread):
         """Initialize video capturers from self._video_sources"""
         for source in self._video_sources:
             self._captures.append(cv2.VideoCapture(source.filename, source.api_preference))
+            self._cur_frames.append(None)
 
     def _emit_frames(self):
         """Emit next/prev frames on the pyqtSignal to be received by video widgets"""
@@ -63,6 +65,7 @@ class VideoThread(QThread):
             ret, cv_img = capture.read()
             if ret:
                 self.update_frames_signal.emit(Frame(cv_img, index))
+                self._cur_frames[index] = cv_img
 
     def run(self):
         self._prepare_captures()
@@ -143,10 +146,10 @@ class VideoThread(QThread):
 
             for source in json_data["sources"]:
                 content = ""
-                
-                if not "content" in source or not "api" in source:
+
+                if "content" not in source or not "api" in source:
                     logger.error('Error reading config JSON: missing content or api fields')
-                elif not "template" in source:
+                elif "template" not in source:
                     content = source["content"]
                 elif source["template"] == "file":
                     content = os.path.join(data_path, source["content"])
@@ -160,6 +163,6 @@ class VideoThread(QThread):
                             content += section
                 else:
                     content = source["content"]
-                
+
                 if hasattr(cv2, source["api"]):
-                    self._video_sources.append( VideoSource(content, getattr(cv2, source["api"])) )
+                    self._video_sources.append(VideoSource(content, getattr(cv2, source["api"])))
