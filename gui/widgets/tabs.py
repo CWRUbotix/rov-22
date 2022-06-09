@@ -1,3 +1,4 @@
+
 import logging
 import os
 from types import SimpleNamespace
@@ -12,6 +13,7 @@ from gui.widgets.vehicle_status_widget import VehicleStatusWidget
 from gui.widgets.image_debug_widget import ImagesWidget
 from gui.widgets.video_controls_widget import VideoControlsWidget
 from gui.widgets.video_widgets import VideoArea
+from gui.widgets.fish_widget import FishRecordWidget
 from gui.data_classes import Frame, VideoSource
 from gui.widgets.arm_control_widget import ArmControlWidget
 from gui.decorated_functions import dropdown
@@ -133,16 +135,20 @@ def header_label(text: str) -> QLabel:
 
 
 class MainTab(VideoTab):
-    def __init__(self, num_video_streams):
+    def __init__(self, app, num_video_streams):
+        self.app = app
         super().__init__(num_video_streams)
+        
 
     def init_widgets(self):
         super().init_widgets()
+        self.widgets.fish_record = FishRecordWidget(self.app.video_thread)
         self.widgets.arm_control = ArmControlWidget()
         self.widgets.vehicle_status = VehicleStatusWidget()
 
     def organize(self):
         super().organize()
+        self.layouts.sidebar.addWidget(self.widgets.fish_record)
         self.layouts.sidebar.addStretch()
         self.layouts.sidebar.addWidget(self.widgets.arm_control)
         self.layouts.sidebar.addWidget(self.widgets.vehicle_status)

@@ -1,5 +1,5 @@
 from os import path
-from vision.stereo.fish_features import vertical_edge
+from vision.stereo.fish_features import refine_coords, vertical_edge
 from vision.stereo.stereo_util import Side
 from vision.stereo.params import StereoParameters
 import numpy as np
@@ -80,6 +80,8 @@ class PixelSelector:
                 # vals = self.img_l[ self.target_y, self.target_xl - 9 : self.target_xl + 10, 0]
                 # print(vals)
                 return self.target_xl, self.target_xr, self.target_y
+            elif key == ord('r'):
+                self.target_xl, self.target_xr, self.target_y = refine_coords(self.img_l, self.img_r, self.target_xl, self.target_xr, self.target_y)
             elif key == 27:
                 break
     

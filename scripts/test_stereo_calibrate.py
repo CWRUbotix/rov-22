@@ -9,7 +9,7 @@ from util import data_path
 
 ACTUAL_LENGTH = 18.3
 
-directory = path.join(data_path, 'stereo-calibration')
+directory = path.join(data_path, 'stereo-calibration-potted')
 
 images = []
 left_images = []
@@ -54,16 +54,19 @@ for i in range(len(images)):
     Left_nice= cv2.remap(imgL_gray,params.left_rectify_map[0],params.left_rectify_map[1], cv2.INTER_LANCZOS4, cv2.BORDER_CONSTANT, 0)
     Right_nice= cv2.remap(imgR_gray,params.right_rectify_map[0],params.right_rectify_map[1], cv2.INTER_LANCZOS4, cv2.BORDER_CONSTANT, 0)
 
-    retR, cornersR =  cv2.findChessboardCorners(Right_nice,(10,7),None)
-    retL, cornersL = cv2.findChessboardCorners(Left_nice,(10,7),None)
+    #retR, cornersR =  cv2.findChessboardCorners(Right_nice,(10,7),None)
+    #retL, cornersL = cv2.findChessboardCorners(Left_nice,(10,7),None)
+
+    retR, cornersR =  cv2.findChessboardCornersSB(outputR,(10,7),None, flags=cv2.CALIB_CB_EXHAUSTIVE+cv2.CALIB_CB_NORMALIZE_IMAGE)
+    retL, cornersL = cv2.findChessboardCornersSB(outputL,(10,7),None, flags=cv2.CALIB_CB_EXHAUSTIVE+cv2.CALIB_CB_NORMALIZE_IMAGE)
 
     if retR and retL:
         obj_pts.append(objp)
 
         
 
-        cv2.cornerSubPix(Right_nice,cornersR,(11,11),(-1,-1),criteria)
-        cv2.cornerSubPix(Left_nice,cornersL,(11,11),(-1,-1),criteria)
+        # cv2.cornerSubPix(Right_nice,cornersR,(11,11),(-1,-1),criteria)
+        # cv2.cornerSubPix(Left_nice,cornersL,(11,11),(-1,-1),criteria)
         cv2.drawChessboardCorners(Right_nice,(10,7),cornersR,retR)
         cv2.drawChessboardCorners(Left_nice,(10,7),cornersL,retL)
         #cv2.imshow('cornersR',Right_nice)

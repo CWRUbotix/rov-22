@@ -16,7 +16,6 @@ class StereoParameters:
     proj_r: np.ndarray
     left_rectify_map: Tuple[np.ndarray, np.ndarray]
     right_rectify_map: Tuple[np.ndarray, np.ndarray]
-    test: str
 
     def rectify_single(self, img: np.ndarray, side: Side):
         map = self.left_rectify_map if side == Side.LEFT else self.right_rectify_map

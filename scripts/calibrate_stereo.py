@@ -6,7 +6,7 @@ from os import path
 
 from util import data_path
 
-directory = path.join(data_path, 'stereo-calibration')
+directory = path.join(data_path, 'stereo-calibration-potted')
 
 images = []
 left_images = []
@@ -44,22 +44,27 @@ for i in range(len(images)):
 	outputL = imgL.copy()
 	outputR = imgR.copy()
 
-	retR, cornersR =  cv2.findChessboardCorners(outputR,(10,7),None)
-	retL, cornersL = cv2.findChessboardCorners(outputL,(10,7),None)
+	#retR, cornersR =  cv2.findChessboardCorners(outputR,(10,7),None, flags=cv2.CALIB_CB_ADAPTIVE_THRESH+cv2.CALIB_CB_NORMALIZE_IMAGE)
+	#retL, cornersL = cv2.findChessboardCorners(outputL,(10,7),None, flags=cv2.CALIB_CB_ADAPTIVE_THRESH+cv2.CALIB_CB_NORMALIZE_IMAGE)
+
+	retR, cornersR =  cv2.findChessboardCornersSB(outputR,(10,7),None, flags=cv2.CALIB_CB_EXHAUSTIVE+cv2.CALIB_CB_NORMALIZE_IMAGE)
+	retL, cornersL = cv2.findChessboardCornersSB(outputL,(10,7),None, flags=cv2.CALIB_CB_EXHAUSTIVE+cv2.CALIB_CB_NORMALIZE_IMAGE)
+
 
 	if retR and retL:
 		obj_pts.append(objp)
-		cv2.cornerSubPix(imgR_gray,cornersR,(11,11),(-1,-1),criteria)
-		cv2.cornerSubPix(imgL_gray,cornersL,(11,11),(-1,-1),criteria)
+		#cv2.cornerSubPix(imgR_gray,cornersR,(11,11),(-1,-1),criteria)
+		#cv2.cornerSubPix(imgL_gray,cornersL,(11,11),(-1,-1),criteria)
 		cv2.drawChessboardCorners(outputR,(10,7),cornersR,retR)
 		cv2.drawChessboardCorners(outputL,(10,7),cornersL,retL)
 		cv2.imshow('cornersR',outputR)
 		cv2.imshow('cornersL',outputL)
-		cv2.waitKey(1)
+		cv2.waitKey(0)
 
 		img_ptsL.append(cornersL)
 		img_ptsR.append(cornersR)
 
+print('LENGTH: ' + str(len(img_ptsL)))
 
 # Calibrating left camera
 retL, mtxL, distL, rvecsL, tvecsL = cv2.calibrateCamera(obj_pts,img_ptsL,imgL_gray.shape[::-1],None,None)
@@ -102,7 +107,7 @@ Right_Stereo_Map= cv2.initUndistortRectifyMap(new_mtxR, distR, rect_r, proj_mat_
                                               imgR_gray.shape[::-1], cv2.CV_16SC2)
 
 parameters = StereoParameters(proj_mat_l, proj_mat_r, Left_Stereo_Map, Right_Stereo_Map)
-parameters.save('stereo')
+parameters.save('stereo-potted')
 
 print("Saving paraeters ......")
 cv_file = cv2.FileStorage("improved_params2.xml", cv2.FILE_STORAGE_WRITE)
