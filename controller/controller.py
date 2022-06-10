@@ -9,7 +9,7 @@ from enum import Enum
 
 from vehicle.constants import InputChannel, Relay, BACKWARD_CAM_INDICES
 
-TRANSLATION_SENSITIVITY = 0.5
+TRANSLATION_SENSITIVITY = 1
 ROTATIONAL_SENSITIVITY = 0.5
 
 
@@ -32,7 +32,7 @@ class Controller:
     class Button(Enum):
         pass
 
-    def __init__(self, get_big_video_index, joystick_curve_exponential=2, trigger_curve_exponential=2):
+    def __init__(self, get_big_video_index, joystick_curve_exponential=3, trigger_curve_exponential=3):
         self.JOY_RANGE = None
         self.TRIG_RANGE = None
 
