@@ -1,3 +1,4 @@
+from gui.gstreamer_capture import GstreamerCapture
 import os
 import cv2
 import json
@@ -33,7 +34,11 @@ class VideoThread(QThread):
     def _prepare_captures(self):
         """Initialize video capturers from self._video_sources"""
         for source in self._video_sources:
-            self._captures.append(cv2.VideoCapture(source.filename, source.api_preference))
+            if source.api_preference == CAP_GSTREAMER:
+                capture = GstreamerCapture(source.filename)
+            else:
+                capture = cv2.VideoCapture(source.filename, source.api_preference)
+            self._captures.append(capture)
             self._cur_frames.append(None)
 
     def _emit_frames(self):
@@ -79,6 +84,7 @@ class VideoThread(QThread):
             # Wait if playing normally, don't if rewinding b/c rewinding is slow
             if not self._rewind:
                 self.msleep(int(1000 / 30))
+            self.msleep(5000)
 
         # Shut down capturers
         for capture in self._captures:
