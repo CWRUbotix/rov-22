@@ -35,7 +35,7 @@ class VideoThread(QThread):
         """Initialize video capturers from self._video_sources"""
         for source in self._video_sources:
             if source.api_preference == CAP_GSTREAMER:
-                capture = GstreamerCapture(source.filename)
+                capture = GstreamerCapture(source.filename, source.width, source.height)
             else:
                 capture = cv2.VideoCapture(source.filename, source.api_preference)
             self._captures.append(capture)
@@ -84,7 +84,6 @@ class VideoThread(QThread):
             # Wait if playing normally, don't if rewinding b/c rewinding is slow
             if not self._rewind:
                 self.msleep(int(1000 / 30))
-            self.msleep(5000)
 
         # Shut down capturers
         for capture in self._captures:
@@ -171,4 +170,4 @@ class VideoThread(QThread):
                     content = source["content"]
 
                 if hasattr(cv2, source["api"]):
-                    self._video_sources.append(VideoSource(content, getattr(cv2, source["api"])))
+                    self._video_sources.append(VideoSource(content, getattr(cv2, source["api"]), source["width"], source["height"]))

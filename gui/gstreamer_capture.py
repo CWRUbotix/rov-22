@@ -1,7 +1,6 @@
-from multiprocessing import Process, Pipe
-from multiprocessing.connection import Connection
+from multiprocessing import Process, Event
+from multiprocessing.shared_memory import SharedMemory
 import time
-import datetime
 
 import numpy as np
 
@@ -11,21 +10,21 @@ from logger import root_logger
 
 logger = root_logger.getChild(__name__)
 
-def run_gstreamer_capture(pipeline: str, connection: Connection):
-    time.sleep(5)
+def run_gstreamer_capture(pipeline: str, new_frame_event, shared_buffer: SharedMemory):
     while True:
         capture = None
         try:
             capture = cv2.VideoCapture(pipeline, cv2.CAP_GSTREAMER)
             while True:
+                new_frame_event.wait()
                 ret, cv_img = capture.read()
                 if ret:
-                    print(f'SENDING {cv_img.shape} {cv_img.dtype}')
-                    #connection.send((cv_img, time.time_ns() ))
-                    connection.send_bytes(cv_img.data, size=len(cv_img.data))
-                    print('SENT')
+                    flat = cv_img.view()
+                    flat.shape = (shared_buffer.size)
+                    shared_buffer.buf[:] = flat.data[:]
+                    new_frame_event.clear()
         except Exception as e:
-            print(f'EXCEPTION: {e}')
+            print(f'Exception in gstreamer process: {e}')
         finally:
             if capture is not None:
                 capture.release()
@@ -34,40 +33,27 @@ def run_gstreamer_capture(pipeline: str, connection: Connection):
 
 class GstreamerCapture:
 
-    def __init__(self, pipeline: str):
-        self._recv_connection, send_connection = Pipe(False)
-        self._buffer = bytearray(600 * 800 * 3)
+    def __init__(self, pipeline: str, width: int, height: int):
+        self._width = width
+        self._height = height
+
+        self._new_frame_event = Event()
+        self._new_frame_event.set()
+        self._shared_buffer = SharedMemory(create=True, size=(3 * width * height))
+
         logger.info('Spawning Gstreamer subprocess')
-        self._process = Process(target=run_gstreamer_capture, args=(pipeline, send_connection))
+        self._process = Process(target=run_gstreamer_capture, args=(pipeline, self._new_frame_event, self._shared_buffer))
         self._process.start()
 
     def read(self):
-        self._buffer = bytearray(600 * 800 * 3)
-        ret = False
-        img = None
-        
-        print('CHECKING1')
-        poll = self._recv_connection.poll()
-        print(f'Poll returned: {poll}')
-        if poll:
-            
-            print('NOW RECEIVING')
-            #img, time_ns = self._recv_connection.recv()
-            try:
-                ret = True
-                self._recv_connection.recv_bytes_into(self._buffer)
-                print('RECEIVED')
-                img = np.frombuffer(self._buffer, dtype=np.uint8)
-                img = img.reshape((600, 800, 3))
+        if not self._new_frame_event.is_set():
+            img = np.frombuffer(self._shared_buffer.buf, dtype=np.uint8)
+            img = img.reshape((self._height, self._width, 3))
+            self._new_frame_event.set()
+            return True, img
 
-                #print(f'CHECKING AGAIN {img.dtype}')
-                #print(time.time_ns() - time_ns)
-            except Exception as e:
-                print(f'RECV EXCEPTION {e}')
-        
-        print(f'RETURNING')
-        return ret, img
+        return False, None
     
     def release(self):
         self._process.kill()
-    
+        self._shared_buffer.unlink()
