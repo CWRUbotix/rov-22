@@ -18,3 +18,5 @@ class CameraAngle(enum.Enum):
 class VideoSource:
     filename: str
     api_preference: int
+    width: int
+    height: int
