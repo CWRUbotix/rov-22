@@ -13,7 +13,7 @@ logger = root_logger.getChild(__name__)
 
 TIMEOUT = 2  # Seconds without a message before we assume the connection's lost
 
-BACKWARD_CAM_INDICES = (3,)
+BACKWARD_CAM_INDICES = (2,)
 
 HOST = "192.168.2.2"  # The server's hostname or IP address
 PORT = 60000  # The port used by the server

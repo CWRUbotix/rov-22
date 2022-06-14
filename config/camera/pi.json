@@ -2,13 +2,17 @@
 	"sources": [
 		{
 			"api": "CAP_GSTREAMER",
-			"template": "gstreamer-display-jpeg-flip",
-			"content": "5002"
+			"template": "gstreamer-display-jpeg",
+			"content": "5002",
+			"width": 1280,
+			"height": 720
 		},
 		{
 			"api": "CAP_GSTREAMER",
-			"template": "gstreamer-display-jpeg",
-			"content": "5003"
+			"template": "gstreamer-display-jpeg-flip",
+			"content": "5004",
+			"width": 1280,
+			"height": 720
 		}
 	]
 }

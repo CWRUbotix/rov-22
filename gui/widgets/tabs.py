@@ -1,3 +1,4 @@
+from gui.widgets.camera_toggle_widget import CameraToggleWidget
 from gui.widgets.mode_button import ModeButton
 import logging
 from collections import defaultdict
@@ -182,6 +183,8 @@ class MainTab(VideoTab):
         self.widgets.stabilize_button = ModeButton("Stabilize", "STABILIZE")
         self.widgets.depth_hold_button = ModeButton("Depth Hold", "ALT_HOLD")
 
+        self.widgets.camera_toggle = CameraToggleWidget()
+
         # Create a new namespace to group all the buttons for starting tasks
         self.widgets.task_buttons = SimpleNamespace()
         self.widgets.task_buttons.no_button_docking = QPushButton("Dock (No button)")
@@ -226,6 +229,8 @@ class MainTab(VideoTab):
         mode_grid.addWidget(self.widgets.stabilize_button, 0, 1, alignment=QtCore.Qt.AlignCenter)
         mode_grid.addWidget(self.widgets.depth_hold_button, 0, 2, alignment=QtCore.Qt.AlignCenter)
         sidebar.addLayout(mode_grid)
+
+        sidebar.addWidget(self.widgets.camera_toggle)
 
         sidebar.addStretch()
         sidebar.addWidget(self.widgets.arm_control)

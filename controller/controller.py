@@ -10,7 +10,7 @@ from enum import Enum
 from vehicle.constants import InputChannel, Relay, BACKWARD_CAM_INDICES
 
 TRANSLATION_SENSITIVITY = 1
-ROTATIONAL_SENSITIVITY = 0.5
+ROTATIONAL_SENSITIVITY = 0.75
 
 
 def apply_curve(value, exponential):
@@ -32,7 +32,7 @@ class Controller:
     class Button(Enum):
         pass
 
-    def __init__(self, get_big_video_index, joystick_curve_exponential=3, trigger_curve_exponential=3):
+    def __init__(self, get_big_video_index, joystick_curve_exponential=2, trigger_curve_exponential=2):
         self.JOY_RANGE = None
         self.TRIG_RANGE = None
 
@@ -263,24 +263,22 @@ class PS5Controller(Controller):
     class JoystickAxis(Controller.JoystickAxis):
         LeftStickX = "ABS_X"
         LeftStickY = "ABS_Y"
-        RightStickX = "ABS_Z"
-        RightStickY = "ABS_RZ"
+        RightStickX = "ABS_RX"
+        RightStickY = "ABS_RY"
         DPadX = "ABS_HAT0X"
         DPadY = "ABS_HAT0Y"
 
     class Trigger(Controller.Trigger):
-        LeftTrigger = "ABS_RX"
-        RightTrigger = "ABS_RY"
+        LeftTrigger = "ABS_Z"
+        RightTrigger = "ABS_RZ"
 
     class Button(Controller.Button):
-        X = "BTN_EAST"
+        X = "BTN_SOUTH"
         Triangle = "BTN_NORTH"
-        Square = "BTN_SOUTH"
-        Circle = "BTN_C"
-        LeftBumper = "BTN_WEST"
-        RightBumper = "BTN_Z"
-        LeftTrigger = "BTN_TL"
-        RightTrigger = "BTN_TR"
+        Square = "BTN_WEST"
+        Circle = "BTN_EAST"
+        LeftBumper = "BTN_TL"
+        RightBumper = "BTN_TR"
         LeftStick = "BTN_SELECT"
         RightStick = "BTN_START"
         PlayStation = "BTN_MODE"
@@ -366,6 +364,6 @@ if __name__ == '__main__':
     controller = get_active_controller(lambda: 0)
     controller.start_monitoring()
     while True:
-        print(" ".join([f"{k}: {round(v, 1)}" for k, v in controller.joystick_axes.items()]))
+        #print(" ".join([f"{k}: {round(v, 1)}" for k, v in controller.joystick_axes.items()]))
         # print([b.name for b, v in controller.buttons.items() if v])
         time.sleep(0.1)

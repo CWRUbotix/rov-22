@@ -7,9 +7,9 @@ from gui.data_classes import Frame
 from tasks.base_task import BaseTask
 from vehicle.vehicle_control import VehicleControl, InputChannel
 
-TRANSLATION_SENSITIVITY = 0.05
-ROTATIONAL_SENSITIVITY = 0.5
-FORWARD_SPEED = 0.03
+TRANSLATION_SENSITIVITY = 0.65
+ROTATIONAL_SENSITIVITY = 0.55
+FORWARD_SPEED = 0.5
 
 MAX_TASK_DURATION = 500
 MIN_TASK_DURATION = 2
