@@ -26,12 +26,12 @@ class TestStitchTransect(unittest.TestCase):
 
             stitcher.set_image(i, image)
 
-    def cropped_images(self):
+    def stitched(self):
         for key in stitcher.images:
             set_lines(key)
             print(f"Finished with image {key}/8")
 
-        cropped_images()
+        stitched()
 
     def browse_images(self):
         """Browse through images with the 'a' and 'd' keys"""

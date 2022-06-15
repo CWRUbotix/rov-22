@@ -313,18 +313,42 @@ def cropped_images(debug=False):
         # Perspective transform original image
         warped = cv2.warpPerspective(image, matrix, (width, height))
 
-        resized = imutils.resize(warped, width=800)
+        resized = imutils.resize(warped, width=400)        
         cropped.append(resized)
 
         if debug:
             cv2.imshow('warped', resized)
             cv2.waitKey(0)
 
-    return cropped_images
+    return cropped
 
 def stitched():
     """
     
     """
 
-    pass
+    cropped = cropped_images()
+    
+    height, width, channel = cropped[0].shape
+
+    final_height = height * 4
+    final_width = width * 2
+
+    final_image = np.zeros((final_height, final_width, 3), np.uint8) 
+    print(final_image.shape)
+
+    # Start from bottom left of final image
+    id = 0
+    y = final_height
+
+    for i in range(4):
+        x = 0
+        for j in range(2):
+            final_image[y-height:y, x:x+width] = cropped[id]
+
+            x += width
+            id += 1
+        y -= height
+
+    cv2.imshow("", final_image)
+    cv2.waitKey(0)
