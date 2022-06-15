@@ -251,7 +251,7 @@ class XboxController(Controller):
         elif event.code == self.Button.X.value:
             self.call_relay_callbacks(Relay.MAGNET)
         elif event.code == self.Button.Y.value:
-            self.call_relay_callbacks(Relay.LIGHTS)
+            self.call_relay_callbacks(Relay.LIGHTS_FRONT)
 
 
 class PS5Controller(Controller):
@@ -333,7 +333,7 @@ class PS5Controller(Controller):
         elif event.code == self.Button.Square.value:
             self.call_relay_callbacks(Relay.MAGNET)
         elif event.code == self.Button.Triangle.value:
-            self.call_relay_callbacks(Relay.LIGHTS)
+            self.call_relay_callbacks(Relay.LIGHTS_FRONT)  # Actually toggles all lights
 
 
 def get_active_controller_type():

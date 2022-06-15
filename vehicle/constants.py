@@ -37,4 +37,6 @@ class Relay(Enum):
     PVC_BACK = 2
     CLAW_BACK = 3
     MAGNET = 4
-    LIGHTS = 5
+    LIGHTS_FRONT = 5
+    LIGHTS_BOTTOM = 6
+    LIGHTS_BACK = 7

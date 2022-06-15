@@ -19,7 +19,6 @@ class CameraToggleWidget(QWidget):
         self._buttons = {}
 
         for cam in Camera:
-            self._state[cam] = False
             button = QPushButton(cam.value, self)
             button.setCheckable(True)
             button.clicked.connect(lambda: self._emit(cam))
