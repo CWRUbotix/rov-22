@@ -6,17 +6,38 @@ import cv2
 from gui.data_classes import Frame
 from tasks.base_task import BaseTask
 from vehicle.vehicle_control import VehicleControl, InputChannel
+from logger import root_logger
+
+logger = root_logger.getChild(__name__)
 
 TRANSLATION_SENSITIVITY = 0.65
 ROTATIONAL_SENSITIVITY = 0.55
-FORWARD_SPEED = 0.5
 
 MAX_TASK_DURATION = 500
 MIN_TASK_DURATION = 2
 
-# The fraction of the screen that the button takes up when we've gotten close enough to it
-STOP_WIDTH_FRACTION = 0.5
-STOP_HEIGHT_FRACTION = 0.5
+# Timeline: crawl forward  ->  steer  ->  ram forward  ->  end task
+#                         START      STOP              END
+# Sorry about the constant debug prints/logs, I can't think of a better way right now (we go backward in the timeline sometimes)
+INFINITE_PRINTING = True
+INFINITE_LOGGING = True
+# TODO: keep timeline state rather than always polling stereo x difference/size % to determine what phase we're in?
+
+CRAWL_SPEED = 0.02
+FORWARD_SPEED = 0.02 # probably 0.5 for real life
+RAM_SPEED = 0.5
+
+# Fraction of screen the button takes up when we stop crawling & start steering
+START_WIDTH_FRACTION = 0.02
+START_HEIGHT_FRACTION = 0.02
+
+# Fraction of screen the button takes up when we stop steering & start ramming
+STOP_WIDTH_FRACTION = 0.1
+STOP_HEIGHT_FRACTION = 0.1
+
+# Fraction of screen the button takes up when we end the task
+END_WIDTH_FRACTION = 0.3
+END_HEIGHT_FRACTION = 0.3
 
 
 def get_button_contour(cv_img):
@@ -67,9 +88,38 @@ class ButtonDocking(BaseTask):
         self.start_time = time.time()
 
     def periodic(self):
-        """Drive forward in the directions indicated by the vertical_move and horizontal_move methods"""
-        if self.button_pos != [-1, -1]:
-            scale = max(-math.log(self.button_dims[0] / self.image_dims[0]) / 10, 0.1)
+        """Drive forward in the directions indicated by the vertical_move and horizontal_move methods, or crawl/ram if the time is right"""
+        scale = max(-math.log(self.button_dims[0] / self.image_dims[0]) / 10, 0.1)
+
+        if self.button_dims[0] <= START_WIDTH_FRACTION * self.image_dims[0] or self.button_dims[1] <= START_HEIGHT_FRACTION * self.image_dims[1]:
+            inputs = {
+                InputChannel.FORWARD: scale * CRAWL_SPEED,
+                InputChannel.LATERAL: 0,
+                InputChannel.THROTTLE: 0,
+                InputChannel.PITCH: 0,
+                InputChannel.YAW: 0,
+                InputChannel.ROLL: 0,
+            }
+
+            self.vehicle.set_rc_inputs(inputs)
+
+            if INFINITE_LOGGING: logger.debug('crawl')
+            if INFINITE_PRINTING: print('crawl')
+        elif self.button_dims[0] >= STOP_WIDTH_FRACTION * self.image_dims[0] or self.button_dims[1] >= STOP_HEIGHT_FRACTION * self.image_dims[1]:
+            inputs = {
+                InputChannel.FORWARD: scale * RAM_SPEED,
+                InputChannel.LATERAL: 0,
+                InputChannel.THROTTLE: 0,
+                InputChannel.PITCH: 0,
+                InputChannel.YAW: 0,
+                InputChannel.ROLL: 0,
+            }
+
+            self.vehicle.set_rc_inputs(inputs)
+
+            if INFINITE_LOGGING: logger.debug('ram')
+            if INFINITE_PRINTING: print('ram')
+        elif self.button_pos != [-1, -1]:
             inputs = {
                 InputChannel.FORWARD: scale * FORWARD_SPEED,
                 InputChannel.LATERAL: 0,
@@ -80,6 +130,9 @@ class ButtonDocking(BaseTask):
             }
 
             self.vehicle.set_rc_inputs(inputs)
+
+            if INFINITE_LOGGING: logger.debug('steer')
+            if INFINITE_PRINTING: print('steer')
 
     def horizontal_move(self):
         """Return the change in yaw that will aim us at the button, in [-1,1]"""
@@ -93,6 +146,9 @@ class ButtonDocking(BaseTask):
     def handle_frame(self, frame: Frame):
         """Recalculate button position info if possible whenever a new frame is recieved"""
         best_contour, high_score = get_button_contour(frame.cv_img)
+
+        # TODO: Guard admit dual cam only
+        # TODO: Chop dual cam frame in half
 
         # Calculate button position info if we found a good countour
         if high_score > 0:
@@ -108,8 +164,8 @@ class ButtonDocking(BaseTask):
         and (we've hit the button or exceeded max task time)
         """
         return time.time() >= self.start_time + MIN_TASK_DURATION and \
-               (self.button_dims[0] > STOP_WIDTH_FRACTION * self.image_dims[0] or \
-                self.button_dims[1] > STOP_HEIGHT_FRACTION * self.image_dims[1] or \
+               (self.button_dims[0] > END_WIDTH_FRACTION * self.image_dims[0] or \
+                self.button_dims[1] > END_HEIGHT_FRACTION * self.image_dims[1] or \
                 time.time() >= self.start_time + MAX_TASK_DURATION)
 
     def end(self):
