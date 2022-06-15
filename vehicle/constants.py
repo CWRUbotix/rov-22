@@ -10,12 +10,11 @@ class Camera(Enum):
 
 CAM_INDICES = {
     Camera.FRONT: 0,
-    Camera.BACK: 1,
+    Camera.BOTTOM: 1,
     Camera.DUAL: 2,
-    Camera.BOTTOM: 3,
 }
 
-BACKWARD_CAM_INDICES = (CAM_INDICES[Camera.BACK],)
+BACKWARD_CAM_INDICES = ()  # Empty tuple
 
 
 class InputChannel(Enum):

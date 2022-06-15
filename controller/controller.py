@@ -7,7 +7,7 @@ import math
 import threading
 from enum import Enum
 
-from vehicle.constants import InputChannel, Relay, BACKWARD_CAM_INDICES
+from vehicle.constants import InputChannel, Relay, Camera, CAM_INDICES, BACKWARD_CAM_INDICES
 
 TRANSLATION_SENSITIVITY = 1
 ROTATIONAL_SENSITIVITY = 0.75
@@ -232,12 +232,12 @@ class XboxController(Controller):
 
     def check_for_camera_change(self, event):
         if event.code == self.JoystickAxis.DPadX.value and event.state != 0:
-            self.call_camera_callbacks(1)
+            self.call_camera_callbacks(CAM_INDICES[Camera.BOTTOM])
         if event.code == self.JoystickAxis.DPadY.value:
             if event.state == -1:
-                self.call_camera_callbacks(0)
+                self.call_camera_callbacks(CAM_INDICES[Camera.FRONT])
             elif event.state == 1:
-                self.call_camera_callbacks(2)
+                self.call_camera_callbacks(CAM_INDICES[Camera.DUAL])
 
     def check_for_relay_toggle(self, event):
         if not event.state:
@@ -314,12 +314,12 @@ class PS5Controller(Controller):
 
     def check_for_camera_change(self, event):
         if event.code == self.JoystickAxis.DPadX.value and event.state != 0:
-            self.call_camera_callbacks(1)
+            self.call_camera_callbacks(CAM_INDICES[Camera.BOTTOM])
         if event.code == self.JoystickAxis.DPadY.value:
             if event.state == -1:
-                self.call_camera_callbacks(0)
+                self.call_camera_callbacks(CAM_INDICES[Camera.FRONT])
             elif event.state == 1:
-                self.call_camera_callbacks(2)
+                self.call_camera_callbacks(CAM_INDICES[Camera.DUAL])
 
     def check_for_relay_toggle(self, event):
         if not event.state:
