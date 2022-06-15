@@ -162,6 +162,7 @@ class App(QWidget):
         # Connect the main video area big cam changed signal to the manipulator control prompts
         self.main_tab.widgets.video_area.big_video_changed_signal.connect(self.main_tab.show_prompts_for_cam)
 
+        # Connect relay buttons to relays
         for relay_button in (
             self.main_tab.widgets.front_deployer_button,
             self.main_tab.widgets.front_claw_button,
@@ -173,6 +174,10 @@ class App(QWidget):
             self.vehicle.armed_signal.connect(relay_button.enable_click)
             self.vehicle.disarmed_signal.connect(relay_button.on_disarm)
             self.vehicle.disconnected_signal.connect(relay_button.on_disarm)
+
+        # Connect the camera toggle widget to the cameras
+        self.main_tab.widgets.camera_toggle.set_cam_signal.connect(self.vehicle.set_camera_enabled)
+        self.vehicle.connected_signal.connect(self.vehicle.send_camera_state)
 
         # Connect the manipulator buttons to their manipulators
         self.main_tab.widgets.front_deployer_button.state_change_signal.connect(
