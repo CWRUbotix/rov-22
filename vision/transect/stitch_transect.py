@@ -33,122 +33,15 @@ class Rectangle():
         self.h = h
         self.cnt = cnt
 
-def color_mask(key):
-
-    image = stitcher.images[key].image
-
-    hsv_image = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
-
-    # Make the blue mask
-    lower_blue = np.array([100, 0, 0])
-    upper_blue = np.array([120, 255, 255])
-
-    blue_mask = cv2.inRange(hsv_image, lower_blue, upper_blue)
-
-    # Make the red mask
-    lower_red = np.array([0,50,50])
-    upper_red = np.array([10,255,255])
-    red_mask1 = cv2.inRange(hsv_image, lower_red, upper_red)
-
-    lower_red = np.array([170,50,50])
-    upper_red = np.array([180,255,255])
-    red_mask2 = cv2.inRange(hsv_image, lower_red, upper_red)
-
-    red_mask = red_mask1 + red_mask2
-    red_mask = eroded_mask(red_mask) 
-
-    mask = blue_mask + red_mask
-
-    if key in [1, 2, 7, 8]:
-        lower_yellow = np.array([22, 93, 0])
-        upper_yellow = np.array([45, 255, 255])
-
-        yellow_mask = cv2.inRange(hsv_image, lower_yellow, upper_yellow)
-        mask += yellow_mask
-
-    return mask
-
-def new_method(key):
-    image = stitcher.images[key].image
-
-    mask = color_mask(key)
-
-    all_lines = cv2.HoughLinesP(mask, 1, np.pi/180, 500, minLineLength=1000, maxLineGap=300)
-
-    lines = np.zeros_like(image)
-
-    if all_lines is not None:
-        for points in all_lines:
-            x1, y1, x2, y2 = points[0]
-
-            cv2.line(lines, (x1, y1), (x2, y2), color=(0, 255, 0), thickness=10)
-
-    ksize2 = 10
-    kernel = np.ones((ksize2, ksize2))
-    lines = cv2.dilate(lines, kernel, iterations=4)
-    lines = cv2.cvtColor(lines, cv2.COLOR_BGR2GRAY)
-
-    # Find the rectangles in the frame
-    rectangles = []
-
-    height, width = image.shape[:2]
-    image_area = height * width
-
-    rect_image = image.copy()
-
-    contours, _ = cv2.findContours(lines, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-    cv2.drawContours(rect_image, contours, -1, (255, 0, 0), 5)
-
-    for c in contours:
-        area = cv2.contourArea(c)
-
-        # Filter out small rectangles
-        if area < image_area * .1:
-            continue
-
-        # Filter out irregular contours
-        hull = cv2.convexHull(c)
-        hull_area = cv2.contourArea(hull)
-        solidity = float(area)/hull_area
-
-        # if solidity < .9: 
-        #     continue
-
-        # Filter out rectangles with irregular width to height ratio
-        (x, y, w, h) = cv2.boundingRect(c)
-        dim_error = (abs(w - h)/w) 
-
-        if dim_error > .8:
-            continue
-
-        # Add rect to rectangles list
-        rect = cv2.minAreaRect(c)
-        box = cv2.boxPoints(rect)
-        box = np.int0(box)
-
-        rectangles.append(Rectangle(x, y, w, h, [box]))
-
-    if rectangles:
-        # Draw rectangles on the image
-        print(f"Rect {id}: {len(rectangles)} rectangle(s) found")
-
-        for r in rectangles:            
-            # cv2.drawContours(rect_image, contours, -1, (255, 0, 0), 5)
-            cv2.rectangle(rect_image, (r.x, r.y), (r.x + r.w, r.y + r.h), (0, 255, 0), 10)
-    else:
-        print(f"Rect {id}: no rectangles found")
-
-    cv2.imshow("", rect_image)
-    cv2.waitKey(0)
-
-def color_masks(image):
+def color_masks(key):
     """
     Given an image, returns the blue and red color masks
 
-    @param image: input image
+    @param key: 
     @return blue_mask, red_mask: the corresponding color masks
     """
 
+    image = stitcher.images[key].image
     hsv_image = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
 
     # Make the blue mask
@@ -167,8 +60,15 @@ def color_masks(image):
     red_mask2 = cv2.inRange(hsv_image, lower_red, upper_red)
 
     red_mask = red_mask1 + red_mask2
+    red_mask = eroded_mask(red_mask) # Get rid of large red objects  
 
-    return blue_mask, red_mask
+    # Make the yellow mask
+    lower_yellow = np.array([22, 93, 0])
+    upper_yellow = np.array([45, 255, 255])
+
+    yellow_mask = cv2.inRange(hsv_image, lower_yellow, upper_yellow)
+
+    return blue_mask, red_mask, yellow_mask
 
 def line_coords( mask):
     """
@@ -331,97 +231,100 @@ def horizontal_lines(image, mask, blue_line):
 
     return final_lines
 
-def set_lines(key):
+def set_lines(key, debug=False):
     """
     
     """
 
     image = stitcher.images[key].image
 
-    blue_mask, red_mask = color_masks(image)
+    blue_mask, red_mask, yellow_mask = color_masks(key)
 
-    # Find the blue pole
-    blue_line = vertical_line(image, blue_mask)
+    blue_line = vertical_line(image, blue_mask) # blue pole
+    red_line_v = vertical_line(image, red_mask) # vertical red string
 
-    # Finding the red string
-    red_eroded = eroded_mask(red_mask) 
+    horz_mask = red_mask
 
-    red_line_v = vertical_line(image, red_eroded)
-    red_lines_h = horizontal_lines(image, red_eroded, blue_line)
+    # Use yellow mask for specific squares
+    if key in [1, 2, 7, 8]:
+        horz_mask = cv2.bitwise_or(red_mask, yellow_mask) 
+    
+    lines_h = horizontal_lines(image, horz_mask, blue_line)
 
     # Set lines for the current TransectImage
     trans_img = stitcher.images[key]
 
     trans_img.vertical_lines = [blue_line, red_line_v]
-    trans_img.horizontal_lines = red_lines_h
+    trans_img.horizontal_lines = lines_h
 
-    image = Line.draw_lines(image, blue_line, color=(255, 0, 0))
-    image = Line.draw_lines(image, red_line_v, color=(0, 0, 255))
-    image = Line.draw_lines(image, red_lines_h, color=(0, 0, 255))
+    if debug:
+        image = Line.draw_lines(image, blue_line, color=(0, 255, 0))
+        image = Line.draw_lines(image, red_line_v, color=(0, 255, 0))
+        image = Line.draw_lines(image, lines_h, color=(0, 255, 0))
 
     # x, y = Line.intersection(trans_img.blue_line, trans_img.red_lines_h[0])
-
     # image = cv2.circle(image, (x,y), radius=0, color=(0, 0, 0), thickness=-1)
 
-def compare_coords(point1, point2):
-    x1, y1 = point1
-    x2, y2 = point2
-
-    if x1 == x2 and y1 == y2:
-        return 0
-
+def cropped_images(debug=False):
+    """
     
+    """
 
-def stitch():
-    
+    cropped = []
+
     for key in stitcher.images:
-        if key == 6:
-            trans_img = stitcher.images[key]
-            image = trans_img.image
+        trans_img = stitcher.images[key]
+        image = trans_img.image
 
-            x1, y1 = Line.intersection(trans_img.vertical_lines[0], trans_img.horizontal_lines[0])
-            x2, y2 = Line.intersection(trans_img.vertical_lines[0], trans_img.horizontal_lines[1])
-            x3, y3 = Line.intersection(trans_img.vertical_lines[1], trans_img.horizontal_lines[0])
-            x4, y4 = Line.intersection(trans_img.vertical_lines[1], trans_img.horizontal_lines[1])
+        x1, y1 = Line.intersection(trans_img.vertical_lines[0], trans_img.horizontal_lines[0])
+        x2, y2 = Line.intersection(trans_img.vertical_lines[0], trans_img.horizontal_lines[1])
+        x3, y3 = Line.intersection(trans_img.vertical_lines[1], trans_img.horizontal_lines[0])
+        x4, y4 = Line.intersection(trans_img.vertical_lines[1], trans_img.horizontal_lines[1])
 
-            coords = [(x1, y1), (x2, y2), (x3, y3), (x4, y4)]
-            print(coords)
+        coords = [(x1, y1), (x2, y2), (x3, y3), (x4, y4)]
 
-            top_left = None
-            top_right = None
-            bottom_left = None
-            bottom_right = None
+        # Figure out which coordinate is for which corner
+        coords.sort(key=lambda coord: coord[1])
+        
+        upper = [coords[0], coords[1]]
+        lower = [coords[2], coords[3]]
 
-            # Figure out which coordinate is for which corner
-            coords.sort(key=lambda coord: coord[1])
-            
-            upper = [coords[0], coords[1]]
-            lower = [coords[2], coords[3]]
+        upper.sort(key=lambda coord: coord[0])
+        lower.sort(key=lambda coord: coord[0])
 
-            upper.sort(key=lambda coord: coord[0])
-            lower.sort(key=lambda coord: coord[0])
+        x1, y1 = upper[0] # top left
+        x2, y2 = upper[1] # top right
+        x3, y3 = lower[0] # bottom left
+        x4, y4 = lower[1] # bottom right
 
-            x1, y1 = upper[0] # top left
-            x2, y2 = upper[1] # top right
-            x3, y3 = lower[0] # bottom left
-            x4, y4 = lower[1] # bottom right
-
+        if debug:
             image = cv2.circle(image, (x1, y1), radius=0, color=(0, 255, 0), thickness=50)
             image = cv2.circle(image, (x2, y2), radius=0, color=(0, 255, 0), thickness=50)
             image = cv2.circle(image, (x3, y3), radius=0, color=(0, 255, 0), thickness=50)
             image = cv2.circle(image, (x4, y4), radius=0, color=(0, 255, 0), thickness=50)
 
-            height, width, _ = image.shape
+        # Warp image 
+        height, width, _ = image.shape
 
-            src = np.float32([[x1, y1], [x2, y2], [x3, y3], [x4, x4]])
-            dst = np.float32([[0, 0], [width, 0], [0, height], [width, height]])
-            matrix = cv2.getPerspectiveTransform(src, dst)
-            
-            # Perspective transform original image
-            warped = cv2.warpPerspective(image, matrix, (width, height))
+        src = np.float32([[x1, y1], [x2, y2], [x3, y3], [x4, x4]])
+        dst = np.float32([[0, 0], [width, 0], [0, height], [width, height]])
+        matrix = cv2.getPerspectiveTransform(src, dst)
+        
+        # Perspective transform original image
+        warped = cv2.warpPerspective(image, matrix, (width, height))
 
-            # resized = imutils.resize(warped, width=800)
-            cv2.imshow('warped', warped)
+        resized = imutils.resize(warped, width=800)
+        cropped.append(resized)
+
+        if debug:
+            cv2.imshow('warped', resized)
             cv2.waitKey(0)
 
-    # Image stitching...
+    return cropped_images
+
+def stitched():
+    """
+    
+    """
+
+    pass
