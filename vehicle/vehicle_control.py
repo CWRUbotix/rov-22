@@ -27,6 +27,7 @@ class VehicleControl(QObject):
     disarmed_signal = pyqtSignal()
     mode_signal = pyqtSignal(str)
     set_mode_signal = pyqtSignal(str)
+    cameras_set_signal = pyqtSignal(dict)
 
     def __init__(self, port):
         super().__init__()
@@ -182,12 +183,14 @@ class VehicleControl(QObject):
         cams_dict = {cam.value: val for cam, val in self.camera_states.items()}
 
         logger.debug(f"Setting enabled cameras to {cams_dict}")
+        self.cameras_set_signal.emit(self.camera_states)
 
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
             try:
                 sock.setblocking(False)
                 sock.connect((HOST, CAMERA_SOCKET_PORT))
                 sock.sendall(bytes(json.dumps(cams_dict) + '\n', 'utf-8'))
+
             except Exception as e:
                 logger.error(f'Exception in camera socket sending: {e}')
 

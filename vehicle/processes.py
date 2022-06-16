@@ -30,3 +30,19 @@ class LightsManager:
     def update_relays(self):
         for light in self.LIGHTS:
             self.vehicle.set_relay(light, light == self.current_light)
+
+
+class CameraManager:
+    ENABLED_CAMS_MAP = {
+        CAM_INDICES[Camera.FRONT]: (Camera.FRONT, Camera.BOTTOM),
+        CAM_INDICES[Camera.BOTTOM]: (Camera.FRONT, Camera.BOTTOM),
+        CAM_INDICES[Camera.DUAL]: (Camera.DUAL, Camera.BOTTOM)
+    }
+
+    def __init__(self, vehicle: VehicleControl):
+        self.vehicle = vehicle
+
+    def handle_active_cam_change(self, index: int):
+        enabled_cams = self.ENABLED_CAMS_MAP[index]
+        for cam in Camera:
+            self.vehicle.set_camera_enabled(cam, cam in enabled_cams)
