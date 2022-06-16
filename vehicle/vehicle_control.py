@@ -3,7 +3,7 @@ import typing as t
 import time
 import socket
 
-from PyQt5.QtCore import pyqtSignal, pyqtSlot, QObject
+from PyQt5.QtCore import pyqtSignal, pyqtSlot, QObject, QThreadPool
 from pymavlink import mavutil
 
 from logger import root_logger
@@ -44,6 +44,8 @@ class VehicleControl(QObject):
         self.camera_states[Camera.BOTTOM] = True
 
         self.set_mode_signal.connect(self.set_mode)
+
+        self._thread_manager = QThreadPool()
 
     def update(self):
         msg = self.link.wait_heartbeat(blocking=False)
@@ -157,15 +159,17 @@ class VehicleControl(QObject):
         if not self.is_connected() or (not self.is_armed() and state):
             return
 
-        logger.debug(f"Setting relay {relay.value} to {state}")
+        def task():
+            logger.debug(f"Setting relay {relay.value} to {state}")
 
-        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
-            try:
-                sock.setblocking(False)
-                sock.connect((HOST, RELAY_SOCKET_PORT))
-                sock.sendall(bytes([relay.value, int(state)]))
-            except Exception as e:
-                logger.error(f'Exception in relay socket sending: {e}')
+            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+                try:
+                    sock.connect((HOST, RELAY_SOCKET_PORT))
+                    sock.sendall(bytes([relay.value, int(state)]))
+                except Exception as e:
+                    logger.error(f'Exception in relay socket sending: {e}')
+        
+        self._thread_manager.start(task)
 
     def turn_off_relays(self) -> None:
         for relay in Relay:
@@ -182,15 +186,16 @@ class VehicleControl(QObject):
     def send_camera_state(self) -> None:
         cams_dict = {cam.value: val for cam, val in self.camera_states.items()}
 
-        logger.debug(f"Setting enabled cameras to {cams_dict}")
-        self.cameras_set_signal.emit(self.camera_states)
+        def task():
+            logger.debug(f"Setting enabled cameras to {cams_dict}")
+            self.cameras_set_signal.emit(self.camera_states)
 
-        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
-            try:
-                sock.setblocking(False)
-                sock.connect((HOST, CAMERA_SOCKET_PORT))
-                sock.sendall(bytes(json.dumps(cams_dict) + '\n', 'utf-8'))
-
-            except Exception as e:
-                logger.error(f'Exception in camera socket sending: {e}')
+            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+                try:
+                    sock.connect((HOST, CAMERA_SOCKET_PORT))
+                    sock.sendall(bytes(json.dumps(cams_dict) + '\n', 'utf-8'))
+                except Exception as e:
+                    logger.error(f'Exception in camera socket sending: {e}')
+        
+        self._thread_manager.start(task)
 

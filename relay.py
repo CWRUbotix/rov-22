@@ -7,4 +7,4 @@ PORT = 60000  # The port used by the server
 
 with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
     s.connect((HOST, PORT))
-    s.sendall(bytes([7, 0]))
+    s.sendall(bytes([6, 0]))
