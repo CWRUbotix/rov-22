@@ -21,13 +21,16 @@ class CameraToggleWidget(QWidget):
         for cam in Camera:
             button = QPushButton(cam.value, self)
             button.setCheckable(True)
-            button.clicked.connect(lambda: self._emit(cam))
+            button.clicked.connect(self._create_slot(cam))
             self.root_layout.addWidget(button)
             self._buttons[cam] = button
 
         # Front and bottom cams start enabled
         for cam in (Camera.FRONT, Camera.BOTTOM):
             self._buttons[cam].setChecked(True)
+    
+    def _create_slot(self, camera: Camera):
+        return lambda: self._emit(camera)
 
     def _emit(self, camera: Camera):
         self.set_cam_signal.emit(camera, self._buttons[camera].isChecked())
