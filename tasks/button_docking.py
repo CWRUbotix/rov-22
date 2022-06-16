@@ -18,10 +18,8 @@ MIN_TASK_DURATION = 2
 
 # Timeline: crawl forward  ->  steer  ->  ram forward  ->  end task
 #                         START      STOP              END
-# Sorry about the constant debug prints/logs, I can't think of a better way right now (we go backward in the timeline sometimes)
-INFINITE_PRINTING = True
-INFINITE_LOGGING = True
-# TODO: keep timeline state rather than always polling stereo x difference/size % to determine what phase we're in?
+DO_PRINTING = True
+DO_LOGGING = True
 
 CRAWL_SPEED = 0.02
 FORWARD_SPEED = 0.02 # probably 0.5 for real life
@@ -83,15 +81,34 @@ class ButtonDocking(BaseTask):
         self.image_dims = [-1, -1]
         self.start_time = 0
 
+        # 0 = crawl, 1 = steer, 2 = ram
+        self.state = 0
+
     def initialize(self):
         self.vehicle.stop_thrusters()
         self.start_time = time.time()
 
+        self.vehicle.set_mode("ALT_HOLD")
+
+        if DO_LOGGING: logger.debug('Button Docking: CRAWL')
+        if DO_PRINTING: print('Button Docking: CRAWL')
+
     def periodic(self):
         """Drive forward in the directions indicated by the vertical_move and horizontal_move methods, or crawl/ram if the time is right"""
+        if self.button_pos == [-1, -1]:
+            return
+
         scale = max(-math.log(self.button_dims[0] / self.image_dims[0]) / 10, 0.1)
 
-        if self.button_dims[0] <= START_WIDTH_FRACTION * self.image_dims[0] or self.button_dims[1] <= START_HEIGHT_FRACTION * self.image_dims[1]:
+        if self.state == 0:
+            # Move to steering
+            if self.button_dims[0] >= START_WIDTH_FRACTION * self.image_dims[0] or self.button_dims[1] >= START_HEIGHT_FRACTION * self.image_dims[1]:
+                self.state = 1
+                self.vehicle.set_mode("MANUAL")
+                if DO_LOGGING: logger.debug('Button Docking: STEER')
+                if DO_PRINTING: print('Button Docking: STEER')
+
+            # Apply crawling
             inputs = {
                 InputChannel.FORWARD: scale * CRAWL_SPEED,
                 InputChannel.LATERAL: 0,
@@ -103,9 +120,30 @@ class ButtonDocking(BaseTask):
 
             self.vehicle.set_rc_inputs(inputs)
 
-            if INFINITE_LOGGING: logger.debug('crawl')
-            if INFINITE_PRINTING: print('crawl')
-        elif self.button_dims[0] >= STOP_WIDTH_FRACTION * self.image_dims[0] or self.button_dims[1] >= STOP_HEIGHT_FRACTION * self.image_dims[1]:
+        elif self.state == 1:
+            # Move to ramming
+            if self.button_dims[0] >= STOP_WIDTH_FRACTION * self.image_dims[0] or self.button_dims[1] >= STOP_HEIGHT_FRACTION * self.image_dims[1]:
+                self.state = 2
+                self.vehicle.set_mode("ALT_HOLD")
+                if DO_LOGGING: logger.debug('Button Docking: RAM')
+                if DO_PRINTING: print('Button Docking: RAM')
+
+            # Apply steering
+            inputs = {
+                InputChannel.FORWARD: scale * FORWARD_SPEED,
+                InputChannel.LATERAL: 0,
+                InputChannel.THROTTLE: self.vertical_move() * scale * TRANSLATION_SENSITIVITY,
+                InputChannel.PITCH: self.vertical_move() * scale * ROTATIONAL_SENSITIVITY,
+                InputChannel.YAW: self.horizontal_move() * scale * ROTATIONAL_SENSITIVITY,
+                InputChannel.ROLL: 0,
+            }
+
+            # print(('>' if self.horizontal_move() > 0 else '<') + ('^' if self.vertical_move() > 0 else 'v'))
+
+            self.vehicle.set_rc_inputs(inputs)
+
+        elif self.state == 2:
+            # Apply ramming
             inputs = {
                 InputChannel.FORWARD: scale * RAM_SPEED,
                 InputChannel.LATERAL: 0,
@@ -117,22 +155,8 @@ class ButtonDocking(BaseTask):
 
             self.vehicle.set_rc_inputs(inputs)
 
-            if INFINITE_LOGGING: logger.debug('ram')
-            if INFINITE_PRINTING: print('ram')
-        elif self.button_pos != [-1, -1]:
-            inputs = {
-                InputChannel.FORWARD: scale * FORWARD_SPEED,
-                InputChannel.LATERAL: 0,
-                InputChannel.THROTTLE: self.vertical_move() * scale * TRANSLATION_SENSITIVITY,
-                InputChannel.PITCH: self.vertical_move() * scale * ROTATIONAL_SENSITIVITY,
-                InputChannel.YAW: self.horizontal_move() * scale * ROTATIONAL_SENSITIVITY,
-                InputChannel.ROLL: 0,
-            }
 
-            self.vehicle.set_rc_inputs(inputs)
 
-            if INFINITE_LOGGING: logger.debug('steer')
-            if INFINITE_PRINTING: print('steer')
 
     def horizontal_move(self):
         """Return the change in yaw that will aim us at the button, in [-1,1]"""
@@ -169,4 +193,5 @@ class ButtonDocking(BaseTask):
                 time.time() >= self.start_time + MAX_TASK_DURATION)
 
     def end(self):
+        self.vehicle.set_mode("MANUAL")
         self.vehicle.stop_thrusters()
