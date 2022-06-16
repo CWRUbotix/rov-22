@@ -9,8 +9,8 @@ import math
 import threading
 from enum import Enum
 
-from logger import root_logger
-from vehicle.constants import InputChannel, Relay, BACKWARD_CAM_INDICES
+from vehicle.constants import InputChannel, Relay, Camera, CAM_INDICES, BACKWARD_CAM_INDICES
+
 
 TRANSLATION_SENSITIVITY = 1
 ROTATIONAL_SENSITIVITY = 0.75
@@ -269,12 +269,12 @@ class XboxController(Controller):
 
     def check_for_camera_change(self, event):
         if event.code == self.JoystickAxis.DPadX.value and event.state != 0:
-            self.call_camera_callbacks(1)
+            self.call_camera_callbacks(CAM_INDICES[Camera.BOTTOM])
         if event.code == self.JoystickAxis.DPadY.value:
             if event.state == -1:
-                self.call_camera_callbacks(0)
+                self.call_camera_callbacks(CAM_INDICES[Camera.FRONT])
             elif event.state == 1:
-                self.call_camera_callbacks(2)
+                self.call_camera_callbacks(CAM_INDICES[Camera.DUAL])
 
     def check_for_relay_toggle(self, event):
         if not event.state:
@@ -288,7 +288,7 @@ class XboxController(Controller):
         elif event.code == self.Button.X.value:
             self.call_relay_callbacks(Relay.MAGNET)
         elif event.code == self.Button.Y.value:
-            self.call_relay_callbacks(Relay.LIGHTS)
+            self.call_relay_callbacks(Relay.LIGHTS_FRONT)
 
 
 class PS5Controller(Controller):
@@ -351,12 +351,12 @@ class PS5Controller(Controller):
 
     def check_for_camera_change(self, event):
         if event.code == self.JoystickAxis.DPadX.value and event.state != 0:
-            self.call_camera_callbacks(1)
+            self.call_camera_callbacks(CAM_INDICES[Camera.BOTTOM])
         if event.code == self.JoystickAxis.DPadY.value:
             if event.state == -1:
-                self.call_camera_callbacks(0)
+                self.call_camera_callbacks(CAM_INDICES[Camera.FRONT])
             elif event.state == 1:
-                self.call_camera_callbacks(2)
+                self.call_camera_callbacks(CAM_INDICES[Camera.DUAL])
 
     def check_for_relay_toggle(self, event):
         if not event.state:
@@ -370,7 +370,7 @@ class PS5Controller(Controller):
         elif event.code == self.Button.Square.value:
             self.call_relay_callbacks(Relay.MAGNET)
         elif event.code == self.Button.Triangle.value:
-            self.call_relay_callbacks(Relay.LIGHTS)
+            self.call_relay_callbacks(Relay.LIGHTS_FRONT)  # Actually toggles all lights
 
 
 def get_active_controller_type():

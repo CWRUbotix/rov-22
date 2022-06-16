@@ -1,52 +1,37 @@
-import json
-import socket
-from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QWidget, QHBoxLayout, QPushButton
-from PyQt5.QtCore import QThreadPool
+from PyQt5.QtCore import pyqtSignal
 
-from gui.data_classes import CameraType
+from vehicle.constants import Camera
 
 from logger import root_logger
 
 logger = root_logger.getChild(__name__)
 
 
-ARM_STYLE = "QPushButton { background-color: green }"
-DISARM_STYLE = "QPushButton { background-color: red }"
-DISABLED_STYLE = "QPushButton { background-color: #575757 }"
-
-
 class CameraToggleWidget(QWidget):
+    set_cam_signal = pyqtSignal(Camera, bool)
+
     def __init__(self):
         super().__init__()
-        socket.socket
         self.root_layout = QHBoxLayout(self)
         self.setLayout(self.root_layout)
 
-        self._state = {}
         self._buttons = {}
-        self._thread_manager = QThreadPool()
-        
 
-        for type in CameraType:
-            camera = type.value
-
-            self._state[type.value] = False
-            button = QPushButton(type.value, self)
-            button.clicked.connect(self._gen_slot(camera))
+        for cam in Camera:
+            button = QPushButton(cam.value, self)
+            button.setCheckable(True)
+            button.clicked.connect(self._create_slot(cam))
             self.root_layout.addWidget(button)
-            self._buttons[type.value] = button
+            self._buttons[cam] = button
+
+        # Front and bottom cams start enabled
+        for cam in (Camera.FRONT, Camera.BOTTOM):
+            self._buttons[cam].setChecked(True)
     
-    def _gen_slot(self, camera: str):
-        return lambda : self._thread_manager.start(lambda :self._toggle(camera))
+    def _create_slot(self, camera: Camera):
+        return lambda: self._emit(camera)
 
-    def _toggle(self, camera: str):
-        #return
-        self._state[camera] = not self._state[camera]
+    def _emit(self, camera: Camera):
+        self.set_cam_signal.emit(camera, self._buttons[camera].isChecked())
 
-        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
-            try:
-                sock.connect(('192.168.2.2', 5000))
-                sock.sendall(bytes(json.dumps(self._state) + '\n', 'utf-8'))
-            except Exception as e:
-                logger.info(f'Exception in camera socket: {e}')
