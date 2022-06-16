@@ -10,7 +10,7 @@ from logger import root_logger
 
 logger = root_logger.getChild(__name__)
 
-TRANSLATION_SENSITIVITY = 0.65
+TRANSLATION_SENSITIVITY = 0.45
 ROTATIONAL_SENSITIVITY = 0.55
 
 MAX_TASK_DURATION = 500
@@ -23,15 +23,15 @@ DO_LOGGING = True
 
 CRAWL_SPEED = 0.4
 FORWARD_SPEED = 0.9 # probably 0.5 for real life
-RAM_SPEED = 0.5
+RAM_SPEED = 0.9
 
 # Fraction of screen the button takes up when we stop crawling & start steering
-START_WIDTH_FRACTION = 0.02
-START_HEIGHT_FRACTION = 0.02
+START_WIDTH_FRACTION = 0.035
+START_HEIGHT_FRACTION = 0.035
 
 # Fraction of screen the button takes up when we stop steering & start ramming
-STOP_WIDTH_FRACTION = 0.1
-STOP_HEIGHT_FRACTION = 0.1
+STOP_WIDTH_FRACTION = 0.15
+STOP_HEIGHT_FRACTION = 0.15
 
 # Fraction of screen the button takes up when we end the task
 END_WIDTH_FRACTION = 0.3
@@ -91,6 +91,7 @@ class ButtonDocking(BaseTask):
         self.start_time = time.time()
 
         self.vehicle.set_mode("ALT_HOLD")
+        self.state = 0
 
         if DO_LOGGING: logger.debug('Button Docking: CRAWL')
         if DO_PRINTING: print('Button Docking: CRAWL')
@@ -126,7 +127,7 @@ class ButtonDocking(BaseTask):
             # Move to ramming
             if self.button_dims[0] >= STOP_WIDTH_FRACTION * self.image_dims[0] or self.button_dims[1] >= STOP_HEIGHT_FRACTION * self.image_dims[1]:
                 self.state = 2
-                self.vehicle.set_mode("ALT_HOLD")
+                #self.vehicle.set_mode("ALT_HOLD")
                 if DO_LOGGING: logger.debug('Button Docking: RAM')
                 if DO_PRINTING: print('Button Docking: RAM')
 
@@ -147,9 +148,9 @@ class ButtonDocking(BaseTask):
         elif self.state == 2:
             # Apply ramming
             inputs = {
-                InputChannel.FORWARD: scale * RAM_SPEED,
+                InputChannel.FORWARD: RAM_SPEED,
                 InputChannel.LATERAL: 0,
-                InputChannel.THROTTLE: 0,
+                InputChannel.THROTTLE: -0.08,
                 InputChannel.PITCH: 0,
                 InputChannel.YAW: 0,
                 InputChannel.ROLL: 0,
@@ -167,7 +168,7 @@ class ButtonDocking(BaseTask):
     def vertical_move(self):
         """Return the change in pitch that will aim us at the button, in [-1,1]"""
         # need to negate b/c inverted y axis
-        return -1 * (self.button_pos[1] - self.image_dims[1] / 2) / (self.image_dims[1] / 2)
+        return -1 * (self.button_pos[1] - (self.image_dims[1] * 0.4)) / (self.image_dims[1] / 2)
 
     def handle_frame(self, frame: Frame):
         """Recalculate button position info if possible whenever a new frame is recieved"""
