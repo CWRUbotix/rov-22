@@ -10,20 +10,6 @@
 		{
 			"api": "CAP_GSTREAMER",
 			"template": "gstreamer-display-jpeg",
-			"content": "5001",
-			"width": 1280,
-			"height": 720
-		},
-		{
-			"api": "CAP_GSTREAMER",
-			"template": "gstreamer-display-jpeg",
-			"content": "5003",
-			"width": 1280,
-			"height": 480
-		},
-		{
-			"api": "CAP_GSTREAMER",
-			"template": "gstreamer-display-jpeg",
 			"content": "5004",
 			"width": 1280,
 			"height": 720

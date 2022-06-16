@@ -16,6 +16,7 @@ from logger import root_logger
 TRANSLATION_SENSITIVITY = 1
 ROTATIONAL_SENSITIVITY = 0.75
 
+from logger import root_logger
 logger = root_logger.getChild(__name__)
 
 
