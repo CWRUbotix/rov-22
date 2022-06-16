@@ -1,16 +1,21 @@
+import importlib
 import time
 import typing as t
 from abc import abstractmethod
 
+import inputs
 from inputs import get_gamepad, devices
 import math
 import threading
 from enum import Enum
 
+from logger import root_logger
 from vehicle.constants import InputChannel, Relay, BACKWARD_CAM_INDICES
 
 TRANSLATION_SENSITIVITY = 1
 ROTATIONAL_SENSITIVITY = 0.75
+
+logger = root_logger.getChild(__name__)
 
 
 def apply_curve(value, exponential):
@@ -33,6 +38,8 @@ class Controller:
         pass
 
     def __init__(self, get_big_video_index, joystick_curve_exponential=2, trigger_curve_exponential=2):
+        self.connected = False
+
         self.JOY_RANGE = None
         self.TRIG_RANGE = None
 
@@ -60,7 +67,37 @@ class Controller:
 
     def _monitor_controller(self):
         while True:
-            events = get_gamepad()
+            try:
+                events = get_gamepad()
+            except OSError:
+                logger.info("Controller disconnected")
+                self.connected = False
+
+                # Reset all inputs to 0
+                for axis in self.joystick_axes.keys():
+                    self.joystick_axes[axis] = 0
+                for trigger in self.triggers.keys():
+                    self.triggers[trigger] = 0
+                for button in self.buttons.keys():
+                    self.buttons[button] = False
+
+                while True:
+                    # Keep reloading the module until it works (should only take one try)
+                    try:
+                        importlib.reload(inputs)
+                        from inputs import devices
+                        break
+                    except Exception:
+                        time.sleep(0.5)
+                continue
+            except inputs.UnpluggedError:
+                time.sleep(0.5)
+                devices._find_devices()
+                continue
+
+            if not self.connected:
+                self.connected = True
+                logger.info("Controller connected")
             for event in events:
                 self._handle_event(event)
 
