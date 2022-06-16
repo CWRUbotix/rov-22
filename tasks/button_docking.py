@@ -23,8 +23,8 @@ INFINITE_PRINTING = True
 INFINITE_LOGGING = True
 # TODO: keep timeline state rather than always polling stereo x difference/size % to determine what phase we're in?
 
-CRAWL_SPEED = 0.02
-FORWARD_SPEED = 0.02 # probably 0.5 for real life
+CRAWL_SPEED = 0.4
+FORWARD_SPEED = 0.9 # probably 0.5 for real life
 RAM_SPEED = 0.5
 
 # Fraction of screen the button takes up when we stop crawling & start steering
@@ -41,6 +41,8 @@ END_HEIGHT_FRACTION = 0.3
 
 
 def get_button_contour(cv_img):
+    h, w, _ = cv_img.shape
+    cv_img = cv_img[:,int(w/2):w]
     hsv = cv2.cvtColor(cv_img, cv2.COLOR_BGR2HSV)
 
     # Mask out non-red stuff
@@ -65,7 +67,7 @@ def get_button_contour(cv_img):
         if w < width and h < height and w * h > high_score:
             high_score = w * h
             best_contour = contour
-
+    print(high_score)
     return best_contour, high_score
 
 
@@ -93,7 +95,7 @@ class ButtonDocking(BaseTask):
 
         if self.button_dims[0] <= START_WIDTH_FRACTION * self.image_dims[0] or self.button_dims[1] <= START_HEIGHT_FRACTION * self.image_dims[1]:
             inputs = {
-                InputChannel.FORWARD: scale * CRAWL_SPEED,
+                InputChannel.FORWARD: CRAWL_SPEED,
                 InputChannel.LATERAL: 0,
                 InputChannel.THROTTLE: 0,
                 InputChannel.PITCH: 0,
@@ -156,7 +158,7 @@ class ButtonDocking(BaseTask):
             self.button_pos = [x + w / 2, y + h / 2]
             self.button_dims = [w, h]
             height, width, colors = frame.cv_img.shape
-            self.image_dims = [width, height]
+            self.image_dims = [int(width/2), height]
 
     def is_finished(self) -> bool:
         """
