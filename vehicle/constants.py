@@ -1,13 +1,23 @@
-import enum
-
-FRONT_CAMERA_INDEX = 0
-BOTTOM_CAMERA_INDEX = 2
-BACK_CAMERA_INDEX = 2
-
-BACKWARD_CAM_INDICES = (2,)
+from enum import Enum
 
 
-class InputChannel(enum.Enum):
+class Camera(Enum):
+    FRONT = 'front'
+    BACK = 'back'
+    BOTTOM = 'bottom'
+    DUAL = 'dual'
+
+
+CAM_INDICES = {
+    Camera.FRONT: 0,
+    Camera.BOTTOM: 1,
+    Camera.DUAL: 2,
+}
+
+BACKWARD_CAM_INDICES = ()  # Empty tuple
+
+
+class InputChannel(Enum):
     PITCH = 1
     ROLL = 2
     THROTTLE = 3  # Translation on the Z axis
@@ -21,10 +31,12 @@ class InputChannel(enum.Enum):
     VIDEO_SWITCH = 11
 
 
-class Relay(enum.Enum):
+class Relay(Enum):
     PVC_FRONT = 0  # Hardware pin
     CLAW_FRONT = 1
     PVC_BACK = 2
     CLAW_BACK = 3
     MAGNET = 4
-    LIGHTS = 5
+    LIGHTS_FRONT = 5
+    LIGHTS_BOTTOM = 7
+    LIGHTS_BACK = 6

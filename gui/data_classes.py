@@ -8,11 +8,6 @@ class Frame:
     cv_img: np.ndarray
     cam_index: int
 
-class CameraType(enum.Enum):
-    FRONT = 'front'
-    BACK = 'back'
-    BOTTOM = 'bottom'
-    DUAL = 'dual'
 
 @dataclasses.dataclass
 class VideoSource:

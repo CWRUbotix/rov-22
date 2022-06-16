@@ -13,6 +13,7 @@ from gui.widgets.tabs import MainTab, DebugTab, ImageDebugTab, VideoTab
 from logger import root_logger
 from tasks.button_docking import ButtonDocking
 from tasks.no_button_docking import NoButtonDocking
+from vehicle.processes import LightsManager
 from vehicle.vehicle_control import VehicleControl, Relay
 from tasks.scheduler import TaskScheduler
 from tasks.keyboard_control import KeyboardControl
@@ -76,7 +77,9 @@ class App(QWidget):
         # Create VehicleControl object to handle the connection to the ROV
         self.vehicle = VehicleControl(port=14550)
 
-        # Creat an instance of controller
+        self.light_manager = LightsManager(self.vehicle)
+
+        # Create an instance of controller
         self.controller = get_active_controller(self.main_tab.widgets.video_area.get_big_video_cam_index)
         if self.controller is not None:
             self.controller.start_monitoring()
@@ -159,9 +162,11 @@ class App(QWidget):
             lambda: self.task_scheduler.start_task(self.button_docking_task)
         )
 
-        # Connect the main video area big cam changed signal to the manipulator control prompts
+        # Connect the main video area big cam changed signal to the manipulator control prompts and lights manager
         self.main_tab.widgets.video_area.big_video_changed_signal.connect(self.main_tab.show_prompts_for_cam)
+        self.main_tab.widgets.video_area.big_video_changed_signal.connect(self.light_manager.handle_active_cam_change)
 
+        # Connect relay buttons to relays
         for relay_button in (
             self.main_tab.widgets.front_deployer_button,
             self.main_tab.widgets.front_claw_button,
@@ -174,6 +179,10 @@ class App(QWidget):
             self.vehicle.disarmed_signal.connect(relay_button.on_disarm)
             self.vehicle.disconnected_signal.connect(relay_button.on_disarm)
 
+        # Connect the camera toggle widget to the cameras
+        self.main_tab.widgets.camera_toggle.set_cam_signal.connect(self.vehicle.set_camera_enabled)
+        self.vehicle.connected_signal.connect(self.vehicle.send_camera_state)
+
         # Connect the manipulator buttons to their manipulators
         self.main_tab.widgets.front_deployer_button.state_change_signal.connect(
             lambda state: self.vehicle.set_relay(Relay.PVC_FRONT, state))
@@ -185,8 +194,7 @@ class App(QWidget):
             lambda state: self.vehicle.set_relay(Relay.CLAW_BACK, state))
         self.main_tab.widgets.magnet_button.state_change_signal.connect(
             lambda state: self.vehicle.set_relay(Relay.MAGNET, state))
-        self.main_tab.widgets.lights_button.state_change_signal.connect(
-            lambda state: self.vehicle.set_relay(Relay.LIGHTS, state))
+        self.main_tab.widgets.lights_button.state_change_signal.connect(self.light_manager.toggle_global_enabled)
 
         if self.controller is not None:
             self.controller.register_relay_callback(Relay.PVC_FRONT, self.main_tab.widgets.front_deployer_button.toggle)
@@ -194,7 +202,7 @@ class App(QWidget):
             self.controller.register_relay_callback(Relay.PVC_BACK, self.main_tab.widgets.back_deployer_button.toggle)
             self.controller.register_relay_callback(Relay.CLAW_BACK, self.main_tab.widgets.back_claw_button.toggle)
             self.controller.register_relay_callback(Relay.MAGNET, self.main_tab.widgets.magnet_button.toggle)
-            self.controller.register_relay_callback(Relay.LIGHTS, self.main_tab.widgets.lights_button.toggle)
+            self.controller.register_relay_callback(Relay.LIGHTS_FRONT, self.main_tab.widgets.lights_button.toggle)
         
         self.vehicle.mode_signal.connect(self.main_tab.widgets.manual_button.on_mode)
         self.main_tab.widgets.manual_button.set_mode_signal(self.vehicle.set_mode_signal)
