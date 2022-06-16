@@ -10,6 +10,7 @@ import threading
 from enum import Enum
 
 from vehicle.constants import InputChannel, Relay, Camera, CAM_INDICES, BACKWARD_CAM_INDICES
+from logger import root_logger
 
 
 TRANSLATION_SENSITIVITY = 1

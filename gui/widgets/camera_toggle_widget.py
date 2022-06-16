@@ -34,7 +34,6 @@ class CameraToggleWidget(QWidget):
 
     def _emit_signal(self, camera: Camera):
         self.set_cam_signal.emit(camera, self._buttons[camera].isChecked())
-        logger.info(f"{camera} set to {self._buttons[camera].isChecked()}")
 
     def on_cameras_update(self, cam_dict: dict):
         for cam, val in cam_dict.items():

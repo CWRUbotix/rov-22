@@ -188,7 +188,6 @@ class VehicleControl(QObject):
 
         def task():
             logger.debug(f"Setting enabled cameras to {cams_dict}")
-            self.cameras_set_signal.emit(self.camera_states)
 
             with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
                 try:
@@ -196,6 +195,7 @@ class VehicleControl(QObject):
                     sock.sendall(bytes(json.dumps(cams_dict) + '\n', 'utf-8'))
                 except Exception as e:
                     logger.error(f'Exception in camera socket sending: {e}')
-        
+
+        self.cameras_set_signal.emit(self.camera_states)
         self._thread_manager.start(task)
 
