@@ -5,6 +5,8 @@ from PyQt5 import QtCore
 from PyQt5.QtCore import pyqtSignal, pyqtSlot
 from PyQt5.QtGui import QColor, QTextCursor, QFont
 from PyQt5.QtWidgets import QComboBox, QFileDialog, QHBoxLayout, QLabel, QPushButton, QVBoxLayout, QWidget, QTextEdit, QFrame
+from gui.app import App
+from gui.widgets.frame_capture_vision import FrameCaptureVisionThread, FrameCaptureVisionWidget
 
 from gui.widgets.gazebo_control_widget import GazeboControlWidget
 from gui.widgets.vehicle_status_widget import VehicleStatusWidget
@@ -17,6 +19,7 @@ from gui.widgets.arm_control_widget import ArmControlWidget
 from gui.decorated_functions import dropdown
 from gui.widgets.map_wreck_widget import MapWreckWidget
 from gui.widgets.wreck_length_widget import WreckLengthWidget
+from gui.widgets.frame_capture_vision import FrameCaptureVisionWidget
 
 # Temporary imports for basic image debug tab
 import os
@@ -149,8 +152,8 @@ def header_label(text: str) -> QLabel:
 
 
 class MainTab(VideoTab):
-    def __init__(self, num_video_streams):
-        super().__init__(num_video_streams)
+    def __init__(self, App, num_video_streams):
+        super().__init__(App, num_video_streams)
 
     def init_widgets(self):
         super().init_widgets()
@@ -158,6 +161,7 @@ class MainTab(VideoTab):
         self.widgets.vehicle_status = VehicleStatusWidget()
         self.widgets.map_wreck = MapWreckWidget()
         self.widgets.wreck_length = WreckLengthWidget()
+        self.widgets.frame_capture_vision = FrameCaptureVisionWidget(App)
 
         # Create a new namespace to group all the buttons for starting tasks
         self.widgets.task_buttons = SimpleNamespace()
@@ -172,6 +176,7 @@ class MainTab(VideoTab):
         sidebar.addWidget(self.widgets.task_buttons.no_button_docking)
         sidebar.addWidget(self.widgets.map_wreck)
         sidebar.addWidget(self.widgets.wreck_length)
+        sidebar.addWidget(self.widgets.frame_capture_vision)
 
         sidebar.addStretch()
         sidebar.addWidget(self.widgets.arm_control)

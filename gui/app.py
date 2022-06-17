@@ -33,6 +33,8 @@ class GuiLogHandler(logging.Handler):
 class App(QWidget):
     main_log_signal = pyqtSignal(str, int)
     debug_log_signal = pyqtSignal(str, int)
+    frame_list = []
+    cam_index = 0
 
     def __init__(self, args):
         super().__init__()
@@ -49,13 +51,17 @@ class App(QWidget):
         with args.cameras as file:
             json_data = json.load(file)
         self.video_thread = VideoThread(json_data)
+        
+        for i in range(0, self.video_thread._captures):
+            self.frame_list.append(None)
+
 
         # Dictionary to keep track of which keys are pressed. If a key is not in the dict, assume it is not pressed.
         self.keysDown = defaultdict(lambda: False)
 
         # Create a tab widget
         self.tabs = QTabWidget()
-        self.main_tab = MainTab(len(self.video_thread._video_sources))
+        self.main_tab = MainTab(self, len(self.video_thread._video_sources))
         self.debug_tab = DebugTab(len(self.video_thread._video_sources))
         self.image_tab = ImageDebugTab()
 
@@ -168,10 +174,13 @@ class App(QWidget):
         if self.keysDown[event.key()]:
             # Remove this key from the keysDown dict, reverting it to the default value (False)
             self.keysDown.pop(event.key())
-
+    
     def closeEvent(self, event):
         self.video_thread.stop()
         event.accept()
+
+    def captureFrame(self, frame:Frame):
+        self.cam_index = self.main_tab.get_big_video_cam_index
 
     @pyqtSlot(Frame)
     def update_image(self, frame: Frame):
@@ -179,5 +188,8 @@ class App(QWidget):
 
         # Update the tab which is currently being viewed only if it is a VideoTab
         current_tab = self.tabs.currentWidget()
+        self.frame_list[frame.cam_index] = frame.cv_img
+        if(current_tab == self.main_tab):
+            self.captureFrame(frame)
         if isinstance(current_tab, VideoTab):
             current_tab.handle_frame(frame)

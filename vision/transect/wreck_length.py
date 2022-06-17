@@ -22,13 +22,13 @@ class WreckLength():
         self.crop = False
         self.line_color = (71, 93, 166)
 
-        self.IMAGE_SIZE = 1000
+        self.IMAGE_SIZE = 800
 
     def new_canvas(self):
         """Creating the canvas"""
 
         # Get transect line image from data repo
-        img_path = os.path.join(data_path, "example-images", "star", "2.jpg") 
+        img_path = os.path.join(data_path, "transect", "stitching", "B", "3", "20220222_184317.jpg") 
         image = cv2.imread(img_path, cv2.IMREAD_UNCHANGED)
 
         # Make transparent background white
@@ -36,12 +36,13 @@ class WreckLength():
         #image[mask] = [255, 255, 255, 255]
 
         image = cv2.cvtColor(image, cv2.COLOR_BGRA2BGR)
+        resized = cv2.resize(image, (800, 800), interpolation = cv2.INTER_AREA)
 
 
-        return image
+        return resized
 
     def draw(self, event, x, y, flags, param):
-        """Draws a line on the screen based on mouse clicks"""
+        """Draws a line on the screen based on mouse clicks. Make sure to click in order [Top Left, Bottom Left, bottom Right, Bottom Right!"""
         #clickList = []
         if event == cv2.EVENT_LBUTTONDOWN:
             if self.drawing == False:

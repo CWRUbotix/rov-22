@@ -1,0 +1,38 @@
+import subprocess
+import os
+from unicodedata import name
+
+
+from PyQt5.QtWidgets import QWidget, QHBoxLayout, QPushButton
+from PyQt5.QtCore import QThread
+from gui.data_classes import Frame
+from logger import root_logger
+from util import vision_path
+
+logger = root_logger.getChild(__name__)
+
+class FrameCaptureVisionThread(QThread):
+    frame_List = []
+
+    def __init__(self, frame: Frame):
+        super().__init__()        
+
+class FrameCaptureVisionWidget(QWidget):
+
+    def __init__(self):
+        super().__init__()
+
+        self.root_layout = QHBoxLayout(self)
+        self.setLayout(self.root_layout)
+
+        self.button_name = QPushButton("Capture Frame", self)
+
+        self.button_name.clicked.connect(self.widget_update)
+
+        self.root_layout.addWidget(self.button_name)
+
+        self.length_thread = FrameCaptureVisionThread()
+    
+    def widget_update(self):
+        if not self.length_thread.isRunning():
+            self.length_thread.start()
