@@ -9,7 +9,7 @@ from util import data_path
 
 ACTUAL_LENGTH = 18.3
 
-directory = path.join(data_path, 'stereo-calibration-potted')
+directory = path.join(data_path, 'stereo-calibration', 'pool')
 
 images = []
 left_images = []
@@ -39,7 +39,7 @@ img_ptsR = []
 obj_pts = []
 
 
-params = StereoParameters.load('stereo')
+params = StereoParameters.load('stereo-pool')
 distances = []
 
 for i in range(len(images)):
@@ -57,8 +57,8 @@ for i in range(len(images)):
     #retR, cornersR =  cv2.findChessboardCorners(Right_nice,(10,7),None)
     #retL, cornersL = cv2.findChessboardCorners(Left_nice,(10,7),None)
 
-    retR, cornersR =  cv2.findChessboardCornersSB(outputR,(10,7),None, flags=cv2.CALIB_CB_EXHAUSTIVE+cv2.CALIB_CB_NORMALIZE_IMAGE)
-    retL, cornersL = cv2.findChessboardCornersSB(outputL,(10,7),None, flags=cv2.CALIB_CB_EXHAUSTIVE+cv2.CALIB_CB_NORMALIZE_IMAGE)
+    retR, cornersR =  cv2.findChessboardCornersSB(Right_nice,(10,7),None, flags=cv2.CALIB_CB_EXHAUSTIVE+cv2.CALIB_CB_NORMALIZE_IMAGE)
+    retL, cornersL = cv2.findChessboardCornersSB(Left_nice,(10,7),None, flags=cv2.CALIB_CB_EXHAUSTIVE+cv2.CALIB_CB_NORMALIZE_IMAGE)
 
     if retR and retL:
         obj_pts.append(objp)
@@ -69,9 +69,7 @@ for i in range(len(images)):
         # cv2.cornerSubPix(Left_nice,cornersL,(11,11),(-1,-1),criteria)
         cv2.drawChessboardCorners(Right_nice,(10,7),cornersR,retR)
         cv2.drawChessboardCorners(Left_nice,(10,7),cornersL,retL)
-        #cv2.imshow('cornersR',Right_nice)
-        #cv2.imshow('cornersL',Left_nice)
-        #cv2.waitKey(0)
+        
 
         points3d = cv2.triangulatePoints(params.proj_l, params.proj_r, cornersL, cornersR)
 
@@ -81,6 +79,10 @@ for i in range(len(images)):
         distance = math.dist(points3d[:,0], points3d[:,-1])
         print(distance)
         distances.append(distance)
+
+        # cv2.imshow('cornersR',Right_nice)
+        # cv2.imshow('cornersL',Left_nice)
+        # cv2.waitKey(0)
 
 
 avg = sum(distances) / len(distances)

@@ -6,7 +6,7 @@ from os import path
 
 from util import data_path
 
-directory = path.join(data_path, 'stereo-calibration-potted')
+directory = path.join(data_path, 'stereo-calibration', 'pool')
 
 images = []
 left_images = []
@@ -107,7 +107,7 @@ Right_Stereo_Map= cv2.initUndistortRectifyMap(new_mtxR, distR, rect_r, proj_mat_
                                               imgR_gray.shape[::-1], cv2.CV_16SC2)
 
 parameters = StereoParameters(proj_mat_l, proj_mat_r, Left_Stereo_Map, Right_Stereo_Map)
-parameters.save('stereo-potted')
+parameters.save('stereo-pool')
 
 print("Saving paraeters ......")
 cv_file = cv2.FileStorage("improved_params2.xml", cv2.FILE_STORAGE_WRITE)
