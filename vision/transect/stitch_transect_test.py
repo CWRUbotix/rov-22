@@ -10,20 +10,29 @@ from vision.colors import *
 class TestStitchTransect(unittest.TestCase):
 
     def setUp(self):
-        # Path to folder with test images
-        folder_A = os.path.join(data_path, "transect", "stitching", "A")
 
-        # Set image for each square in the stitcher
-        for i in range(1, 9):
+        # # Path to folder with test images
+        # folder_A = os.path.join(data_path, "transect", "stitching", "A")
 
-            test_set = 1 # Change this number to change the testing set
+        # # Set image for each square in the stitcher
+        # for i in range(1, 9):
 
-            subfolder_path = os.path.join(folder_A, str(i))
-            image_name = os.listdir(subfolder_path)[test_set]
-            complete_path = os.path.join(subfolder_path, image_name)
+        #     test_set = 1 # Change this number to change the testing set
 
-            image = TransectImage(i, cv2.imread(complete_path))
+        #     subfolder_path = os.path.join(folder_A, str(i))
+        #     image_name = os.listdir(subfolder_path)[test_set]
+        #     complete_path = os.path.join(subfolder_path, image_name)
 
+        #     image = TransectImage(i, cv2.imread(complete_path))
+
+        #     stitcher.set_image(i, image)        
+
+        folder_path = os.path.join(data_path, "transect", "stitching", "p00l")
+
+        for i in range(0, 8):
+            image_path = os.path.join(folder_path, os.listdir(folder_path)[i])
+
+            image = TransectImage(i, cv2.imread(image_path))
             stitcher.set_image(i, image)
 
     def stitched(self):
@@ -35,8 +44,6 @@ class TestStitchTransect(unittest.TestCase):
 
     def browse_images(self):
         """Browse through images with the 'a' and 'd' keys"""
-
-        print("Starting k means color clustering...")
 
         for key in stitcher.images:
             set_lines(key, debug=True)

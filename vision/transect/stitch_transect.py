@@ -68,6 +68,9 @@ def color_masks(key):
 
     yellow_mask = cv2.inRange(hsv_image, lower_yellow, upper_yellow)
 
+    cv2.imshow("", yellow_mask)
+    cv2.waitKey(0)
+
     return blue_mask, red_mask, yellow_mask
 
 def line_coords( mask):
@@ -329,7 +332,7 @@ def stitched():
 
     cropped = cropped_images()
     
-    height, width, channel = cropped[0].shape
+    height, width, _ = cropped[0].shape
 
     final_height = height * 4
     final_width = width * 2
@@ -352,3 +355,12 @@ def stitched():
 
     cv2.imshow("", final_image)
     cv2.waitKey(0)
+
+def stitch_manually():
+    """
+    Stitch manually
+    """
+
+
+
+    pass

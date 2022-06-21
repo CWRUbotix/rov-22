@@ -1,4 +1,4 @@
-"""Goes through the fish images for manually marking the ends of the fis"""
+"""Goes through the fish images for manually marking the ends of the fish"""
 
 import cv2
 import os
