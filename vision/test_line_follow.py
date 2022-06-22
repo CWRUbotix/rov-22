@@ -2,7 +2,15 @@
 import cv2 as cv
 import numpy as np
 
+FORWARD_SPEED = 0.08
+RIGHT_SPEED = 0.1
+LEFT_SPEED = 0.1
+DOWN_SPEED = 0.1
+UP_SPEED = 0.1
+TASK_DURATION = 5
+
 #read the image
+#pull from a set of images from the video capture
 img = cv.imread("D:/Rov 22/rov-vision-22/vision/red scarf.jpg")
 
 #convert the BGR image to HSV colour space
