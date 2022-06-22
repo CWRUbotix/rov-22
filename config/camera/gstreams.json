@@ -1,12 +1,14 @@
 {
 	"sources": [
 		{
-			"api": "ffmpeg",
-			"name": "example-streams/1.mp4"
+			"api": "CAP_FFMPEG",
+			"template": "file",
+			"content": "example-streams/1.mp4"
 		},
 		{
-			"api": "gstreamer",
-			"name": "udpsrc port=5600 caps = \"application/x-rtp, media=(string)video, clock-rate=(int)90000, encoding-name=(string)H264, payload=(int)96\" ! rtph264depay ! decodebin ! videoconvert ! appsink"
+			"api": "CAP_GSTREAMER",
+			"template": "gstreamer-record-jpeg",
+			"content": "5600"
 		}
 	]
 }

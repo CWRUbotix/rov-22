@@ -1,12 +1,18 @@
+from gui.gstreamer_capture import GstreamerCapture
 import os
 import cv2
 import json
+import datetime
 
 from PyQt5.QtCore import pyqtSignal, pyqtSlot, QThread
 from cv2 import CAP_GSTREAMER
 
 from gui.data_classes import Frame, VideoSource
-from util import data_path
+from util import data_path, pipeline_templates_path
+
+from logger import root_logger
+
+logger = root_logger.getChild(__name__)
 
 
 class VideoThread(QThread):
@@ -20,6 +26,7 @@ class VideoThread(QThread):
 
         self._video_sources = []
         self._captures = []
+        self._cur_frames = []
         self._rewind = False
 
         self.load_json(json_data)
@@ -27,7 +34,12 @@ class VideoThread(QThread):
     def _prepare_captures(self):
         """Initialize video capturers from self._video_sources"""
         for source in self._video_sources:
-            self._captures.append(cv2.VideoCapture(source.filename, source.api_preference))
+            if source.api_preference == CAP_GSTREAMER:
+                capture = GstreamerCapture(source.filename, source.width, source.height)
+            else:
+                capture = cv2.VideoCapture(source.filename, source.api_preference)
+            self._captures.append(capture)
+            self._cur_frames.append(None)
 
     def _emit_frames(self):
         """Emit next/prev frames on the pyqtSignal to be received by video widgets"""
@@ -49,7 +61,7 @@ class VideoThread(QThread):
                     # Go back 2 frames so when we read() we'll read back 1 frame
                     prev_frame -= 2
                 else:
-                    # If at beginning, just read 1st frame over and over
+                    # If a t beginning, just read 1st frame over and over
                     prev_frame = 0
 
                 capture.set(cv2.CAP_PROP_POS_FRAMES, prev_frame)
@@ -58,6 +70,7 @@ class VideoThread(QThread):
             ret, cv_img = capture.read()
             if ret:
                 self.update_frames_signal.emit(Frame(cv_img, index))
+                self._cur_frames[index] = cv_img
 
     def run(self):
         self._prepare_captures()
@@ -124,7 +137,7 @@ class VideoThread(QThread):
                 self.load_json(json_data)
 
                 file.close()
-            else:
+            else:  # Regular file (not JSON)
                 self._video_sources.append(VideoSource(filename, cv2.CAP_FFMPEG))
 
         self._video_playing_flag = True
@@ -134,11 +147,27 @@ class VideoThread(QThread):
 
     def load_json(self, json_data):
         if json_data["sources"]:
+            pipeline_templates = json.load(open(pipeline_templates_path, 'r'))
+
             for source in json_data["sources"]:
-                api = cv2.CAP_FFMPEG
-                if source["api"] == "gstreamer":
-                    api = cv2.CAP_GSTREAMER
+                content = ""
+
+                if "content" not in source or not "api" in source:
+                    logger.error('Error reading config JSON: missing content or api fields')
+                elif "template" not in source:
+                    content = source["content"]
+                elif source["template"] == "file":
+                    content = os.path.join(data_path, source["content"])
+                elif source["template"] in pipeline_templates:
+                    for section in pipeline_templates[source["template"]]:
+                        if section == "json.content":
+                            content += source["content"]
+                        elif section == "python.new_recording":
+                            content += datetime.datetime.now().strftime("recordings/%Y-%m-%d_%H%M%S")
+                        else:
+                            content += section
                 else:
-                    source["name"] = os.path.join(data_path, source["name"])
-                
-                self._video_sources.append(VideoSource(source["name"], api))
+                    content = source["content"]
+
+                if hasattr(cv2, source["api"]):
+                    self._video_sources.append(VideoSource(content, getattr(cv2, source["api"]), source["width"], source["height"]))

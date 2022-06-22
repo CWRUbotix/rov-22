@@ -1,0 +1,36 @@
+{
+    "gstreamer-record-h264": [
+        "udpsrc port=",
+        "json.content",
+        " caps=\"application/x-rtp, media=(string)video, clock-rate=(int)90000, encoding-name=(string)H264, payload=(int)96\" ! rtph264depay ! h264parse ! tee name=t t. ! queue ! flvmux ! filesink location=",
+        "python.new_recording",
+        ".flv t. ! queue leaky=1 ! decodebin ! videoconvert ! appsink"
+    ],
+    "gstreamer-display-h264": [
+        "udpsrc port=",
+        "json.content",
+        " caps=\"application/x-rtp, media=(string)video, clock-rate=(int)90000, encoding-name=(string)H264\" ! rtph264depay ! avdec_h264 ! videoconvert ! appsink"
+    ],
+    "gstreamer-record-jpeg": [
+        "udpsrc port=",
+        "json.content",
+        " ! application/x-rtp,encoding=JPEG,payload=26 ! rtpjpegdepay ! tee name=t t. ! queue ! matroskamux ! filesink location=",
+        "python.new_recording",
+        ".mkv t. ! queue leaky=1 ! decodebin ! videoconvert ! appsink"
+    ],
+    "gstreamer-display-jpeg": [
+        "udpsrc port=",
+        "json.content",
+        " caps=\"application/x-rtp, media=(string)video, encoding-name=(string)JPEG\" ! rtpjpegdepay ! decodebin ! videoconvert ! appsink sync=false"
+    ],
+    "gstreamer-display-jpeg-flip": [
+        "udpsrc port=",
+        "json.content",
+        " caps=\"application/x-rtp, media=(string)video, encoding-name=(string)JPEG\" ! rtpjpegdepay ! decodebin ! videoflip method=rotate-180 ! videoconvert ! appsink sync=false"
+    ],
+    "dual-cam": [
+        "udpsrc address=0.0.0.0 port=",
+        "json.content",
+        " ! application/x-rtp,media=(string)video,clock-rate=(int)90000,encoding-name=(string)JPEG,a-framerate=(string)15.000000,x-dimensions=(string)\\\\\"2560\\\\\\,960\\\\\",payload=(int)96,ssrc=(uint)2164174236,timestamp-offset=(uint)3672647732,seqnum-offset=(uint)5184 ! rtpjpegdepay ! decodebin ! queue ! videoconvert ! appsink sync=false"
+    ]
+}
