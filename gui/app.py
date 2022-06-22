@@ -1,6 +1,8 @@
+import datetime
 import json
 import logging
 from collections import defaultdict
+import cv2
 
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QTabWidget
 from PyQt5.QtCore import pyqtSignal, pyqtSlot, Qt
@@ -9,12 +11,14 @@ from gui.data_classes import Frame
 from gui.video_thread import VideoThread
 from gui.widgets.tabs import MainTab, DebugTab, ImageDebugTab, VideoTab
 from logger import root_logger
+from tasks.button_docking import ButtonDocking
 from tasks.no_button_docking import NoButtonDocking
-from vehicle.vehicle_control import VehicleControl
+from vehicle.processes import LightsManager
+from vehicle.vehicle_control import VehicleControl, Relay
 from tasks.scheduler import TaskScheduler
 from tasks.keyboard_control import KeyboardControl
-
-from util import data_path
+from tasks.controller_drive import ControllerDrive
+from controller.controller import get_active_controller, get_active_controller_type
 
 # The name of the logger will be included in debug messages, so set it to the name of the file to make the log traceable
 logger = root_logger.getChild(__name__)
@@ -54,7 +58,7 @@ class App(QWidget):
 
         # Create a tab widget
         self.tabs = QTabWidget()
-        self.main_tab = MainTab(len(self.video_thread._video_sources))
+        self.main_tab = MainTab(len(self.video_thread._video_sources), get_active_controller_type())
         self.debug_tab = DebugTab(len(self.video_thread._video_sources))
         self.image_tab = ImageDebugTab()
 
@@ -73,12 +77,23 @@ class App(QWidget):
         # Create VehicleControl object to handle the connection to the ROV
         self.vehicle = VehicleControl(port=14550)
 
+        self.light_manager = LightsManager(self.vehicle)
+
+        # Create an instance of controller
+        self.controller = get_active_controller(self.main_tab.widgets.video_area.get_big_video_cam_index)
+        if self.controller is not None:
+            self.controller.start_monitoring()
+
         # Setup the task scheduling thread
         self.task_scheduler = TaskScheduler(self.vehicle)
-        self.task_scheduler.default_task = KeyboardControl(self.vehicle, self.keysDown)
+        if self.controller is not None:
+            self.task_scheduler.default_task = ControllerDrive(self.vehicle, self.controller, self.get_big_video_index)
+        else:
+            self.task_scheduler.default_task = KeyboardControl(self.vehicle, self.keysDown, self.get_big_video_index)
 
         # Create the autonomous tasks
         self.no_button_docking_task = NoButtonDocking(self.vehicle)
+        self.button_docking_task = ButtonDocking(self.vehicle)
 
         # Setup GUI logging
         gui_formatter = logging.Formatter("[{levelname}] {message}", style="{")
@@ -125,6 +140,10 @@ class App(QWidget):
             self.vehicle.disconnected_signal.connect(tab.widgets.vehicle_status.on_disconnect)
             self.task_scheduler.change_task_signal.connect(tab.widgets.vehicle_status.on_task_change)
 
+            # Register the change big video method with the controller
+            if self.controller is not None:
+                self.controller.register_camera_callback(tab.widgets.video_area.set_as_big_video)
+
         # Connect DebugTab's selecting files signal to video thread's on_select_filenames
         self.debug_tab.select_files_signal.connect(self.video_thread.on_select_filenames)
 
@@ -139,6 +158,58 @@ class App(QWidget):
         self.main_tab.widgets.task_buttons.no_button_docking.clicked.connect(
             lambda: self.task_scheduler.start_task(self.no_button_docking_task)
         )
+        self.main_tab.widgets.task_buttons.button_docking.clicked.connect(
+            lambda: self.task_scheduler.start_task(self.button_docking_task)
+        )
+
+        # Connect the main video area big cam changed signal to the manipulator control prompts and lights manager
+        self.main_tab.widgets.video_area.big_video_changed_signal.connect(self.main_tab.show_prompts_for_cam)
+        self.main_tab.widgets.video_area.big_video_changed_signal.connect(self.light_manager.handle_active_cam_change)
+
+        # Connect relay buttons to relays
+        for relay_button in (
+            self.main_tab.widgets.front_deployer_button,
+            self.main_tab.widgets.front_claw_button,
+            self.main_tab.widgets.back_deployer_button,
+            self.main_tab.widgets.back_claw_button,
+            self.main_tab.widgets.magnet_button,
+            self.main_tab.widgets.lights_button,
+        ):
+            self.vehicle.armed_signal.connect(relay_button.enable_click)
+            self.vehicle.disarmed_signal.connect(relay_button.on_disarm)
+            self.vehicle.disconnected_signal.connect(relay_button.on_disarm)
+
+        # Connect the camera toggle widget to the cameras
+        self.main_tab.widgets.camera_toggle.set_cam_signal.connect(self.vehicle.set_camera_enabled)
+        self.vehicle.connected_signal.connect(self.vehicle.send_camera_state)
+
+        # Connect the manipulator buttons to their manipulators
+        self.main_tab.widgets.front_deployer_button.state_change_signal.connect(
+            lambda state: self.vehicle.set_relay(Relay.PVC_FRONT, state))
+        self.main_tab.widgets.front_claw_button.state_change_signal.connect(
+            lambda state: self.vehicle.set_relay(Relay.CLAW_FRONT, state))
+        self.main_tab.widgets.back_deployer_button.state_change_signal.connect(
+            lambda state: self.vehicle.set_relay(Relay.PVC_BACK, state))
+        self.main_tab.widgets.back_claw_button.state_change_signal.connect(
+            lambda state: self.vehicle.set_relay(Relay.CLAW_BACK, state))
+        self.main_tab.widgets.magnet_button.state_change_signal.connect(
+            lambda state: self.vehicle.set_relay(Relay.MAGNET, state))
+        self.main_tab.widgets.lights_button.state_change_signal.connect(self.light_manager.toggle_global_enabled)
+
+        if self.controller is not None:
+            self.controller.register_relay_callback(Relay.PVC_FRONT, self.main_tab.widgets.front_deployer_button.toggle)
+            self.controller.register_relay_callback(Relay.CLAW_FRONT, self.main_tab.widgets.front_claw_button.toggle)
+            self.controller.register_relay_callback(Relay.PVC_BACK, self.main_tab.widgets.back_deployer_button.toggle)
+            self.controller.register_relay_callback(Relay.CLAW_BACK, self.main_tab.widgets.back_claw_button.toggle)
+            self.controller.register_relay_callback(Relay.MAGNET, self.main_tab.widgets.magnet_button.toggle)
+            self.controller.register_relay_callback(Relay.LIGHTS_FRONT, self.main_tab.widgets.lights_button.toggle)
+        
+        self.vehicle.mode_signal.connect(self.main_tab.widgets.manual_button.on_mode)
+        self.main_tab.widgets.manual_button.set_mode_signal(self.vehicle.set_mode_signal)
+        self.vehicle.mode_signal.connect(self.main_tab.widgets.stabilize_button.on_mode)
+        self.main_tab.widgets.stabilize_button.set_mode_signal(self.vehicle.set_mode_signal)
+        self.vehicle.mode_signal.connect(self.main_tab.widgets.depth_hold_button.on_mode)
+        self.main_tab.widgets.depth_hold_button.set_mode_signal(self.vehicle.set_mode_signal)
 
     def keyPressEvent(self, event):
         """Sets keyboard keys to different actions"""
@@ -158,6 +229,9 @@ class App(QWidget):
 
         elif event.key() == Qt.Key_T:
             self.video_thread.toggle_rewind()
+        
+        elif event.key() == Qt.Key_C:
+            self.capture_image()
 
     def keyReleaseEvent(self, event):
         if self.keysDown[event.key()]:
@@ -167,6 +241,20 @@ class App(QWidget):
     def closeEvent(self, event):
         self.video_thread.stop()
         event.accept()
+
+    def get_big_video_index(self):
+        tab = self.tabs.currentWidget()
+        if isinstance(tab, VideoTab):
+            return tab.widgets.video_area.get_big_video_cam_index()
+        else:
+            return None
+    
+    def get_active_frame(self):
+        return self.video_thread._cur_frames[self.get_big_video_index()]
+    
+    def capture_image(self):
+        filename = datetime.datetime.now().strftime("recordings/%Y-%m-%d_%H%M%S") + '.png'
+        cv2.imwrite(filename, self.get_active_frame())
 
     @pyqtSlot(Frame)
     def update_image(self, frame: Frame):
