@@ -36,7 +36,6 @@ class StereoParameters:
 
     def triangulate(self, point_l, point_r):
         point = cv2.triangulatePoints(self.proj_l, self.proj_r, point_l, point_r).reshape(4)
-        print(point)
         point /= point[3]
         return point[0:3]
 

@@ -1,5 +1,6 @@
 """Goes through the fish images for manually marking the ends of the fis"""
 
+from vision.stereo.stereo_util import left_half, right_half
 from vision.stereo.pixels import PixelSelector
 from vision.stereo.params import StereoParameters
 import cv2
@@ -50,7 +51,7 @@ def browse_images(file_path, images_path, stereo_params: StereoParameters, label
     left_path = os.path.join(images_path, 'left')
     right_path = os.path.join(images_path, 'right')
 
-    images_list = [img for img in os.listdir(left_path)]
+    images_list = [img for img in os.listdir(images_path)]
     #images_list.sort()
 
     index = 0
@@ -64,11 +65,12 @@ def browse_images(file_path, images_path, stereo_params: StereoParameters, label
     for index in range(len(images_list)):
 
         current_image = images_list[index]
+        image = cv2.imread(images_path + '/' + current_image)
 
-        image_l = cv2.imread(left_path +"/"+ current_image)
+        image_l = left_half(image)
         image_l = cv2.putText(image_l, current_image, (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2, cv2.LINE_AA)
 
-        image_r = cv2.imread(right_path +"/"+ current_image)
+        image_r = right_half(image)
         image_r = cv2.putText(image_r, current_image, (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2, cv2.LINE_AA)
 
         selector = PixelSelector(image_l, image_r, stereo_params)
@@ -87,7 +89,7 @@ def browse_images(file_path, images_path, stereo_params: StereoParameters, label
 
 
 file_name = "right.txtdddddddddddd" 
-file_path = os.path.join(data_path, "stereo", "dualcam1filtered") 
+file_path = os.path.join(data_path, "stereo", "dualcam-potted-pool") 
 
 #browse_images(file_path, left_images, "left")
-browse_images(os.path.join(file_path, 'test.txt'), file_path, StereoParameters.load('stereo'), "right")
+browse_images(os.path.join(file_path, 'test.txt'), file_path, StereoParameters.load('stereo-pool'), "right")

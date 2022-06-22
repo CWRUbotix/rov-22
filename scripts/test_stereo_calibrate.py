@@ -7,7 +7,7 @@ from os import path
 
 from util import data_path
 
-ACTUAL_LENGTH = 18.3
+ACTUAL_LENGTH = 23
 
 directory = path.join(data_path, 'stereo-calibration', 'pool')
 

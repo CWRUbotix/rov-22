@@ -37,8 +37,8 @@ class PixelSelector:
         self.img_l = params.rectify_single(img_l, Side.LEFT)
         self.img_r = params.rectify_single(img_r, Side.RIGHT)
 
-        self.img_l = cv2.GaussianBlur(self.img_l, (15, 15), 0)
-        self.img_r = cv2.GaussianBlur(self.img_r, (15, 15), 0)
+        self.img_l = cv2.GaussianBlur(self.img_l, (3, 3), 0)
+        self.img_r = cv2.GaussianBlur(self.img_r, (7, 7), 0)
 
         kernel = np.array([[-1,-1,-1], [-1,9,-1], [-1,-1,-1]])
         kernel = np.array([[0, 0, 0], [-1, 0, 1], [0, 0, 0]])

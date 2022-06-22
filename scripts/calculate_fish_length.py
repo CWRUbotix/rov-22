@@ -44,14 +44,14 @@ def get_point_camera_space(p1, p2):
 
 
 if __name__ == "__main__":
-    params = StereoParameters.load('stereo')
+    params = StereoParameters.load('stereo-pool')
 
-    with open("../data/stereo/dualcam1filtered/test.txt") as data_file:
+    with open("../data/stereo/dualcam-potted-pool/test.txt") as data_file:
         test_dict = defaultdict(lambda: {})
 
         for line in data_file.read().split("\n"):
             fname, x1, y1, x2, y2 = line.split(" ")
-            match = re.match(r"(\w+)/(\d+)", fname)
+            match = re.match(r"(\w+)/(\S+).png", fname)
             test_dict[match[2]][match[1]] = ((int(x1), int(y1)), (int(x2), int(y2)))
 
         for k in list(test_dict.keys()):
@@ -63,15 +63,15 @@ if __name__ == "__main__":
         for k, v in test_dict.items():
             left_points = v["left"]
             right_points = v["right"]
-            print(f'../data/stereo/dualcam1filtered/left/{k}.png')
-            img_l = cv2.imread(f'../data/stereo/dualcam1filtered/left/{k}.png')
-            img_r = cv2.imread(f'../data/stereo/dualcam1filtered/right/{k}.png')
+            # print(f'../data/stereo/dualcam1filtered/left/{k}.png')
+            # img_l = cv2.imread(f'../data/stereo/dualcam1filtered/left/{k}.png')
+            # img_r = cv2.imread(f'../data/stereo/dualcam1filtered/right/{k}.png')
 
-            img_l = params.rectify_single(img_l, Side.LEFT)
-            img_r = params.rectify_single(img_r, Side.RIGHT)
+            # img_l = params.rectify_single(img_l, Side.LEFT)
+            # img_r = params.rectify_single(img_r, Side.RIGHT)
 
-            img_l = cv2.GaussianBlur(img_l, (15, 15), 0)
-            img_r = cv2.GaussianBlur(img_r, (15, 15), 0)
+            # img_l = cv2.GaussianBlur(img_l, (15, 15), 0)
+            # img_r = cv2.GaussianBlur(img_r, (15, 15), 0)
             
 
             # point1 = get_point_camera_space(left_points[0], right_points[0])
@@ -80,18 +80,20 @@ if __name__ == "__main__":
             point1 = params.triangulate(left_points[0], right_points[0])
             point2 = params.triangulate(left_points[1], right_points[1])
             
-            xl1, xr1, y1 = refine_coords(img_l, img_r, left_points[0][0], right_points[0][0], left_points[0][1])
-            point1 = params.triangulate((xl1, y1), (xr1, y1))
+            # xl1, xr1, y1 = refine_coords(img_l, img_r, left_points[0][0], right_points[0][0], left_points[0][1])
+            # point1 = params.triangulate((xl1, y1), (xr1, y1))
 
-            xl2, xr2, y2 = refine_coords(img_l, img_r, left_points[1][0], right_points[1][0], left_points[1][1])
-            point2 = params.triangulate((xl2, y2), (xr2, y2))
+            # xl2, xr2, y2 = refine_coords(img_l, img_r, left_points[1][0], right_points[1][0], left_points[1][1])
+            # point2 = params.triangulate((xl2, y2), (xr2, y2))
             #print(point1, point2)
 
             x_diffs.append(point2[0] - point1[0])
-            dist = math.dist(point1, point2) * 1.6909861571441303
+            #dist = math.dist(point1, point2) * 1.6909861571441303
+            dist = math.dist(point1, point2) * 2.126447913752668
             fish_lengths.append(dist)
             #print(point2[0] - point1[0])
-            print(f'{point1[0] - point2[0]} ,  {math.dist(point1, point2)}')
+            #print(f'{point1[0] - point2[0]} ,  {math.dist(point1, point2)}')
+            print()
 
         mean = statistics.mean(fish_lengths)
         std_dev = statistics.pstdev(fish_lengths)
