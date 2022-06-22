@@ -1,4 +1,5 @@
 import subprocess
+import atexit
 
 from PyQt5.QtWidgets import QPushButton
 
@@ -14,6 +15,8 @@ class RecordingButton(QPushButton):
         self.setCheckable(True)
 
         self.clicked.connect(self.on_click)
+
+        atexit.register(lambda: self.process.kill())
 
     def on_click(self):
         if self.isChecked():
