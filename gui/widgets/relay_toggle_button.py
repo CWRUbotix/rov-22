@@ -8,13 +8,13 @@ class RelayToggleButton(QPushButton):
     def __init__(self, text, parent=None, control_prompt_image=None):
         super().__init__(text, parent)
 
-        self.setFixedHeight(80)
+        self.setFixedHeight(50)
         self.setCheckable(True)
         self.clicked.connect(self.send_state)
         self.disable_click()
 
         self.control_prompt = QLabel()
-        self.control_prompt.setFixedHeight(80)
+        self.control_prompt.setFixedHeight(50)
         if control_prompt_image is not None:
             self.control_prompt.setPixmap(control_prompt_image)
 

@@ -11,7 +11,7 @@ from gui.data_classes import Frame
 from gui.video_thread import VideoThread
 from gui.widgets.map_wreck_widget import MapWreckWidget
 from gui.widgets.tabs import MainTab, DebugTab, ImageDebugTab, VideoTab
-from gui.widgets.transect_widget import StitchManualWidget
+from gui.widgets.transect_widget import TransectWidget
 from gui.widgets.map_wreck_widget import MapWreckWidget
 
 from logger import root_logger
@@ -62,7 +62,7 @@ class App(QWidget):
 
         # Create a tab widget
         self.tabs = QTabWidget()
-        self.main_tab = MainTab(len(self.video_thread._video_sources), get_active_controller_type())
+        self.main_tab = MainTab(self, len(self.video_thread._video_sources), get_active_controller_type())
         self.debug_tab = DebugTab(len(self.video_thread._video_sources))
         self.image_tab = ImageDebugTab()
 
@@ -102,7 +102,6 @@ class App(QWidget):
 
         # Create the vision tasks
         self.map_wreck_task = MapWreckWidget()
-        self.stitch_manually_task = StitchManualWidget()
 
         # Setup GUI logging
         gui_formatter = logging.Formatter("[{levelname}] {message}", style="{")

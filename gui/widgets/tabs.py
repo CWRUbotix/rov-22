@@ -16,11 +16,12 @@ from gui.widgets.vehicle_status_widget import VehicleStatusWidget
 from gui.widgets.image_debug_widget import ImagesWidget
 from gui.widgets.video_controls_widget import VideoControlsWidget
 from gui.widgets.video_widgets import VideoArea
+from gui.widgets.fish_widget import FishRecordWidget
 from gui.data_classes import Frame, VideoSource
 from gui.widgets.arm_control_widget import ArmControlWidget
 from gui.decorated_functions import dropdown
 from gui.widgets.map_wreck_widget import MapWreckWidget
-from gui.widgets.transect_widget import StitchManualWidget, TransectWidget
+from gui.widgets.transect_widget import TransectWidget
 from gui.widgets.relay_toggle_button import RelayToggleButton
 
 from vehicle.constants import BACKWARD_CAM_INDICES
@@ -159,7 +160,8 @@ def header_label(text: str) -> QLabel:
 
 class MainTab(VideoTab):
 
-    def __init__(self, num_video_streams, controller_type):
+    def __init__(self, app, num_video_streams, controller_type):
+        self.app = app
         icons_dict = CONTROLLER_ICONS[controller_type]
         self.deployer_image = QPixmap(icons_dict["deployer"])
         self.claw_image = QPixmap(icons_dict["claw"])
@@ -167,12 +169,14 @@ class MainTab(VideoTab):
         self.lights_image = QPixmap(icons_dict["lights"])
 
         super().__init__(num_video_streams)
+        
 
     def init_widgets(self):
         super().init_widgets()
+        self.widgets.fish_record = FishRecordWidget(self.app)
         self.widgets.arm_control = ArmControlWidget()
         self.widgets.vehicle_status = VehicleStatusWidget()
-        self.widgets.transect_stitching = TransectWidget()
+        self.widgets.transect_stitching = TransectWidget(self.app)
 
         self.widgets.front_deployer_button = RelayToggleButton("Front Deployer", control_prompt_image=self.deployer_image)
         self.widgets.front_claw_button = RelayToggleButton("Front Claw", control_prompt_image=self.claw_image)
@@ -202,7 +206,9 @@ class MainTab(VideoTab):
         sidebar.addWidget(self.widgets.task_buttons.no_button_docking)
         sidebar.addWidget(self.widgets.task_buttons.button_docking)
         sidebar.addWidget(self.widgets.task_buttons.map_wreck)
+        sidebar.addWidget(self.widgets.task_buttons.map_wreck)
         sidebar.addWidget(self.widgets.transect_stitching)
+        sidebar.addWidget(self.widgets.fish_record)
 
         sidebar.addWidget(header_label("Manipulators"))
         manipulator_grid = QGridLayout()

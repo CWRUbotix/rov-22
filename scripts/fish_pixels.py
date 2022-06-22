@@ -1,5 +1,8 @@
 """Goes through the fish images for manually marking the ends of the fish"""
 
+from vision.stereo.stereo_util import left_half, right_half
+from vision.stereo.pixels import PixelSelector
+from vision.stereo.params import StereoParameters
 import cv2
 import os
 from util import data_path    
@@ -35,7 +38,7 @@ def record_mouse_position(event, x, y, flags, param):
 
         num_clicks += 1
 
-def browse_images(file_path, images_path, label=""):
+def browse_images(file_path, images_path, stereo_params: StereoParameters, label=""):
     """
     Browse through images with the 'a' and 'd' keys
 
@@ -45,8 +48,11 @@ def browse_images(file_path, images_path, label=""):
     """
 
     global num_clicks
+    left_path = os.path.join(images_path, 'left')
+    right_path = os.path.join(images_path, 'right')
+
     images_list = [img for img in os.listdir(images_path)]
-    images_list.sort()
+    #images_list.sort()
 
     index = 0
 
@@ -56,41 +62,34 @@ def browse_images(file_path, images_path, label=""):
     file = open(file_path, "a")
     
     # Display the images
-    while True:
+    for index in range(len(images_list)):
 
         current_image = images_list[index]
+        image = cv2.imread(images_path + '/' + current_image)
 
-        image = cv2.imread(images_path +"/"+ current_image)
-        image = cv2.putText(image, current_image, (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2, cv2.LINE_AA)
+        image_l = left_half(image)
+        image_l = cv2.putText(image_l, current_image, (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2, cv2.LINE_AA)
 
-        cv2.imshow(window, image)
+        image_r = right_half(image)
+        image_r = cv2.putText(image_r, current_image, (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2, cv2.LINE_AA)
 
-        cv2.setWindowProperty(window, cv2.WND_PROP_TOPMOST, 1)
-        cv2.setMouseCallback(window, record_mouse_position, [file, label, current_image])
+        selector = PixelSelector(image_l, image_r, stereo_params)
+        xl1, xr1, y1 = selector.run()
+        print('f')
+        selector = PixelSelector(image_l, image_r, stereo_params)
+        xl2, xr2, y2 = selector.run()
+        
+        print(f' {xl1} {y1} {xl2} {y2}')
+        print(f' {xr1} {y1} {xr2} {y2}')
 
-        k = cv2.waitKey(0) & 0xFF
-
-        # 'a' key to go back    
-        if k == 97 and index > 0:
-            index -= 1
-
-        # 'd' key to go forwards
-        elif k == 100 and index < len(images_list) - 1: 
-            index += 1
-
-        # 'esc' to quit
-        elif k == 27: 
-            cv2.destroyAllWindows()
-            break
+        file.write('left/' + current_image + f' {xl1} {y1} {xl2} {y2}\n')
+        file.write('right/' + current_image + f' {xr1} {y1} {xr2} {y2}\n')
 
     file.close()
 
 
-file_name = "test" 
-file_path = os.path.join(data_path, "stereo", "1undistort", file_name) 
+file_name = "right.txtdddddddddddd" 
+file_path = os.path.join(data_path, "stereo", "dualcam-potted-pool") 
 
-left_images = os.path.join(data_path, "stereo", "1undistort", "left")
-right_images = os.path.join(data_path, "stereo", "1undistort", "right")
-
-# browse_images(file_path, left_images, "left")
-# browse_images(file_path, right_images, "right")
+#browse_images(file_path, left_images, "left")
+browse_images(os.path.join(file_path, 'test.txt'), file_path, StereoParameters.load('stereo-pool'), "right")
