@@ -1,8 +1,11 @@
 import math
-import re
-from vision.stereo.stereo_util import draw_crosshairs
+from multiprocessing import Process, Queue, RawArray, Array
+from multiprocessing.shared_memory import SharedMemory
+
+import numpy as np
+from vision.stereo.stereo_util import draw_crosshairs, left_half, right_half
 from vision.stereo.params import StereoParameters
-from vision.stereo.pixels import PixelSelector
+from vision.stereo.pixels import PixelSelector, QPixelSelector, QPixelWidget
 from gui.gui_util import convert_cv_qt
 from gui.data_classes import Frame
 from gui.video_thread import VideoThread
@@ -127,7 +130,15 @@ class FishMeasurmentWidget(QScrollArea):
         logger.info(f'Average of all fish: {fish_sum/3}')
 
         
-    
+def run_selector(arr_l: SharedMemory, arr_r: SharedMemory, shape_l, shape_r, queue: Queue):
+    print('RUNNING SELECTOR')
+    img_l = np.frombuffer(arr_l.buf, dtype=np.uint8).reshape(shape_l).copy()
+    print(f'Image: {img_l.sum()}')
+    img_r = np.frombuffer(arr_r.buf, dtype=np.uint8).reshape(shape_r).copy()
+    selector = PixelSelector(img_l, img_r, StereoParameters.load('stereo-pool'))
+    coord = selector.run()
+    queue.put(coord)
+
 
 class FishCaptureWidget(QLabel):
 
@@ -145,14 +156,16 @@ class FishCaptureWidget(QLabel):
         self.setPixmap(convert_cv_qt(self.img, width=480, height=800))
     
     def mousePressEvent(self, ev: QMouseEvent) -> None:
-        self.thread_pool.start(self.run_selector)
+        #self.thread_pool.start(self.run_selectors)
+        self.sel = QPixelWidget(self.img[:, 0:640], self.img[:,640:1280], StereoParameters.load('stereo-pool'))
+        self.sel.show()
 
-    def run_selector(self):
-        selector = PixelSelector(self.img[:, 0:640], self.img[:,640:1280], StereoParameters.load('stereo-pool'))
-        coord1 = selector.run()
+    def run_selectors(self):
+        #selector = PixelSelector(self.img[:, 0:640], self.img[:,640:1280], StereoParameters.load('stereo-pool'))
+        coord1 = self.get_coord()
         if coord1 is not None:
-            selector = PixelSelector(self.img[:, 0:640], self.img[:,640:1280], StereoParameters.load('stereo-pool'))
-            coord2 = selector.run()
+            #selector = PixelSelector(self.img[:, 0:640], self.img[:,640:1280], StereoParameters.load('stereo-pool'))
+            coord2 = self.get_coord()
 
             if coord2 is not None:
                 self.coord1 = coord1
@@ -168,6 +181,26 @@ class FishCaptureWidget(QLabel):
                 self._clear_coords()
         else:
             self._clear_coords()
+    
+    def get_coord(self):
+        queue = Queue()
+        img_l = left_half(self.img)
+        print('Original')
+        print(img_l)
+        img_r = right_half(self.img)
+
+        arr_l = SharedMemory(create=True, size=img_l.shape[0] * img_l.shape[1] * img_l.shape[2])
+        arr_r = SharedMemory(create=True, size=img_r.shape[0] * img_r.shape[1] * img_r.shape[2])
+        print('Flattened data')
+        print(img_l.flatten().data)
+        arr_l.buf[:] = img_l.flatten().data[:]
+        arr_r.buf[:] = img_r.flatten().data[:]
+
+        print(f'ORIGINAL TYPE: {img_l.dtype}')
+
+        process = Process(target=run_selector, args=(arr_l, arr_r, img_l.shape, img_r.shape, queue))
+        process.start()
+        return queue.get()
 
     def _clear_coords(self):
         self.coord1 = None
