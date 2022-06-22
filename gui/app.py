@@ -36,6 +36,7 @@ class GuiLogHandler(logging.Handler):
 class App(QWidget):
     main_log_signal = pyqtSignal(str, int)
     debug_log_signal = pyqtSignal(str, int)
+    key_signal = pyqtSignal(Qt.Key)
 
     def __init__(self, args):
         super().__init__()
@@ -218,6 +219,8 @@ class App(QWidget):
         self.vehicle.mode_signal.connect(self.main_tab.widgets.depth_hold_button.on_mode)
         self.main_tab.widgets.depth_hold_button.set_mode_signal(self.vehicle.set_mode_signal)
 
+        self.key_signal.connect(self.main_tab.widgets.map_wreck.map_thread.key_slot)
+
     def keyPressEvent(self, event):
         """Sets keyboard keys to different actions"""
         self.keysDown[event.key()] = True
@@ -239,6 +242,8 @@ class App(QWidget):
         
         elif event.key() == Qt.Key_C:
             self.capture_image()
+        
+        self.key_signal.emit(event.key())
 
     def keyReleaseEvent(self, event):
         if self.keysDown[event.key()]:

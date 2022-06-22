@@ -10,9 +10,12 @@ Right click to delete the line you are currently drawing.
 import cv2
 import os
 import numpy as np
-from util import data_path    
+from util import data_path  
+from PyQt5.QtCore import Qt, QThread
 
 class MapWreck():
+    should_quit = False
+
     def __init__(self):
         self.canvas = self.new_canvas()
         self.preview = self.canvas.copy()
@@ -50,7 +53,7 @@ class MapWreck():
 
     def draw(self, event, x, y, flags, param):
         """Draws a line on the screen based on mouse clicks"""
-
+        print(event)
         if event == cv2.EVENT_LBUTTONDOWN:
             if self.drawing == False:
                 # Save mouse position of the first click
@@ -82,29 +85,42 @@ class MapWreck():
         """Display the canvas"""
 
         window = "Map Wreck"
+        
+        cv2.setWindowProperty(window, cv2.WND_PROP_TOPMOST, 1)
 
-        while True:
+        while not self.should_quit:
+            print('START WHILE')
             if self.drawing == False:
                 cv2.imshow(window, self.canvas)
 
             else:
                 cv2.imshow(window, self.preview)
-
+            
             cv2.setMouseCallback(window, self.draw)
-            cv2.setWindowProperty(window, cv2.WND_PROP_TOPMOST, 1)
 
-            key = cv2.waitKey(1) & 0xFF
+            QThread.currentThread().msleep(20)
+            
+            # print('Starting wait')
+            # key = cv2.waitKey(20) & 0xFF
+            # print('Got key')
+            # # 'q' key to exit
+            # if key == ord("q"):
+            #     break
 
-            # 'q' key to exit
-            if key == ord("q"):
-                break
+            # # 'c' key to clear the window
+            # elif key == ord("c"):
+            #     self.canvas = self.new_canvas()
+            #     self.preview = self.canvas.copy()
 
-            # 'c' key to clear the window
-            elif key == ord("c"):
-                self.canvas = self.new_canvas()
-                self.preview = self.canvas.copy()
-
-        cv2.destroyAllWindows()
+        cv2.destroyWindow(window)
+    
+    def key_press(self, key):
+        print(f'GOT KEY {key}')
+        if key == Qt.Key_Q:
+            self.should_quit = True
+        elif key == Qt.Key_C:
+            self.canvas = self.new_canvas()
+            self.preview = self.canvas.copy()
 
 if __name__ == "__main__":
 
