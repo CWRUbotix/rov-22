@@ -12,6 +12,7 @@ from PyQt5.QtWidgets import QComboBox, QFileDialog, QHBoxLayout, QLabel, QPushBu
 
 from controller.controller import XboxController, PS5Controller
 from gui.widgets.gazebo_control_widget import GazeboControlWidget
+from gui.widgets.recording_button import RecordingButton
 from gui.widgets.vehicle_status_widget import VehicleStatusWidget
 from gui.widgets.image_debug_widget import ImagesWidget
 from gui.widgets.video_controls_widget import VideoControlsWidget
@@ -185,6 +186,8 @@ class MainTab(VideoTab):
 
         self.widgets.camera_toggle = CameraToggleWidget()
 
+        self.widgets.recording_button = RecordingButton()
+
         # Create a new namespace to group all the buttons for starting tasks
         self.widgets.task_buttons = SimpleNamespace()
         self.widgets.task_buttons.no_button_docking = QPushButton("Dock (No button)")
@@ -221,7 +224,7 @@ class MainTab(VideoTab):
         self.show_prompts_for_cam(0)
 
         manipulator_grid.setColumnStretch(0, 1)
-        manipulator_grid.setColumnStretch(1, 5)
+        manipulator_grid.setColumnStretch(1, 10)
         sidebar.addLayout(manipulator_grid)
 
         mode_grid = QGridLayout()
@@ -231,6 +234,8 @@ class MainTab(VideoTab):
         sidebar.addLayout(mode_grid)
 
         sidebar.addWidget(self.widgets.camera_toggle)
+
+        sidebar.addWidget(self.widgets.recording_button)
 
         sidebar.addStretch()
         sidebar.addWidget(self.widgets.arm_control)
