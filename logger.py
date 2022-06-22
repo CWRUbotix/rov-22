@@ -1,5 +1,6 @@
 import datetime
 import logging
+import pathlib
 import sys
 
 root_logger = logging.getLogger("rov-vision")
@@ -9,7 +10,9 @@ def init_logger():
     root_logger.setLevel(logging.DEBUG)
 
     # Send all log messages to a file
-    filename = datetime.datetime.now().strftime("logs/%Y-%m-%d_%H%M%S.log")
+    logs_path = (pathlib.Path(__file__).parent / "logs").resolve()
+
+    filename = datetime.datetime.now().strftime(str(logs_path) + "/%Y-%m-%d_%H%M%S.log")
     file_handler = logging.FileHandler(filename)
     file_handler.setLevel(logging.DEBUG)
     file_formatter = logging.Formatter("{asctime} [{levelname}] [{name}] {message}", style="{")

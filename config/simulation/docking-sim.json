@@ -1,0 +1,5 @@
+{
+    "world": "worlds/docking_station.world",
+    "headless": true,
+    "gui_args": ["-c", "gazebo-three-cams.json"]
+}
