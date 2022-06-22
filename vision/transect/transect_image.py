@@ -8,5 +8,6 @@ class TransectImage():
         
         self.vertical_lines = []
         self.horizontal_lines = []
+        self.coords = []
 
     
