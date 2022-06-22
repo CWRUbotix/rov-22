@@ -1,53 +1,7 @@
 import cv2
-import os
-import imutils
-from util import data_path
 from vision.colors import *
 from vision.transect.line import *
 from vision.transect.stitch_transect import *
-
-def cropped_images(debug=False):
-
-    cropped = []
-
-    for key in stitcher.images:
-        trans_img = stitcher.images[key]
-        coords = trans_img.coords
-
-        if len(coords) != 4:
-            raise Exception("Must have 4 coords")
-
-        coords.sort(key=lambda coord: coord[1])
-            
-        upper = [coords[0], coords[1]]
-        lower = [coords[2], coords[3]]
-
-        upper.sort(key=lambda coord: coord[0])
-        lower.sort(key=lambda coord: coord[0])
-
-        x1, y1 = upper[0] # top left
-        x2, y2 = upper[1] # top right
-        x3, y3 = lower[0] # bottom left
-        x4, y4 = lower[1] # bottom right
-
-        image = trans_img.image
-        height, width, _ = image.shape
-
-        src = np.float32([[x1, y1], [x2, y2], [x3, y3], [x4, y4]])
-        dst = np.float32([[0, 0], [width, 0], [0, height], [width, height]])
-        matrix = cv2.getPerspectiveTransform(src, dst)
-        
-        # Perspective transform original image
-        warped = cv2.warpPerspective(image, matrix, (width, height))
-
-        resized = imutils.resize(warped, width=400)        
-        cropped.append(resized)
-
-        if debug:
-            cv2.imshow('warped', resized)
-            cv2.waitKey(0)
-
-    return cropped
 
 def record_mouse_position(event, x, y, flags, param):
     """
@@ -72,13 +26,6 @@ def select_intersections():
 
     @return: true if you selected 4 corners for all 8 squares, otherwise false
     """
-
-    # folder_path = os.path.join(data_path, "transect", "stitching", "p00l")
-
-    # files = [img_name for img_name in os.listdir(folder_path)]
-    # files.sort()
-
-    # images_list = [cv2.imread(os.path.join(folder_path, img)) for img in files]
 
     images_list = []
 
@@ -117,6 +64,7 @@ def select_intersections():
 
         # 'r' key to reset transect coords
         elif k == 114:
+            print(f"RESETTING SQUARE {curr_trans.num} POINTS")
             curr_trans.coords = []
 
         # 'esc' to quit
@@ -138,3 +86,4 @@ def stitch_manually():
 
     print("Continuing")
     cropped = cropped_images()
+    display_stitched(cropped)

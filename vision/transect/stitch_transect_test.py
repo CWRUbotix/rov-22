@@ -40,14 +40,13 @@ def set_pool_images():
 
 
 class TestStitchTransect(unittest.TestCase):
-    def stitched(self):
+    def auto_stitch(self):
         set_test_images()
+        stitch_auto()
 
-        for key in stitcher.images:
-            set_lines(key)
-            print(f"Finished with image {key}/8")
-
-        stitched()
+    def manual_stitch(self):
+        set_pool_images()
+        stitch_manually()
 
     def browse_images(self):
         """Browse through images with the 'a' and 'd' keys"""
@@ -94,10 +93,6 @@ class TestStitchTransect(unittest.TestCase):
             elif k == 113: 
                 cv2.destroyAllWindows()
                 break
-
-    def stitch_manually(self):
-        set_pool_images()
-        stitch_manually()
 
 if __name__ == "__main__":
     """

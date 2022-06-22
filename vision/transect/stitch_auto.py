@@ -243,19 +243,9 @@ def set_lines(key, debug=False):
         image = Line.draw_lines(image, red_line_v, color=(0, 255, 0))
         image = Line.draw_lines(image, lines_h, color=(0, 255, 0))
 
-    # x, y = Line.intersection(trans_img.blue_line, trans_img.red_lines_h[0])
-    # image = cv2.circle(image, (x,y), radius=0, color=(0, 0, 0), thickness=-1)
-
-def cropped_images(debug=False):
-    """
-    
-    """
-
-    cropped = []
-
+def set_coords():
     for key in stitcher.images:
         trans_img = stitcher.images[key]
-        image = trans_img.image
 
         x1, y1 = Line.intersection(trans_img.vertical_lines[0], trans_img.horizontal_lines[0])
         x2, y2 = Line.intersection(trans_img.vertical_lines[0], trans_img.horizontal_lines[1])
@@ -264,72 +254,13 @@ def cropped_images(debug=False):
 
         coords = [(x1, y1), (x2, y2), (x3, y3), (x4, y4)]
 
-        # Figure out which coordinate is for which corner
-        coords.sort(key=lambda coord: coord[1])
-        
-        upper = [coords[0], coords[1]]
-        lower = [coords[2], coords[3]]
+        trans_img.coords = coords
 
-        upper.sort(key=lambda coord: coord[0])
-        lower.sort(key=lambda coord: coord[0])
+def stitch_auto():
+    for key in stitcher.images:
+        set_lines(key)
+        print(f"Finished with image {key}/8")
 
-        x1, y1 = upper[0] # top left
-        x2, y2 = upper[1] # top right
-        x3, y3 = lower[0] # bottom left
-        x4, y4 = lower[1] # bottom right
-
-        if debug:
-            image = cv2.circle(image, (x1, y1), radius=0, color=(0, 255, 0), thickness=50)
-            image = cv2.circle(image, (x2, y2), radius=0, color=(0, 255, 0), thickness=50)
-            image = cv2.circle(image, (x3, y3), radius=0, color=(0, 255, 0), thickness=50)
-            image = cv2.circle(image, (x4, y4), radius=0, color=(0, 255, 0), thickness=50)
-
-        # Warp image 
-        height, width, _ = image.shape
-
-        src = np.float32([[x1, y1], [x2, y2], [x3, y3], [x4, y4]])
-        dst = np.float32([[0, 0], [width, 0], [0, height], [width, height]])
-        matrix = cv2.getPerspectiveTransform(src, dst)
-        
-        # Perspective transform original image
-        warped = cv2.warpPerspective(image, matrix, (width, height))
-
-        resized = imutils.resize(warped, width=400)        
-        cropped.append(resized)
-
-        if debug:
-            cv2.imshow('warped', resized)
-            cv2.waitKey(0)
-
-    return cropped
-
-def stitched():
-    """
-    
-    """
-
+    set_coords()
     cropped = cropped_images()
-    
-    height, width, _ = cropped[0].shape
-
-    final_height = height * 4
-    final_width = width * 2
-
-    final_image = np.zeros((final_height, final_width, 3), np.uint8) 
-    print(final_image.shape)
-
-    # Start from bottom left of final image
-    id = 0
-    y = final_height
-
-    for i in range(4):
-        x = 0
-        for j in range(2):
-            final_image[y-height:y, x:x+width] = cropped[id]
-
-            x += width
-            id += 1
-        y -= height
-
-    cv2.imshow("", final_image)
-    cv2.waitKey(0)
+    display_stitched(cropped)
