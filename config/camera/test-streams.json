@@ -3,12 +3,16 @@
 		{
 			"api": "CAP_FFMPEG",
 			"template": "file",
-			"content": "example-streams/1.mp4"
+			"content": "example-streams/1.mp4",
+			"width": 1920,
+			"height": 1080
 		},
 		{
 			"api": "CAP_FFMPEG",
 			"template": "file",
-			"content": "example-streams/2.mp4"
+			"content": "example-streams/2.mp4",
+			"width": 1920,
+			"height": 1080
         }
 	]
 }
