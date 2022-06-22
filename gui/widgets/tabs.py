@@ -172,7 +172,7 @@ class MainTab(VideoTab):
 
     def init_widgets(self):
         super().init_widgets()
-        self.widgets.fish_record = FishRecordWidget(self.app.video_thread)
+        self.widgets.fish_record = FishRecordWidget(self.app)
         self.widgets.arm_control = ArmControlWidget()
         self.widgets.vehicle_status = VehicleStatusWidget()
         self.widgets.map_wreck = MapWreckWidget()

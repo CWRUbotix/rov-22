@@ -24,10 +24,19 @@ class StereoParameters:
     def rectify_stereo(self, img: np.ndarray):
         left = self.rectify_single(left_half(img), Side.LEFT)
         right = self.rectify_single(right_half(img), Side.RIGHT)
-        return np.concatenate(left, right, axis=1)
+        return np.concatenate((left, right), axis=1)
     
+    def triangulate_stereo_coord(self, point):
+        point_l = np.array([[point.xl], [point.y]], dtype=np.float64)
+        point_r = np.array([[point.xr], [point.y]], dtype=np.float64)
+        triangulated = cv2.triangulatePoints(self.proj_l, self.proj_r, point_l, point_r).reshape(4)
+        print(triangulated)
+        triangulated /= triangulated[3]
+        return triangulated[0:3]
+
     def triangulate(self, point_l, point_r):
         point = cv2.triangulatePoints(self.proj_l, self.proj_r, point_l, point_r).reshape(4)
+        print(point)
         point /= point[3]
         return point[0:3]
 
