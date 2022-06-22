@@ -2,6 +2,10 @@ import cv2
 from vision.colors import *
 from vision.transect.line import *
 from vision.transect.stitch_transect import *
+from vision.transect.stitch_transect_test import set_pool_images
+
+def set_images():
+    pass
 
 def record_mouse_position(event, x, y, flags, param):
     """
@@ -80,8 +84,9 @@ def select_intersections():
     return True
 
 def stitch_manually():
+    # TEMPORARY DELETE BEFORE COMPETITION
+    set_pool_images()
 
-    
     if not select_intersections():
         print("Exiting")
         return

@@ -20,7 +20,7 @@ from gui.data_classes import Frame, VideoSource
 from gui.widgets.arm_control_widget import ArmControlWidget
 from gui.decorated_functions import dropdown
 from gui.widgets.map_wreck_widget import MapWreckWidget
-from gui.widgets.stitch_manual_widget import StitchManualWidget
+from gui.widgets.transect_widget import StitchManualWidget, TransectWidget
 from gui.widgets.relay_toggle_button import RelayToggleButton
 
 from vehicle.constants import BACKWARD_CAM_INDICES
@@ -172,6 +172,7 @@ class MainTab(VideoTab):
         super().init_widgets()
         self.widgets.arm_control = ArmControlWidget()
         self.widgets.vehicle_status = VehicleStatusWidget()
+        self.widgets.transect_stitching = TransectWidget()
 
         self.widgets.front_deployer_button = RelayToggleButton("Front Deployer", control_prompt_image=self.deployer_image)
         self.widgets.front_claw_button = RelayToggleButton("Front Claw", control_prompt_image=self.claw_image)
@@ -191,7 +192,6 @@ class MainTab(VideoTab):
         self.widgets.task_buttons.no_button_docking = QPushButton("Dock (No button)")
         self.widgets.task_buttons.button_docking = QPushButton("Dock (Yes button)")
         self.widgets.task_buttons.map_wreck = QPushButton("Map Wreck")
-        self.widgets.task_buttons.stitch_manually = QPushButton("Stitch Transect Manually")
 
     def organize(self):
         super().organize()
@@ -202,7 +202,7 @@ class MainTab(VideoTab):
         sidebar.addWidget(self.widgets.task_buttons.no_button_docking)
         sidebar.addWidget(self.widgets.task_buttons.button_docking)
         sidebar.addWidget(self.widgets.task_buttons.map_wreck)
-        sidebar.addWidget(self.widgets.task_buttons.stitch_manually)
+        sidebar.addWidget(self.widgets.transect_stitching)
 
         sidebar.addWidget(header_label("Manipulators"))
         manipulator_grid = QGridLayout()

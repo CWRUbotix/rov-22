@@ -11,7 +11,7 @@ from gui.data_classes import Frame
 from gui.video_thread import VideoThread
 from gui.widgets.map_wreck_widget import MapWreckWidget
 from gui.widgets.tabs import MainTab, DebugTab, ImageDebugTab, VideoTab
-from gui.widgets.stitch_manual_widget import StitchManualWidget
+from gui.widgets.transect_widget import StitchManualWidget
 from gui.widgets.map_wreck_widget import MapWreckWidget
 
 from logger import root_logger
@@ -171,7 +171,6 @@ class App(QWidget):
             lambda: self.task_scheduler.start_task(self.button_docking_task)
         )
         self.main_tab.widgets.task_buttons.map_wreck.clicked.connect(self.map_wreck_task.map_wreck)
-        self.main_tab.widgets.task_buttons.stitch_manually.clicked.connect(self.stitch_manually_task.stitch)
 
         # Connect the main video area big cam changed signal to the manipulator control prompts
         self.main_tab.widgets.video_area.big_video_changed_signal.connect(self.main_tab.show_prompts_for_cam)
