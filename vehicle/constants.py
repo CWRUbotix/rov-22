@@ -3,7 +3,6 @@ from enum import Enum
 
 class Camera(Enum):
     FRONT = 'front'
-    BACK = 'back'
     BOTTOM = 'bottom'
     DUAL = 'dual'
 

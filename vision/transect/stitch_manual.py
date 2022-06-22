@@ -80,6 +80,8 @@ def select_intersections():
     return True
 
 def stitch_manually():
+
+    
     if not select_intersections():
         print("Exiting")
         return
