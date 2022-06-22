@@ -196,12 +196,6 @@ class MainTab(VideoTab):
 
     def organize(self):
         super().organize()
-<<<<<<< HEAD
-        self.layouts.sidebar.addWidget(self.widgets.fish_record)
-        self.layouts.sidebar.addStretch()
-        self.layouts.sidebar.addWidget(self.widgets.arm_control)
-        self.layouts.sidebar.addWidget(self.widgets.vehicle_status)
-=======
         
         sidebar = self.layouts.sidebar
 
@@ -209,6 +203,7 @@ class MainTab(VideoTab):
         sidebar.addWidget(self.widgets.task_buttons.no_button_docking)
         sidebar.addWidget(self.widgets.task_buttons.button_docking)
         sidebar.addWidget(self.widgets.map_wreck)
+        sidebar.addWidget(self.widgets.fish_record)
 
         sidebar.addWidget(header_label("Manipulators"))
         manipulator_grid = QGridLayout()
@@ -253,7 +248,6 @@ class MainTab(VideoTab):
         self.widgets.front_claw_button.control_prompt.setVisible(not facing_backward)
         self.widgets.back_deployer_button.control_prompt.setVisible(facing_backward)
         self.widgets.back_claw_button.control_prompt.setVisible(facing_backward)
->>>>>>> c94ba889f3bf70a78a8d0d7a035c4a20173b8ec8
 
 
 class DebugTab(VideoTab):
