@@ -13,7 +13,7 @@ from gui.widgets.tabs import MainTab, DebugTab, ImageDebugTab, VideoTab
 from logger import root_logger
 from tasks.button_docking import ButtonDocking
 from tasks.no_button_docking import NoButtonDocking
-from vehicle.processes import LightsManager
+from vehicle.processes import LightsManager, CameraManager
 from vehicle.vehicle_control import VehicleControl, Relay
 from tasks.scheduler import TaskScheduler
 from tasks.keyboard_control import KeyboardControl
@@ -78,6 +78,7 @@ class App(QWidget):
         self.vehicle = VehicleControl(port=14550)
 
         self.light_manager = LightsManager(self.vehicle)
+        self.camera_manager = CameraManager(self.vehicle)
 
         # Create an instance of controller
         self.controller = get_active_controller(self.main_tab.widgets.video_area.get_big_video_cam_index)
@@ -162,9 +163,15 @@ class App(QWidget):
             lambda: self.task_scheduler.start_task(self.button_docking_task)
         )
 
-        # Connect the main video area big cam changed signal to the manipulator control prompts and lights manager
+        # Connect the main video area big cam changed signal to the manipulator control prompts
         self.main_tab.widgets.video_area.big_video_changed_signal.connect(self.main_tab.show_prompts_for_cam)
+
+        # Update the cameras and lights when the big video changes
         self.main_tab.widgets.video_area.big_video_changed_signal.connect(self.light_manager.handle_active_cam_change)
+        self.main_tab.widgets.video_area.big_video_changed_signal.connect(self.camera_manager.handle_active_cam_change)
+
+        # When camera state changes, update camera toggle buttons to match
+        self.vehicle.cameras_set_signal.connect(self.main_tab.widgets.camera_toggle.on_cameras_update)
 
         # Connect relay buttons to relays
         for relay_button in (
