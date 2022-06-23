@@ -16,7 +16,7 @@ class RecordingButton(QPushButton):
 
         self.clicked.connect(self.on_click)
 
-        atexit.register(lambda: self.process.kill())
+        atexit.register(lambda: self.process.kill() if self.process is not None else None)
 
     def on_click(self):
         if self.isChecked():
