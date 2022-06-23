@@ -33,8 +33,8 @@ def select_intersections():
 
     images_list = []
 
-    for key in stitcher.images:
-        images_list.append(stitcher.images[key].image)
+    for key in stitcher_test.images:
+        images_list.append(stitcher_test.images[key].image)
 
     index = 0
 
@@ -45,7 +45,8 @@ def select_intersections():
     while True:
 
         curr_image = images_list[index]
-        curr_trans = stitcher.images[index+1]
+        curr_trans = stitcher_test.images[index+1]
+        print(curr_image.shape)
 
         text = f"Square {index+1}"
 
@@ -77,8 +78,8 @@ def select_intersections():
             break
 
     # Verify that all transect images had 4 points set
-    for key in stitcher.images:
-        if len(stitcher.images[key].coords) != 4:
+    for key in stitcher_test.images:
+        if len(stitcher_test.images[key].coords) != 4:
             return False
 
     return True
@@ -93,4 +94,4 @@ def stitch_manually():
 
     print("Continuing")
     cropped = cropped_images()
-    display_stitched(cropped)
+    final_stitched_image(cropped)

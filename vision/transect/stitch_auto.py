@@ -22,7 +22,7 @@ def color_masks(key):
     @return blue_mask, red_mask: the corresponding color masks
     """
 
-    image = stitcher.images[key].image
+    image = stitcher_test.images[key].image
     hsv_image = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
 
     # Make the blue mask
@@ -217,7 +217,7 @@ def set_lines(key, debug=False):
     
     """
 
-    image = stitcher.images[key].image
+    image = stitcher_test.images[key].image
 
     blue_mask, red_mask, yellow_mask = color_masks(key)
 
@@ -233,7 +233,7 @@ def set_lines(key, debug=False):
     lines_h = horizontal_lines(image, horz_mask, blue_line)
 
     # Set lines for the current TransectImage
-    trans_img = stitcher.images[key]
+    trans_img = stitcher_test.images[key]
 
     trans_img.vertical_lines = [blue_line, red_line_v]
     trans_img.horizontal_lines = lines_h
@@ -244,8 +244,8 @@ def set_lines(key, debug=False):
         image = Line.draw_lines(image, lines_h, color=(0, 255, 0))
 
 def set_coords():
-    for key in stitcher.images:
-        trans_img = stitcher.images[key]
+    for key in stitcher_test.images:
+        trans_img = stitcher_test.images[key]
 
         x1, y1 = Line.intersection(trans_img.vertical_lines[0], trans_img.horizontal_lines[0])
         x2, y2 = Line.intersection(trans_img.vertical_lines[0], trans_img.horizontal_lines[1])
@@ -257,10 +257,10 @@ def set_coords():
         trans_img.coords = coords
 
 def stitch_auto():
-    for key in stitcher.images:
+    for key in stitcher_test.images:
         set_lines(key)
         print(f"Finished with image {key}/8")
 
     set_coords()
     cropped = cropped_images()
-    display_stitched(cropped)
+    final_stitched_image(cropped)

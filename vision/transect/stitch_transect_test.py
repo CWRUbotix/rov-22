@@ -2,6 +2,7 @@ import cv2
 import os
 import unittest
 from util import data_path
+from vision.transect.stitch_manual import stitch_manually
 
 from vision.transect.transect_image import TransectImage
 from vision.transect.stitch_transect import *
@@ -24,7 +25,7 @@ def set_test_images():
 
         image = TransectImage(i, cv2.imread(complete_path))
 
-        stitcher.set_image(i, image)      
+        stitcher_test.set_image(i, image)      
 
 def set_pool_images():
     folder_path = os.path.join(data_path, "transect", "stitching", "p00l")
@@ -36,7 +37,7 @@ def set_pool_images():
         image_path = os.path.join(folder_path, files[i])
 
         image = TransectImage(i+1, cv2.imread(image_path))
-        stitcher.set_image(i+1, image)
+        stitcher_test.set_image(i+1, image)
 
 
 class TestStitchTransect(unittest.TestCase):
@@ -53,7 +54,7 @@ class TestStitchTransect(unittest.TestCase):
 
         set_test_images()
 
-        for key in stitcher.images:
+        for key in stitcher_test.images:
             set_lines(key, debug=True)
             print(f"Finished with image {key}/8")
 
@@ -61,8 +62,8 @@ class TestStitchTransect(unittest.TestCase):
 
         images_list = []
 
-        for key in stitcher.images:
-            images_list.append(stitcher.images[key].image)
+        for key in stitcher_test.images:
+            images_list.append(stitcher_test.images[key].image)
 
         index = 0
 

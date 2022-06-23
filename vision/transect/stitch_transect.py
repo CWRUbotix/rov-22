@@ -7,7 +7,7 @@ from vision.transect.line import *
 class StitchTransect():
 
     def __init__(self):
-        self.images = dict.fromkeys([1, 2, 3, 4, 5, 6, 7, 8], TransectImage)
+        self.images = dict.fromkeys([0, 1, 2, 3, 4, 5, 6, 7], TransectImage)
 
     def set_image(self, key, trans_img):
         # If the image is horizontal, flip it to be vertical
@@ -19,9 +19,17 @@ class StitchTransect():
 
         self.images[key] = trans_img
 
-stitcher = StitchTransect()
+    def get_images(self):
+        image_list = []
+        
+        for key in self.images:
+            image_list.append(self.images[key].image)
 
-def cropped_images(debug=False):
+        return image_list
+
+stitcher_test = StitchTransect()
+
+def cropped_images(stitcher, debug=False):
     """
     
     """
@@ -72,7 +80,7 @@ def cropped_images(debug=False):
 
     return cropped
 
-def display_stitched(cropped):
+def final_stitched_image(cropped):
     """
     
     """
@@ -101,5 +109,5 @@ def display_stitched(cropped):
             id += 1
         y -= height
 
-    cv2.imshow("", final_image)
-    cv2.waitKey(0)
+    return final_image
+

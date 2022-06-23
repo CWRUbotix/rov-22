@@ -1,11 +1,11 @@
+import os
+import cv2
+
 from vision.transect.stitch_manual import stitch_manually
 from PyQt5.QtWidgets import QWidget, QPushButton, QHBoxLayout
 from PyQt5.QtCore import QThread
 from logger import root_logger
 from util import data_path
-import os
-import cv2
-import numpy as np
 
 logger = root_logger.getChild(__name__)
 
