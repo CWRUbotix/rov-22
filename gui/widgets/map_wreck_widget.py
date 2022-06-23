@@ -1,9 +1,10 @@
 import subprocess
 import os
+import threading
 from vision.transect.map_wreck import MapWreck
 
 from PyQt5.QtWidgets import QWidget, QHBoxLayout, QPushButton
-from PyQt5.QtCore import QThread
+from PyQt5.QtCore import QThread, pyqtSlot, Qt
 from logger import root_logger
 from util import vision_path
 
@@ -16,8 +17,18 @@ class MapWreckThread(QThread):
 
     def run(self):
         logger.debug("Starting map wreck thread")
-        mapper = MapWreck()
-        mapper.show_canvas()
+        self.mapper = MapWreck()
+        self.mapper.show_canvas()
+    
+    @pyqtSlot(Qt.Key)
+    def key_slot(self, key):
+        if self.isRunning():
+            self.mapper.key_press(key)
+
+def run():
+    logger.debug("Starting map wreck thread")
+    mapper = MapWreck()
+    mapper.show_canvas()
 
 class MapWreckWidget(QWidget):
 
