@@ -9,7 +9,11 @@ from PyQt5.QtCore import pyqtSignal, pyqtSlot, Qt
 
 from gui.data_classes import Frame
 from gui.video_thread import VideoThread
+from gui.widgets.map_wreck_widget import MapWreckWidget
 from gui.widgets.tabs import MainTab, DebugTab, ImageDebugTab, VideoTab
+from gui.widgets.transect_widget import TransectWidget
+from gui.widgets.map_wreck_widget import MapWreckWidget
+
 from logger import root_logger
 from tasks.button_docking import ButtonDocking
 from tasks.no_button_docking import NoButtonDocking
@@ -36,17 +40,21 @@ class GuiLogHandler(logging.Handler):
 class App(QWidget):
     main_log_signal = pyqtSignal(str, int)
     debug_log_signal = pyqtSignal(str, int)
+    key_signal = pyqtSignal(Qt.Key)
 
     def __init__(self, args):
         super().__init__()
         self.setWindowTitle("ROV Vision")
-        self.resize(1280, 720)
+        self.resize(1850, 720)
 
         if args.fullscreen:
             self.showFullScreen()
 
-        if args.maximize:
+        elif args.maximize:
             self.showMaximized()
+
+        else:
+            self.showNormal()
 
         # Create the video capture thread
         with args.cameras as file:
@@ -56,10 +64,13 @@ class App(QWidget):
         # Dictionary to keep track of which keys are pressed. If a key is not in the dict, assume it is not pressed.
         self.keysDown = defaultdict(lambda: False)
 
+        # Create VehicleControl object to handle the connection to the ROV
+        self.vehicle = VehicleControl(port=14550)
+
         # Create a tab widget
         self.tabs = QTabWidget()
         self.main_tab = MainTab(self, len(self.video_thread._video_sources), get_active_controller_type())
-        self.debug_tab = DebugTab(len(self.video_thread._video_sources))
+        self.debug_tab = DebugTab(self, len(self.video_thread._video_sources))
         self.image_tab = ImageDebugTab()
 
         self.tabs.resize(300, 200)
@@ -73,9 +84,6 @@ class App(QWidget):
 
         # Set the root layout to this vbox
         self.setLayout(vbox)
-
-        # Create VehicleControl object to handle the connection to the ROV
-        self.vehicle = VehicleControl(port=14550)
 
         self.light_manager = LightsManager(self.vehicle)
         self.camera_manager = CameraManager(self.vehicle)
@@ -95,6 +103,9 @@ class App(QWidget):
         # Create the autonomous tasks
         self.no_button_docking_task = NoButtonDocking(self.vehicle)
         self.button_docking_task = ButtonDocking(self.vehicle)
+
+        # Create the vision tasks
+        self.map_wreck_task = MapWreckWidget()
 
         # Setup GUI logging
         gui_formatter = logging.Formatter("[{levelname}] {message}", style="{")
@@ -162,6 +173,7 @@ class App(QWidget):
         self.main_tab.widgets.task_buttons.button_docking.clicked.connect(
             lambda: self.task_scheduler.start_task(self.button_docking_task)
         )
+        self.main_tab.widgets.task_buttons.map_wreck.clicked.connect(self.map_wreck_task.map_wreck)
 
         # Connect the main video area big cam changed signal to the manipulator control prompts
         self.main_tab.widgets.video_area.big_video_changed_signal.connect(self.main_tab.show_prompts_for_cam)
@@ -218,6 +230,9 @@ class App(QWidget):
         self.vehicle.mode_signal.connect(self.main_tab.widgets.depth_hold_button.on_mode)
         self.main_tab.widgets.depth_hold_button.set_mode_signal(self.vehicle.set_mode_signal)
 
+        self.key_signal.connect(self.main_tab.widgets.map_wreck.map_thread.key_slot)
+        self.vehicle.depth_update_signal.connect(self.main_tab.widgets.vehicle_status.update_depth)
+
     def keyPressEvent(self, event):
         """Sets keyboard keys to different actions"""
         self.keysDown[event.key()] = True
@@ -236,9 +251,11 @@ class App(QWidget):
 
         elif event.key() == Qt.Key_T:
             self.video_thread.toggle_rewind()
-        
+
         elif event.key() == Qt.Key_C:
             self.capture_image()
+        
+        self.key_signal.emit(event.key())
 
     def keyReleaseEvent(self, event):
         if self.keysDown[event.key()]:
@@ -255,10 +272,10 @@ class App(QWidget):
             return tab.widgets.video_area.get_big_video_cam_index()
         else:
             return None
-    
+
     def get_active_frame(self):
         return self.video_thread._cur_frames[self.get_big_video_index()]
-    
+
     def capture_image(self):
         filename = datetime.datetime.now().strftime("recordings/%Y-%m-%d_%H%M%S") + '.png'
         cv2.imwrite(filename, self.get_active_frame())

@@ -1,4 +1,5 @@
 from gui.widgets.camera_toggle_widget import CameraToggleWidget
+from gui.widgets.fish_button import FishButton
 from gui.widgets.mode_button import ModeButton
 import logging
 from collections import defaultdict
@@ -12,6 +13,8 @@ from PyQt5.QtWidgets import QComboBox, QFileDialog, QHBoxLayout, QLabel, QPushBu
 
 from controller.controller import XboxController, PS5Controller
 from gui.widgets.gazebo_control_widget import GazeboControlWidget
+from gui.widgets.recording_button import RecordingButton
+from gui.widgets.timer_widget import TimerWidget
 from gui.widgets.vehicle_status_widget import VehicleStatusWidget
 from gui.widgets.image_debug_widget import ImagesWidget
 from gui.widgets.video_controls_widget import VideoControlsWidget
@@ -22,6 +25,7 @@ from gui.widgets.arm_control_widget import ArmControlWidget
 from gui.decorated_functions import dropdown
 from gui.widgets.map_wreck_widget import MapWreckWidget
 from gui.widgets.measure_wreck_widget import MeasureWreckWidget
+from gui.widgets.transect_widget import TransectWidget
 from gui.widgets.relay_toggle_button import RelayToggleButton
 
 from vehicle.constants import BACKWARD_CAM_INDICES
@@ -167,15 +171,15 @@ class MainTab(VideoTab):
         self.claw_image = QPixmap(icons_dict["claw"])
         self.magnet_image = QPixmap(icons_dict["magnet"])
         self.lights_image = QPixmap(icons_dict["lights"])
-
         super().__init__(num_video_streams)
-        
+
 
     def init_widgets(self):
         super().init_widgets()
         self.widgets.fish_record = FishRecordWidget(self.app)
         self.widgets.arm_control = ArmControlWidget()
-        self.widgets.vehicle_status = VehicleStatusWidget()
+        self.widgets.vehicle_status = VehicleStatusWidget(self.app.vehicle)
+        self.widgets.transect_stitching = TransectWidget(self.app)
         self.widgets.map_wreck = MapWreckWidget()
         self.widgets.measure_wreck = MeasureWreckWidget()
         self.widgets.front_deployer_button = RelayToggleButton("Front Deployer", control_prompt_image=self.deployer_image)
@@ -191,10 +195,16 @@ class MainTab(VideoTab):
 
         self.widgets.camera_toggle = CameraToggleWidget()
 
+        self.widgets.recording_button = RecordingButton()
+
         # Create a new namespace to group all the buttons for starting tasks
         self.widgets.task_buttons = SimpleNamespace()
         self.widgets.task_buttons.no_button_docking = QPushButton("Dock (No button)")
         self.widgets.task_buttons.button_docking = QPushButton("Dock (Yes button)")
+        self.widgets.task_buttons.map_wreck = QPushButton("Map Wreck")
+        self.widgets.fish_button = FishButton("Fish Calculator")
+
+        self.widgets.timer = TimerWidget()
 
     def organize(self):
         super().organize()
@@ -204,13 +214,18 @@ class MainTab(VideoTab):
         sidebar.addWidget(header_label("Tasks"))
         sidebar.addWidget(self.widgets.task_buttons.no_button_docking)
         sidebar.addWidget(self.widgets.task_buttons.button_docking)
+        sidebar.addWidget(self.widgets.task_buttons.map_wreck)
+        sidebar.addWidget(self.widgets.task_buttons.map_wreck)
+        sidebar.addWidget(self.widgets.transect_stitching)
         sidebar.addWidget(self.widgets.map_wreck)
         sidebar.addWidget(self.widgets.measure_wreck)
         sidebar.addWidget(self.widgets.fish_record)
+        sidebar.addWidget(self.widgets.fish_button)
 
         sidebar.addWidget(header_label("Manipulators"))
         manipulator_grid = QGridLayout()
         self.layouts.manipulator_grid = manipulator_grid
+        manipulator_grid.setSpacing(0)
 
         for i, button in enumerate((
             self.widgets.front_deployer_button,
@@ -229,7 +244,7 @@ class MainTab(VideoTab):
         self.show_prompts_for_cam(0)
 
         manipulator_grid.setColumnStretch(0, 1)
-        manipulator_grid.setColumnStretch(1, 5)
+        manipulator_grid.setColumnStretch(1, 10)
         sidebar.addLayout(manipulator_grid)
 
         mode_grid = QGridLayout()
@@ -239,6 +254,10 @@ class MainTab(VideoTab):
         sidebar.addLayout(mode_grid)
 
         sidebar.addWidget(self.widgets.camera_toggle)
+
+        sidebar.addWidget(self.widgets.timer)
+
+        sidebar.addWidget(self.widgets.recording_button)
 
         sidebar.addStretch()
         sidebar.addWidget(self.widgets.arm_control)
@@ -257,9 +276,9 @@ class DebugTab(VideoTab):
     # Create file selection signal
     select_files_signal = pyqtSignal(list)
 
-    def __init__(self, num_video_streams):
+    def __init__(self, app, num_video_streams):
         self.current_filter = "None"  # Filter applied with dropdown menu
-
+        self.app = app
         super().__init__(num_video_streams)
 
     def init_widgets(self):
@@ -289,7 +308,7 @@ class DebugTab(VideoTab):
         self.widgets.gazebo_control = GazeboControlWidget()
 
         self.widgets.arm_control = ArmControlWidget()
-        self.widgets.vehicle_status = VehicleStatusWidget()
+        self.widgets.vehicle_status = VehicleStatusWidget(self.app.vehicle)
 
     def organize(self):
         super().organize()
@@ -313,7 +332,8 @@ class DebugTab(VideoTab):
 
     def select_files(self):
         """Run the system file selection dialog and emit results, to be recieved by VideoThread"""
-        filenames, _ = QFileDialog.getOpenFileNames(self, "QFileDialog.getOpenFileNames()", "", "Video/Config (*.mp4 *.json)",
+        filenames, _ = QFileDialog.getOpenFileNames(self, "QFileDialog.getOpenFileNames()", "",
+                                                    "Video/Config (*.mp4 *.json)",
                                                     options=QFileDialog.Options())
         
         if len(filenames) != 0:

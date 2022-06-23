@@ -1,4 +1,4 @@
-"""Goes through the fish images for manually marking the ends of the fis"""
+"""Goes through the fish images for manually marking the ends of the fish"""
 
 from vision.stereo.stereo_util import left_half, right_half
 from vision.stereo.pixels import PixelSelector
