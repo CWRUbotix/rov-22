@@ -209,6 +209,7 @@ class MainTab(VideoTab):
         sidebar.addWidget(self.widgets.task_buttons.button_docking)
         sidebar.addWidget(self.widgets.map_wreck)
         sidebar.addWidget(self.widgets.fish_record)
+        sidebar.addWidget(self.widgets.fish_button)
 
         sidebar.addWidget(header_label("Manipulators"))
         manipulator_grid = QGridLayout()
@@ -240,8 +241,6 @@ class MainTab(VideoTab):
         mode_grid.addWidget(self.widgets.stabilize_button, 0, 1, alignment=QtCore.Qt.AlignCenter)
         mode_grid.addWidget(self.widgets.depth_hold_button, 0, 2, alignment=QtCore.Qt.AlignCenter)
         sidebar.addLayout(mode_grid)
-
-        sidebar.addWidget(self.widgets.fish_button)
 
         sidebar.addWidget(self.widgets.camera_toggle)
 
