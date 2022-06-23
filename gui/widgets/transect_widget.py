@@ -1,11 +1,12 @@
 import os
 import cv2
+import numpy as np
 
 from vision.transect.stitch_transect import TransectStitcher
 from vision.transect.transect_image import TransectImage
 from vision.transect.stitch_pyqt import TransectStitcherWidget
 from PyQt5.QtWidgets import QWidget, QPushButton, QHBoxLayout
-from PyQt5.QtCore import QThread
+from PyQt5.QtCore import QThread, pyqtSignal
 from logger import root_logger
 from util import data_path, undistort, BOTTOM_CAM_DIM, BOTTOM_CAM_K, BOTTOM_CAM_D
 
@@ -33,6 +34,8 @@ class CaptureThread(QThread):
         logger.info(f"Saving {file_name} to {path}")
 
 class TransectWidget(QWidget):
+    stitched_image_signal = pyqtSignal(np.ndarray)
+
     pictures = []
     image_num = 0
 
@@ -86,6 +89,7 @@ class TransectWidget(QWidget):
     def stitch_manually(self):
         self.stitcher = TransectStitcher()
         self.transect_stitcher = TransectStitcherWidget(self.stitcher)
+        self.transect_stitcher.stitched_image_signal.connect(lambda img: self.stitched_image_signal.emit(img))
 
         folder_path = os.path.join(data_path, "transect_frames")
 

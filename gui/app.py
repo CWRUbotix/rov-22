@@ -233,6 +233,9 @@ class App(QWidget):
         self.key_signal.connect(self.main_tab.widgets.map_wreck.map_thread.key_slot)
         self.vehicle.depth_update_signal.connect(self.main_tab.widgets.vehicle_status.update_depth)
 
+        # Forward the finished stitched image to the measure wreck button
+        self.main_tab.widgets.transect_stitching.stitched_image_signal.connect(self.main_tab.widgets.measure_wreck.on_stitch_complete)
+
     def keyPressEvent(self, event):
         """Sets keyboard keys to different actions"""
         self.keysDown[event.key()] = True
