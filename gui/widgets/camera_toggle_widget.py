@@ -28,10 +28,13 @@ class CameraToggleWidget(QWidget):
         # Front and bottom cams start enabled
         for cam in (Camera.FRONT, Camera.BOTTOM):
             self._buttons[cam].setChecked(True)
-    
-    def _create_slot(self, camera: Camera):
-        return lambda: self._emit(camera)
 
-    def _emit(self, camera: Camera):
+    def _create_slot(self, camera: Camera):
+        return lambda: self._emit_signal(camera)
+
+    def _emit_signal(self, camera: Camera):
         self.set_cam_signal.emit(camera, self._buttons[camera].isChecked())
 
+    def on_cameras_update(self, cam_dict: dict):
+        for cam, val in cam_dict.items():
+            self._buttons[cam].setChecked(val)

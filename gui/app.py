@@ -13,7 +13,7 @@ from gui.widgets.tabs import MainTab, DebugTab, ImageDebugTab, VideoTab
 from logger import root_logger
 from tasks.button_docking import ButtonDocking
 from tasks.no_button_docking import NoButtonDocking
-from vehicle.processes import LightsManager
+from vehicle.processes import LightsManager, CameraManager
 from vehicle.vehicle_control import VehicleControl, Relay
 from tasks.scheduler import TaskScheduler
 from tasks.keyboard_control import KeyboardControl
@@ -56,10 +56,13 @@ class App(QWidget):
         # Dictionary to keep track of which keys are pressed. If a key is not in the dict, assume it is not pressed.
         self.keysDown = defaultdict(lambda: False)
 
+        # Create VehicleControl object to handle the connection to the ROV
+        self.vehicle = VehicleControl(port=14550)
+
         # Create a tab widget
         self.tabs = QTabWidget()
         self.main_tab = MainTab(self, len(self.video_thread._video_sources), get_active_controller_type())
-        self.debug_tab = DebugTab(len(self.video_thread._video_sources))
+        self.debug_tab = DebugTab(self, len(self.video_thread._video_sources))
         self.image_tab = ImageDebugTab()
 
         self.tabs.resize(300, 200)
@@ -74,10 +77,8 @@ class App(QWidget):
         # Set the root layout to this vbox
         self.setLayout(vbox)
 
-        # Create VehicleControl object to handle the connection to the ROV
-        self.vehicle = VehicleControl(port=14550)
-
         self.light_manager = LightsManager(self.vehicle)
+        self.camera_manager = CameraManager(self.vehicle)
 
         # Create an instance of controller
         self.controller = get_active_controller(self.main_tab.widgets.video_area.get_big_video_cam_index)
@@ -162,9 +163,15 @@ class App(QWidget):
             lambda: self.task_scheduler.start_task(self.button_docking_task)
         )
 
-        # Connect the main video area big cam changed signal to the manipulator control prompts and lights manager
+        # Connect the main video area big cam changed signal to the manipulator control prompts
         self.main_tab.widgets.video_area.big_video_changed_signal.connect(self.main_tab.show_prompts_for_cam)
+
+        # Update the cameras and lights when the big video changes
         self.main_tab.widgets.video_area.big_video_changed_signal.connect(self.light_manager.handle_active_cam_change)
+        self.main_tab.widgets.video_area.big_video_changed_signal.connect(self.camera_manager.handle_active_cam_change)
+
+        # When camera state changes, update camera toggle buttons to match
+        self.vehicle.cameras_set_signal.connect(self.main_tab.widgets.camera_toggle.on_cameras_update)
 
         # Connect relay buttons to relays
         for relay_button in (
@@ -211,6 +218,8 @@ class App(QWidget):
         self.vehicle.mode_signal.connect(self.main_tab.widgets.depth_hold_button.on_mode)
         self.main_tab.widgets.depth_hold_button.set_mode_signal(self.vehicle.set_mode_signal)
 
+        self.vehicle.depth_update_signal.connect(self.main_tab.widgets.vehicle_status.update_depth)
+
     def keyPressEvent(self, event):
         """Sets keyboard keys to different actions"""
         self.keysDown[event.key()] = True
@@ -229,7 +238,7 @@ class App(QWidget):
 
         elif event.key() == Qt.Key_T:
             self.video_thread.toggle_rewind()
-        
+
         elif event.key() == Qt.Key_C:
             self.capture_image()
 
@@ -248,10 +257,10 @@ class App(QWidget):
             return tab.widgets.video_area.get_big_video_cam_index()
         else:
             return None
-    
+
     def get_active_frame(self):
         return self.video_thread._cur_frames[self.get_big_video_index()]
-    
+
     def capture_image(self):
         filename = datetime.datetime.now().strftime("recordings/%Y-%m-%d_%H%M%S") + '.png'
         cv2.imwrite(filename, self.get_active_frame())

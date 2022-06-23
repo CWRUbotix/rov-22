@@ -27,6 +27,8 @@ class VehicleControl(QObject):
     disarmed_signal = pyqtSignal()
     mode_signal = pyqtSignal(str)
     set_mode_signal = pyqtSignal(str)
+    cameras_set_signal = pyqtSignal(dict)
+    depth_update_signal = pyqtSignal(float)
 
     def __init__(self, port):
         super().__init__()
@@ -83,6 +85,10 @@ class VehicleControl(QObject):
             if self.connected and time.time() - self.last_msg_time > TIMEOUT:
                 self.disconnected_signal.emit()
                 self.connected = False
+
+        msg = self.link.recv_match(type="VFR_HUD", blocking=False)
+        if msg is not None:
+            self.depth_update_signal.emit(msg.alt)
 
     def arm(self) -> None:
         self.link.arducopter_arm()
@@ -163,7 +169,6 @@ class VehicleControl(QObject):
 
             with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
                 try:
-                    #sock.setblocking(False)
                     sock.connect((HOST, RELAY_SOCKET_PORT))
                     sock.sendall(bytes([relay.value, int(state)]))
                 except Exception as e:
@@ -187,15 +192,15 @@ class VehicleControl(QObject):
         cams_dict = {cam.value: val for cam, val in self.camera_states.items()}
 
         def task():
-            logger.info(f"Setting enabled cameras to {cams_dict}")
+            logger.debug(f"Setting enabled cameras to {cams_dict}")
 
             with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
                 try:
-                    #sock.setblocking(False)
                     sock.connect((HOST, CAMERA_SOCKET_PORT))
                     sock.sendall(bytes(json.dumps(cams_dict) + '\n', 'utf-8'))
                 except Exception as e:
                     logger.error(f'Exception in camera socket sending: {e}')
-        
+
+        self.cameras_set_signal.emit(self.camera_states)
         self._thread_manager.start(task)
 
