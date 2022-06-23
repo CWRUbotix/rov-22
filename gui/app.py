@@ -57,10 +57,13 @@ class App(QWidget):
         # Dictionary to keep track of which keys are pressed. If a key is not in the dict, assume it is not pressed.
         self.keysDown = defaultdict(lambda: False)
 
+        # Create VehicleControl object to handle the connection to the ROV
+        self.vehicle = VehicleControl(port=14550)
+
         # Create a tab widget
         self.tabs = QTabWidget()
-        self.main_tab = MainTab(len(self.video_thread._video_sources), get_active_controller_type())
-        self.debug_tab = DebugTab(len(self.video_thread._video_sources))
+        self.main_tab = MainTab(self, len(self.video_thread._video_sources), get_active_controller_type())
+        self.debug_tab = DebugTab(self, len(self.video_thread._video_sources))
         self.image_tab = ImageDebugTab()
 
         self.tabs.resize(300, 200)
@@ -74,9 +77,6 @@ class App(QWidget):
 
         # Set the root layout to this vbox
         self.setLayout(vbox)
-
-        # Create VehicleControl object to handle the connection to the ROV
-        self.vehicle = VehicleControl(port=14550)
 
         self.light_manager = LightsManager(self.vehicle)
         self.camera_manager = CameraManager(self.vehicle)
@@ -220,6 +220,7 @@ class App(QWidget):
         self.main_tab.widgets.depth_hold_button.set_mode_signal(self.vehicle.set_mode_signal)
 
         self.key_signal.connect(self.main_tab.widgets.map_wreck.map_thread.key_slot)
+        self.vehicle.depth_update_signal.connect(self.main_tab.widgets.vehicle_status.update_depth)
 
     def keyPressEvent(self, event):
         """Sets keyboard keys to different actions"""
@@ -239,7 +240,7 @@ class App(QWidget):
 
         elif event.key() == Qt.Key_T:
             self.video_thread.toggle_rewind()
-        
+
         elif event.key() == Qt.Key_C:
             self.capture_image()
         
@@ -260,10 +261,10 @@ class App(QWidget):
             return tab.widgets.video_area.get_big_video_cam_index()
         else:
             return None
-    
+
     def get_active_frame(self):
         return self.video_thread._cur_frames[self.get_big_video_index()]
-    
+
     def capture_image(self):
         filename = datetime.datetime.now().strftime("recordings/%Y-%m-%d_%H%M%S") + '.png'
         cv2.imwrite(filename, self.get_active_frame())

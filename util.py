@@ -9,6 +9,9 @@ from logger import root_logger
 
 logger = root_logger.getChild(__name__)
 
+
+parent_dir = path.split(path.dirname(__file__))[0]
+config_path = path.join(path.dirname(__file__), 'config')
 vision_path = path.dirname(__file__)
 
 #If your repository paths do not match the following defaults, copy the "config/resource-paths.json.default" file to "config/resource-paths-paths.json" and edit.

@@ -12,10 +12,12 @@ from PyQt5.QtWidgets import QComboBox, QFileDialog, QHBoxLayout, QLabel, QPushBu
 
 from controller.controller import XboxController, PS5Controller
 from gui.widgets.gazebo_control_widget import GazeboControlWidget
+from gui.widgets.timer_widget import TimerWidget
 from gui.widgets.vehicle_status_widget import VehicleStatusWidget
 from gui.widgets.image_debug_widget import ImagesWidget
 from gui.widgets.video_controls_widget import VideoControlsWidget
 from gui.widgets.video_widgets import VideoArea
+from gui.widgets.fish_widget import FishRecordWidget
 from gui.data_classes import Frame, VideoSource
 from gui.widgets.arm_control_widget import ArmControlWidget
 from gui.decorated_functions import dropdown
@@ -158,21 +160,23 @@ def header_label(text: str) -> QLabel:
 
 class MainTab(VideoTab):
 
-    def __init__(self, num_video_streams, controller_type):
+    def __init__(self, app, num_video_streams, controller_type):
+        self.app = app
         icons_dict = CONTROLLER_ICONS[controller_type]
         self.deployer_image = QPixmap(icons_dict["deployer"])
         self.claw_image = QPixmap(icons_dict["claw"])
         self.magnet_image = QPixmap(icons_dict["magnet"])
         self.lights_image = QPixmap(icons_dict["lights"])
-
         super().__init__(num_video_streams)
 
     def init_widgets(self):
         super().init_widgets()
+        self.widgets.fish_record = FishRecordWidget(self.app)
         self.widgets.arm_control = ArmControlWidget()
-        self.widgets.vehicle_status = VehicleStatusWidget()
+        self.widgets.vehicle_status = VehicleStatusWidget(self.app.vehicle)
         self.widgets.map_wreck = MapWreckWidget()
-        self.widgets.front_deployer_button = RelayToggleButton("Front Deployer", control_prompt_image=self.deployer_image)
+        self.widgets.front_deployer_button = RelayToggleButton("Front Deployer",
+                                                               control_prompt_image=self.deployer_image)
         self.widgets.front_claw_button = RelayToggleButton("Front Claw", control_prompt_image=self.claw_image)
         self.widgets.back_deployer_button = RelayToggleButton("Back Deployer", control_prompt_image=self.deployer_image)
         self.widgets.back_claw_button = RelayToggleButton("Back Claw", control_prompt_image=self.claw_image)
@@ -190,6 +194,8 @@ class MainTab(VideoTab):
         self.widgets.task_buttons.no_button_docking = QPushButton("Dock (No button)")
         self.widgets.task_buttons.button_docking = QPushButton("Dock (Yes button)")
 
+        self.widgets.timer = TimerWidget()
+
     def organize(self):
         super().organize()
         
@@ -199,10 +205,12 @@ class MainTab(VideoTab):
         sidebar.addWidget(self.widgets.task_buttons.no_button_docking)
         sidebar.addWidget(self.widgets.task_buttons.button_docking)
         sidebar.addWidget(self.widgets.map_wreck)
+        sidebar.addWidget(self.widgets.fish_record)
 
         sidebar.addWidget(header_label("Manipulators"))
         manipulator_grid = QGridLayout()
         self.layouts.manipulator_grid = manipulator_grid
+        manipulator_grid.setSpacing(0)
 
         for i, button in enumerate((
             self.widgets.front_deployer_button,
@@ -232,6 +240,8 @@ class MainTab(VideoTab):
 
         sidebar.addWidget(self.widgets.camera_toggle)
 
+        sidebar.addWidget(self.widgets.timer)
+
         sidebar.addStretch()
         sidebar.addWidget(self.widgets.arm_control)
         sidebar.addWidget(self.widgets.vehicle_status)
@@ -249,9 +259,9 @@ class DebugTab(VideoTab):
     # Create file selection signal
     select_files_signal = pyqtSignal(list)
 
-    def __init__(self, num_video_streams):
+    def __init__(self, app, num_video_streams):
         self.current_filter = "None"  # Filter applied with dropdown menu
-
+        self.app = app
         super().__init__(num_video_streams)
 
     def init_widgets(self):
@@ -281,7 +291,7 @@ class DebugTab(VideoTab):
         self.widgets.gazebo_control = GazeboControlWidget()
 
         self.widgets.arm_control = ArmControlWidget()
-        self.widgets.vehicle_status = VehicleStatusWidget()
+        self.widgets.vehicle_status = VehicleStatusWidget(self.app.vehicle)
 
     def organize(self):
         super().organize()
@@ -305,7 +315,8 @@ class DebugTab(VideoTab):
 
     def select_files(self):
         """Run the system file selection dialog and emit results, to be recieved by VideoThread"""
-        filenames, _ = QFileDialog.getOpenFileNames(self, "QFileDialog.getOpenFileNames()", "", "Video/Config (*.mp4 *.json)",
+        filenames, _ = QFileDialog.getOpenFileNames(self, "QFileDialog.getOpenFileNames()", "",
+                                                    "Video/Config (*.mp4 *.json)",
                                                     options=QFileDialog.Options())
         
         if len(filenames) != 0:
