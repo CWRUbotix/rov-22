@@ -89,7 +89,6 @@ class MapWreck():
         cv2.setWindowProperty(window, cv2.WND_PROP_TOPMOST, 1)
 
         while not self.should_quit:
-            print('START WHILE')
             if self.drawing == False:
                 cv2.imshow(window, self.canvas)
 
@@ -115,7 +114,6 @@ class MapWreck():
         cv2.destroyWindow(window)
     
     def key_press(self, key):
-        print(f'GOT KEY {key}')
         if key == Qt.Key_Q:
             self.should_quit = True
         elif key == Qt.Key_C:
