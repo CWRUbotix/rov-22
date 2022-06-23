@@ -36,17 +36,21 @@ class GuiLogHandler(logging.Handler):
 class App(QWidget):
     main_log_signal = pyqtSignal(str, int)
     debug_log_signal = pyqtSignal(str, int)
+    key_signal = pyqtSignal(Qt.Key)
 
     def __init__(self, args):
         super().__init__()
         self.setWindowTitle("ROV Vision")
-        self.resize(1280, 720)
+        self.resize(1850, 720)
 
         if args.fullscreen:
             self.showFullScreen()
 
-        if args.maximize:
+        elif args.maximize:
             self.showMaximized()
+
+        else:
+            self.showNormal()
 
         # Create the video capture thread
         with args.cameras as file:
@@ -218,6 +222,7 @@ class App(QWidget):
         self.vehicle.mode_signal.connect(self.main_tab.widgets.depth_hold_button.on_mode)
         self.main_tab.widgets.depth_hold_button.set_mode_signal(self.vehicle.set_mode_signal)
 
+        self.key_signal.connect(self.main_tab.widgets.map_wreck.map_thread.key_slot)
         self.vehicle.depth_update_signal.connect(self.main_tab.widgets.vehicle_status.update_depth)
 
     def keyPressEvent(self, event):
@@ -241,6 +246,8 @@ class App(QWidget):
 
         elif event.key() == Qt.Key_C:
             self.capture_image()
+        
+        self.key_signal.emit(event.key())
 
     def keyReleaseEvent(self, event):
         if self.keysDown[event.key()]:

@@ -16,7 +16,7 @@
 		},
 		{
 			"api": "CAP_GSTREAMER",
-			"template": "gstreamer-record-jpeg",
+			"template": "gstreamer-display-jpeg",
 			"content": "5003",
 			"width": 1280,
 			"height": 480
