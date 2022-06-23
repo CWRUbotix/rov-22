@@ -1,16 +1,17 @@
+import numpy as np
 from PyQt5 import QtGui
 from PyQt5.QtWidgets import QLabel, QVBoxLayout, QWidget
 from PyQt5.QtGui import QPixmap
-from PyQt5.QtCore import Qt
-from util import data_path
+from PyQt5.QtCore import Qt, pyqtSignal
 from vision.transect.stitch_transect import *
-from vision.transect.transect_image import TransectImage
 from gui.gui_util import convert_cv_qt
 from logger import root_logger
 
 logger = root_logger.getChild(__name__)
 
 class TransectStitcherWidget(QWidget):
+    stitched_image_signal = pyqtSignal(np.ndarray)
+
     def __init__(self, stitcher):
         super().__init__()
 
@@ -76,6 +77,7 @@ class TransectStitcherWidget(QWidget):
     def stitch_manually(self):
         cropped = cropped_images(self.stitcher)
         final_image = final_stitched_image(cropped)
+        self.stitched_image_signal.emit(final_image)
 
         self.display_image(final_image)
 

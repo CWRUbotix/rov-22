@@ -24,6 +24,7 @@ from gui.data_classes import Frame, VideoSource
 from gui.widgets.arm_control_widget import ArmControlWidget
 from gui.decorated_functions import dropdown
 from gui.widgets.map_wreck_widget import MapWreckWidget
+from gui.widgets.measure_wreck_widget import MeasureWreckWidget
 from gui.widgets.transect_widget import TransectWidget
 from gui.widgets.relay_toggle_button import RelayToggleButton
 
@@ -180,14 +181,13 @@ class MainTab(VideoTab):
         self.widgets.vehicle_status = VehicleStatusWidget(self.app.vehicle)
         self.widgets.transect_stitching = TransectWidget(self.app)
         self.widgets.map_wreck = MapWreckWidget()
-        self.widgets.front_deployer_button = RelayToggleButton("Front Deployer",
-                                                               control_prompt_image=self.deployer_image)
+        self.widgets.measure_wreck = MeasureWreckWidget()
+        self.widgets.front_deployer_button = RelayToggleButton("Front Deployer", control_prompt_image=self.deployer_image)
         self.widgets.front_claw_button = RelayToggleButton("Front Claw", control_prompt_image=self.claw_image)
         self.widgets.back_deployer_button = RelayToggleButton("Back Deployer", control_prompt_image=self.deployer_image)
         self.widgets.back_claw_button = RelayToggleButton("Back Claw", control_prompt_image=self.claw_image)
         self.widgets.magnet_button = RelayToggleButton("Magnet", control_prompt_image=self.magnet_image)
         self.widgets.lights_button = RelayToggleButton("Lights", control_prompt_image=self.lights_image)
-        
 
         self.widgets.manual_button = ModeButton("Manual", "MANUAL")
         self.widgets.stabilize_button = ModeButton("Stabilize", "STABILIZE")
@@ -217,6 +217,8 @@ class MainTab(VideoTab):
         sidebar.addWidget(self.widgets.task_buttons.map_wreck)
         sidebar.addWidget(self.widgets.task_buttons.map_wreck)
         sidebar.addWidget(self.widgets.transect_stitching)
+        sidebar.addWidget(self.widgets.map_wreck)
+        sidebar.addWidget(self.widgets.measure_wreck)
         sidebar.addWidget(self.widgets.fish_record)
         sidebar.addWidget(self.widgets.fish_button)
 

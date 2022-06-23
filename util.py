@@ -14,6 +14,10 @@ parent_dir = path.split(path.dirname(__file__))[0]
 config_path = path.join(path.dirname(__file__), 'config')
 vision_path = path.dirname(__file__)
 
+BOTTOM_CAM_DIM = (1280, 720)
+BOTTOM_CAM_K = np.array([[827.608147769299, 0.0, 704.3778058959629], [0.0, 830.178379475675, 315.4798525597648], [0.0, 0.0, 1.0]])
+BOTTOM_CAM_D = D = np.array([[0.03192406944778746], [-0.05787649912329225], [0.05508562245378389], [-0.027340946484827603]])
+
 #If your repository paths do not match the following defaults, copy the "config/resource-paths.json.default" file to "config/resource-paths-paths.json" and edit.
 try:
     with open('config/resource-paths.json', 'r') as paths_file:
