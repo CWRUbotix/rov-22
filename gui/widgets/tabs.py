@@ -178,6 +178,7 @@ class MainTab(VideoTab):
         self.widgets.back_claw_button = RelayToggleButton("Back Claw", control_prompt_image=self.claw_image)
         self.widgets.magnet_button = RelayToggleButton("Magnet", control_prompt_image=self.magnet_image)
         self.widgets.lights_button = RelayToggleButton("Lights", control_prompt_image=self.lights_image)
+        
 
         self.widgets.manual_button = ModeButton("Manual", "MANUAL")
         self.widgets.stabilize_button = ModeButton("Stabilize", "STABILIZE")
@@ -189,6 +190,7 @@ class MainTab(VideoTab):
         self.widgets.task_buttons = SimpleNamespace()
         self.widgets.task_buttons.no_button_docking = QPushButton("Dock (No button)")
         self.widgets.task_buttons.button_docking = QPushButton("Dock (Yes button)")
+        self.widgets.fish_button = QPushButton("Fish Calculator")
 
     def organize(self):
         super().organize()
@@ -229,6 +231,8 @@ class MainTab(VideoTab):
         mode_grid.addWidget(self.widgets.stabilize_button, 0, 1, alignment=QtCore.Qt.AlignCenter)
         mode_grid.addWidget(self.widgets.depth_hold_button, 0, 2, alignment=QtCore.Qt.AlignCenter)
         sidebar.addLayout(mode_grid)
+
+        sidebar.addWidget(self.widgets.fish_button)
 
         sidebar.addWidget(self.widgets.camera_toggle)
 
