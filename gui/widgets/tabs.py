@@ -1,4 +1,5 @@
 from gui.widgets.camera_toggle_widget import CameraToggleWidget
+from gui.widgets.fish_button import FishButton
 from gui.widgets.mode_button import ModeButton
 import logging
 from collections import defaultdict
@@ -184,6 +185,7 @@ class MainTab(VideoTab):
         self.widgets.back_claw_button = RelayToggleButton("Back Claw", control_prompt_image=self.claw_image)
         self.widgets.magnet_button = RelayToggleButton("Magnet", control_prompt_image=self.magnet_image)
         self.widgets.lights_button = RelayToggleButton("Lights", control_prompt_image=self.lights_image)
+        
 
         self.widgets.manual_button = ModeButton("Manual", "MANUAL")
         self.widgets.stabilize_button = ModeButton("Stabilize", "STABILIZE")
@@ -197,6 +199,7 @@ class MainTab(VideoTab):
         self.widgets.task_buttons = SimpleNamespace()
         self.widgets.task_buttons.no_button_docking = QPushButton("Dock (No button)")
         self.widgets.task_buttons.button_docking = QPushButton("Dock (Yes button)")
+        self.widgets.fish_button = FishButton("Fish Calculator")
 
         self.widgets.timer = TimerWidget()
 
@@ -210,6 +213,7 @@ class MainTab(VideoTab):
         sidebar.addWidget(self.widgets.task_buttons.button_docking)
         sidebar.addWidget(self.widgets.map_wreck)
         sidebar.addWidget(self.widgets.fish_record)
+        sidebar.addWidget(self.widgets.fish_button)
 
         sidebar.addWidget(header_label("Manipulators"))
         manipulator_grid = QGridLayout()
