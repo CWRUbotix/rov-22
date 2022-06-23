@@ -27,7 +27,6 @@ class TransectStitcherWidget(QWidget):
         self.label = QLabel(self)
         layout.addWidget(self.label)
 
-        self.setWindowTitle("Transect Stitching")
         self.display_image(self.stitcher.images[self.image_index].image)
         self.show()
 
@@ -35,9 +34,9 @@ class TransectStitcherWidget(QWidget):
         pixmap = QPixmap(convert_cv_qt(image))
         self.label.setPixmap(pixmap)
         self.label.resize(pixmap.width(), pixmap.height())
+        self.setWindowTitle(f"Square {self.image_index+1}")
 
         self.show()
-        logger.info(f"Displaying transect square {self.image_index+1}")
 
     def keyPressEvent(self, event):
         key = event.key()

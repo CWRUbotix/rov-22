@@ -71,7 +71,7 @@ class TransectWidget(QWidget):
         logger.info("Cleared the transect_frames folder in the data repo")
 
     def capture(self):
-        frame = self.app.get_active_frame()
+        frame = self.app.get_active_frame().copy()
 
         self.pictures.append(frame)
         self.image_num += 1
