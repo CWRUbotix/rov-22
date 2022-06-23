@@ -44,8 +44,6 @@ class TimerWidget(QWidget):
     def update_label(self):
         minutes = self.seconds_left // 60
         seconds = self.seconds_left % 60
-        if self.seconds_left == 60:
-            self.label.setWindowFilePath() 
         self.label.setText(f"{str(minutes).zfill(2)}:{str(seconds).zfill(2)}")
 
     def toggle_timer(self):
