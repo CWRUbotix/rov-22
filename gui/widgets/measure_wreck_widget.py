@@ -28,6 +28,7 @@ class MeasureWreckWidget(QWidget):
         super().__init__()
 
         self.root_layout = QHBoxLayout(self)
+        self.root_layout.setContentsMargins(0, 0, 0, 0)
         self.setLayout(self.root_layout)
 
         self.start_button = QPushButton("Measure Wreck", self)
