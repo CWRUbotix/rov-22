@@ -21,20 +21,22 @@ class MainWindow(QWidget):
         self.initUI()
 
     def initUI(self):
+        self.setStyleSheet("border-color: transparent;")        
         layout = QVBoxLayout()
+        layout.setContentsMargins(0, 0, 0, 0)
         self.setLayout(layout)
         self.label = QLabel(self)
         layout.addWidget(self.label)
 
-        self.setWindowTitle("Title")
-        self.display_image(0)
+        self.setWindowTitle("Transect Stitching")
+        self.display_image(stitcher.images[self.image_index].image)
         self.show()
 
-    def display_image(self, num):
-        pixmap = QPixmap(convert_cv_qt(self.image_list[num]))
+    def display_image(self, image):
+        pixmap = QPixmap(convert_cv_qt(image))
         self.label.setPixmap(pixmap)
+        self.label.resize(pixmap.width(), pixmap.height())
 
-        self.resize(pixmap.width(), pixmap.height())
         self.show()
 
     def keyPressEvent(self, event):
@@ -43,12 +45,12 @@ class MainWindow(QWidget):
         if key == Qt.Key_Right and self.image_index < len(self.image_list) - 1:
             self.image_index += 1
             self.transect_img = stitcher.images[self.image_index]
-            self.display_image(self.image_index)
+            self.display_image(self.transect_img.image)
 
         elif key == Qt.Key_Left and self.image_index > 0:
             self.image_index -= 1
             self.transect_img = stitcher.images[self.image_index]
-            self.display_image(self.image_index)
+            self.display_image(self.transect_img.image)
 
         elif key == Qt.Key_R:
             print(f"RESETTING SQUARE {self.transect_img.num} POINTS")
@@ -58,20 +60,17 @@ class MainWindow(QWidget):
             self.stitch_manually()
 
     def mousePressEvent(self, ev: QtGui.QMouseEvent) -> None:
-        x = ev.pos().x()
-        y = ev.pos().y()   
+        x = ev.localPos().x()
+        y = ev.localPos().y()   
 
         self.transect_img.coords.append((x, y))
         print(f"Square {self.transect_img.num} coord {len(self.transect_img.coords)}: ({x}, {y})")        
 
     def stitch_manually(self):
         cropped = cropped_images(self.stitcher)
-        final_image = convert_cv_qt(final_stitched_image(cropped))
+        final_image = final_stitched_image(cropped)
 
-        pixmap = QPixmap(final_image)
-        self.label.setPixmap(pixmap)
-        self.resize(pixmap.width(), pixmap.height())
-        self.show()
+        self.display_image(final_image)
 
 if __name__ == '__main__':
     stitcher = StitchTransect()

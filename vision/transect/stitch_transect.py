@@ -17,6 +17,8 @@ class StitchTransect():
         if width > height:
             trans_img.image = cv2.rotate(trans_img.image, cv2.ROTATE_90_COUNTERCLOCKWISE)
 
+        trans_img.image = imutils.resize(trans_img.image, width=400)        
+
         self.images[key] = trans_img
 
     def get_images(self):
@@ -71,7 +73,7 @@ def cropped_images(stitcher, debug=False):
         # Perspective transform original image
         warped = cv2.warpPerspective(image, matrix, (width, height))
 
-        resized = imutils.resize(warped, width=400)        
+        resized = imutils.resize(warped, width=100)        
         cropped.append(resized)
 
         if debug:
@@ -94,7 +96,6 @@ def final_stitched_image(cropped):
     final_width = width * 2
 
     final_image = np.zeros((final_height, final_width, 3), np.uint8) 
-    print(final_image.shape)
 
     # Start from bottom left of final image
     id = 0
@@ -108,6 +109,8 @@ def final_stitched_image(cropped):
             x += width
             id += 1
         y -= height
+
+    final_image = cv2.rotate(final_image, cv2.ROTATE_90_CLOCKWISE)
 
     return final_image
 
