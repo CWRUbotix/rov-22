@@ -17,8 +17,8 @@ class ArmControlWidget(QWidget):
         arm_button = QPushButton("Arm", self)
         disarm_button = QPushButton("Disarm", self)
 
-        arm_button.setMinimumHeight(100)
-        disarm_button.setMinimumHeight(100)
+        arm_button.setMinimumHeight(70)
+        disarm_button.setMinimumHeight(70)
 
         disarm_button.setStyleSheet(DISARM_STYLE)
 

@@ -11,7 +11,7 @@ class FishButton(QPushButton):
     def __init__(self, text, parent=None, control_prompt_image=None):
         super().__init__(text, parent)
 
-        self.setFixedHeight(80)
+        self.setFixedHeight(30)
         self.clicked.connect(self.on_click)
 
     def on_click(self):
