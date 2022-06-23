@@ -25,12 +25,11 @@ class MeasureWreckImage(QLabel):
         if len(self.points) == 2:
             dist = self.get_dist()
 
-            # TODO: Convert pixel get_dist into real-world length
+            #Convert pixel get_dist into real-world length
+            length = 300 / self.width() * dist
 
             self.distLabel.setText(
-                '(' + str(self.points[0]['x']) + ',' + str(self.points[0]['y']) + ') -> (' +
-                str(self.points[1]['x']) + ',' + str(self.points[1]['y']) + '): ' +
-                str(dist)
+                f"({self.points[0]['x']},{self.points[0]['y']}) -> ({self.points[1]['x']},{self.points[1]['y']}): {round(dist)} px, {round(length, 2)}cm"
             )
         
         self.distLabel.repaint()
