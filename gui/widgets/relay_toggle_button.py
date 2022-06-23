@@ -1,4 +1,4 @@
-from PyQt5.QtCore import pyqtSignal
+from PyQt5.QtCore import pyqtSignal, Qt
 from PyQt5.QtWidgets import QPushButton, QLabel
 
 
@@ -16,7 +16,7 @@ class RelayToggleButton(QPushButton):
         self.control_prompt = QLabel()
         self.control_prompt.setFixedHeight(50)
         if control_prompt_image is not None:
-            self.control_prompt.setPixmap(control_prompt_image)
+            self.control_prompt.setPixmap(control_prompt_image.scaled(self.size(), Qt.KeepAspectRatio))
 
     def send_state(self):
         if self.isChecked():

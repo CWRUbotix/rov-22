@@ -30,7 +30,7 @@ class StereoParameters:
         point_l = np.array([[point.xl], [point.y]], dtype=np.float64)
         point_r = np.array([[point.xr], [point.y]], dtype=np.float64)
         triangulated = cv2.triangulatePoints(self.proj_l, self.proj_r, point_l, point_r).reshape(4)
-        print(triangulated)
+        #print(triangulated)
         triangulated /= triangulated[3]
         return triangulated[0:3]
 

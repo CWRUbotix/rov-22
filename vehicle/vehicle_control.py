@@ -28,6 +28,7 @@ class VehicleControl(QObject):
     mode_signal = pyqtSignal(str)
     set_mode_signal = pyqtSignal(str)
     cameras_set_signal = pyqtSignal(dict)
+    depth_update_signal = pyqtSignal(float)
 
     def __init__(self, port):
         super().__init__()
@@ -84,6 +85,10 @@ class VehicleControl(QObject):
             if self.connected and time.time() - self.last_msg_time > TIMEOUT:
                 self.disconnected_signal.emit()
                 self.connected = False
+
+        msg = self.link.recv_match(type="VFR_HUD", blocking=False)
+        if msg is not None:
+            self.depth_update_signal.emit(msg.alt)
 
     def arm(self) -> None:
         self.link.arducopter_arm()
