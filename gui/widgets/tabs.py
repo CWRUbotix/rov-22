@@ -1,4 +1,5 @@
 from gui.widgets.camera_toggle_widget import CameraToggleWidget
+from gui.widgets.fish_button import FishButton
 from gui.widgets.mode_button import ModeButton
 import logging
 from collections import defaultdict
@@ -190,7 +191,7 @@ class MainTab(VideoTab):
         self.widgets.task_buttons = SimpleNamespace()
         self.widgets.task_buttons.no_button_docking = QPushButton("Dock (No button)")
         self.widgets.task_buttons.button_docking = QPushButton("Dock (Yes button)")
-        self.widgets.fish_button = QPushButton("Fish Calculator")
+        self.widgets.fish_button = FishButton("Fish Calculator")
 
     def organize(self):
         super().organize()
