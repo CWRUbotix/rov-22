@@ -149,7 +149,7 @@ class PixelSelector:
         
 from PyQt5.QtWidgets import QWidget, QHBoxLayout, QVBoxLayout, QPushButton, QLabel, QScrollArea
 from PyQt5 import QtGui
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import Qt, pyqtSignal
 
 class QPixelWidget(QWidget):
 
@@ -160,6 +160,12 @@ class QPixelWidget(QWidget):
 
         self.measurement_widget = QPixelSelector(img_l, img_r, params)
         layout.addWidget(self.measurement_widget)
+    
+    def keyPressEvent(self, a0: QtGui.QKeyEvent) -> None:
+        self.measurement_widget.keyPressEvent(a0)
+    
+    def wheelEvent(self, a0: QtGui.QWheelEvent) -> None:
+        return self.measurement_widget.wheelEvent(a0)
 
 class QPixelSelector(QLabel):
 
@@ -186,9 +192,10 @@ class QPixelSelector(QLabel):
     target_xr = 50
     target_y = 50
 
+    coord_signal = pyqtSignal(object)
+
     def __init__(self, img_l: np.ndarray, img_r: np.ndarray, params: StereoParameters):
         super().__init__()
-        print(f'IMAGE SUM: {img_l.sum()}')
 
         self.setMinimumSize(400, 400)
 
@@ -305,7 +312,25 @@ class QPixelSelector(QLabel):
             self.view_y = self.drag_view_y + delta_y
             self._clamp_view()
             self.update_image()
-        
+    
+    def keyPressEvent(self, event):
+        if event.key() == Qt.Key_F:
+            self.coord_signal.emit(StereoCoordinate(self.target_xl, self.target_xr, self.target_y))
+            self.parentWidget().close()
+        if event.key() == Qt.Key_Q:
+            self.coord_signal.emit(None)
+            self.parentWidget().close()
+    
+    def wheelEvent(self, event: QtGui.QWheelEvent) -> None:
+        if event.angleDelta().y() > 0:
+            if self.view_size > 100:
+                self.view_size = int(self.view_size / 1.25)
+        else:
+            if  int(1.25 * self.view_size) <= min(self.img_width, self.img_height):
+                self.view_size = int(1.25 * self.view_size)
+                self._clamp_view()
+    
+        self.update_image()
         
     
     def _clamp_view(self):
