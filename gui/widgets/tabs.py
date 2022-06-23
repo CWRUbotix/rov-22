@@ -12,6 +12,7 @@ from PyQt5.QtWidgets import QComboBox, QFileDialog, QHBoxLayout, QLabel, QPushBu
 
 from controller.controller import XboxController, PS5Controller
 from gui.widgets.gazebo_control_widget import GazeboControlWidget
+from gui.widgets.timer_widget import TimerWidget
 from gui.widgets.vehicle_status_widget import VehicleStatusWidget
 from gui.widgets.image_debug_widget import ImagesWidget
 from gui.widgets.video_controls_widget import VideoControlsWidget
@@ -194,6 +195,8 @@ class MainTab(VideoTab):
         self.widgets.task_buttons.no_button_docking = QPushButton("Dock (No button)")
         self.widgets.task_buttons.button_docking = QPushButton("Dock (Yes button)")
 
+        self.widgets.timer = TimerWidget()
+
     def organize(self):
         super().organize()
         
@@ -208,6 +211,7 @@ class MainTab(VideoTab):
         sidebar.addWidget(header_label("Manipulators"))
         manipulator_grid = QGridLayout()
         self.layouts.manipulator_grid = manipulator_grid
+        manipulator_grid.setSpacing(0)
 
         for i, button in enumerate((
             self.widgets.front_deployer_button,
@@ -236,6 +240,8 @@ class MainTab(VideoTab):
         sidebar.addLayout(mode_grid)
 
         sidebar.addWidget(self.widgets.camera_toggle)
+
+        sidebar.addWidget(self.widgets.timer)
 
         sidebar.addStretch()
         sidebar.addWidget(self.widgets.arm_control)
