@@ -7,7 +7,7 @@ from vision.transect.stitch_pyqt import TransectStitcherWidget
 from PyQt5.QtWidgets import QWidget, QPushButton, QHBoxLayout
 from PyQt5.QtCore import QThread
 from logger import root_logger
-from util import data_path
+from util import data_path, undistort, BOTTOM_CAM_DIM, BOTTOM_CAM_K, BOTTOM_CAM_D
 
 logger = root_logger.getChild(__name__)
 
@@ -24,9 +24,11 @@ class CaptureThread(QThread):
         self.image_num = num
 
     def run(self):
+        corrected_image = undistort(self.image_to_save, BOTTOM_CAM_DIM, BOTTOM_CAM_K, BOTTOM_CAM_D, balance=1)
+
         file_name = f"transect_image({self.image_num}).png"
         path = os.path.join(data_path, "transect_frames", file_name)
-        cv2.imwrite(path, self.image_to_save)
+        cv2.imwrite(path, corrected_image)
 
         logger.info(f"Saving {file_name} to {path}")
 
