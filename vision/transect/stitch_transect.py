@@ -4,7 +4,7 @@ from vision.transect.transect_image import TransectImage
 from vision.colors import *
 from vision.transect.line import *
 
-class StitchTransect():
+class TransectStitcher():
 
     def __init__(self):
         self.images = dict.fromkeys([0, 1, 2, 3, 4, 5, 6, 7], TransectImage)
@@ -29,7 +29,7 @@ class StitchTransect():
 
         return image_list
 
-stitcher_test = StitchTransect()
+stitcher_test = TransectStitcher()
 
 def cropped_images(stitcher, debug=False):
     """

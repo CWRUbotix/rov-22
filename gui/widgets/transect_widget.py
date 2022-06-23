@@ -1,7 +1,9 @@
 import os
 import cv2
 
-from vision.transect.stitch_manual import stitch_manually
+from vision.transect.stitch_transect import TransectStitcher
+from vision.transect.transect_image import TransectImage
+from vision.transect.stitch_pyqt import TransectStitcherWidget
 from PyQt5.QtWidgets import QWidget, QPushButton, QHBoxLayout
 from PyQt5.QtCore import QThread
 from logger import root_logger
@@ -28,15 +30,6 @@ class CaptureThread(QThread):
 
         logger.info(f"Saving {file_name} to {path}")
 
-class StitchManualThread(QThread):
-
-    def __init__(self):
-        super().__init__()
-
-    def run(self):
-        logger.info("Starting manual transect stitching")
-        stitch_manually()
-
 class TransectWidget(QWidget):
     pictures = []
     image_num = 0
@@ -45,6 +38,7 @@ class TransectWidget(QWidget):
         super().__init__()
 
         self.app = app
+        self.capture_thread = CaptureThread()
 
         # Horizontal layout
         self.root_layout = QHBoxLayout(self)
@@ -54,18 +48,27 @@ class TransectWidget(QWidget):
         self.capture_button = QPushButton("Capture Transect", self)
         self.capture_button.clicked.connect(self.capture)
 
+        self.clear_button = QPushButton("Clear Images", self)
+        self.clear_button.clicked.connect(self.clear_directory)
+
         self.manual_button = QPushButton("Stitch Manually", self)
         self.manual_button.clicked.connect(self.stitch_manually)     
 
         self.root_layout.addWidget(self.capture_button)
+        self.root_layout.addWidget(self.clear_button)
         self.root_layout.addWidget(self.manual_button)
 
-        self.capture_thread = CaptureThread()
-        self.manual_stitch_thread = StitchManualThread()
+        self.clear_directory()
 
+    def clear_directory(self):
         dir = os.path.join(data_path, "transect_frames")
+
         for f in os.listdir(dir):
             os.remove(os.path.join(dir, f))
+
+        self.image_num = 0
+
+        logger.info("Cleared the transect_frames folder in the data repo")
 
     def capture(self):
         frame = self.app.get_active_frame()
@@ -79,5 +82,21 @@ class TransectWidget(QWidget):
             self.capture_thread.start()
 
     def stitch_manually(self):
-        if not self.manual_stitch_thread.isRunning():
-            self.manual_stitch_thread.start()
+        self.stitcher = TransectStitcher()
+        self.transect_stitcher = TransectStitcherWidget(self.stitcher)
+
+        folder_path = os.path.join(data_path, "transect_frames")
+
+        all_images = os.listdir(folder_path)
+        all_images.sort()
+
+        if len(all_images) == 8:
+            for i in range(0, 8):
+                image_path = os.path.join(folder_path, all_images[i])
+
+                image = TransectImage(i, cv2.imread(image_path))
+                self.stitcher.set_image(i, image)        
+
+            self.transect_stitcher.initUI()
+        else:
+            logger.info(f"WARNING: Need 8 photos, only {len(all_images)} were taken")
