@@ -20,6 +20,7 @@ class TimerWidget(QWidget):
         self.toggle_btn.setCheckable(True)
 
         layout = QGridLayout()
+        layout.setContentsMargins(0, 0, 0, 0)
 
         self.timer = QTimer()
         self.timer.timeout.connect(self.update_timer)
