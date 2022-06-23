@@ -41,13 +41,16 @@ class App(QWidget):
     def __init__(self, args):
         super().__init__()
         self.setWindowTitle("ROV Vision")
-        self.resize(1280, 720)
+        self.resize(1850, 720)
 
         if args.fullscreen:
             self.showFullScreen()
 
-        if args.maximize:
+        elif args.maximize:
             self.showMaximized()
+
+        else:
+            self.showNormal()
 
         # Create the video capture thread
         with args.cameras as file:

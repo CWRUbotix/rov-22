@@ -27,7 +27,6 @@ def run_gui(args):
     theme_picker(app, args.theme)
     a = App(args)
 
-    a.show()
     return app.exec_()
 
 if __name__ == '__main__':
