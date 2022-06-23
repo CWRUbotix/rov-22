@@ -24,6 +24,7 @@ from gui.data_classes import Frame, VideoSource
 from gui.widgets.arm_control_widget import ArmControlWidget
 from gui.decorated_functions import dropdown
 from gui.widgets.map_wreck_widget import MapWreckWidget
+from gui.widgets.transect_widget import TransectWidget
 from gui.widgets.relay_toggle_button import RelayToggleButton
 
 from vehicle.constants import BACKWARD_CAM_INDICES
@@ -177,6 +178,7 @@ class MainTab(VideoTab):
         self.widgets.fish_record = FishRecordWidget(self.app)
         self.widgets.arm_control = ArmControlWidget()
         self.widgets.vehicle_status = VehicleStatusWidget(self.app.vehicle)
+        self.widgets.transect_stitching = TransectWidget(self.app)
         self.widgets.map_wreck = MapWreckWidget()
         self.widgets.front_deployer_button = RelayToggleButton("Front Deployer",
                                                                control_prompt_image=self.deployer_image)
@@ -199,6 +201,7 @@ class MainTab(VideoTab):
         self.widgets.task_buttons = SimpleNamespace()
         self.widgets.task_buttons.no_button_docking = QPushButton("Dock (No button)")
         self.widgets.task_buttons.button_docking = QPushButton("Dock (Yes button)")
+        self.widgets.task_buttons.map_wreck = QPushButton("Map Wreck")
         self.widgets.fish_button = FishButton("Fish Calculator")
 
         self.widgets.timer = TimerWidget()
@@ -211,7 +214,9 @@ class MainTab(VideoTab):
         sidebar.addWidget(header_label("Tasks"))
         sidebar.addWidget(self.widgets.task_buttons.no_button_docking)
         sidebar.addWidget(self.widgets.task_buttons.button_docking)
-        sidebar.addWidget(self.widgets.map_wreck)
+        sidebar.addWidget(self.widgets.task_buttons.map_wreck)
+        sidebar.addWidget(self.widgets.task_buttons.map_wreck)
+        sidebar.addWidget(self.widgets.transect_stitching)
         sidebar.addWidget(self.widgets.fish_record)
         sidebar.addWidget(self.widgets.fish_button)
 
