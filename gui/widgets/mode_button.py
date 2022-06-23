@@ -12,7 +12,6 @@ class ModeButton(QPushButton):
         super().__init__(text, parent)
         self.mode = mode
 
-        self.setFixedHeight(80)
         self.clicked.connect(self.on_click)
 
         self.control_prompt = QLabel()
