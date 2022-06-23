@@ -58,7 +58,7 @@ class App(QWidget):
 
         # Create a tab widget
         self.tabs = QTabWidget()
-        self.main_tab = MainTab(len(self.video_thread._video_sources), get_active_controller_type())
+        self.main_tab = MainTab(self, len(self.video_thread._video_sources), get_active_controller_type())
         self.debug_tab = DebugTab(len(self.video_thread._video_sources))
         self.image_tab = ImageDebugTab()
 
