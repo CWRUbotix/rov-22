@@ -7,7 +7,8 @@ def theme_picker(app, theme):
     if theme == 'alt_theme':
         alt_theme(app)
     else:
-        dark_theme(app)
+        pass
+        #dark_theme(app)
 
 
 # sets dark theme

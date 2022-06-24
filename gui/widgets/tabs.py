@@ -35,8 +35,8 @@ import os
 from util import data_path
 
 CONSOLE_TEXT_COLORS = {
-    logging.DEBUG: QColor.fromRgb(0xffffff),
-    logging.INFO: QColor.fromRgb(0xffffff),
+    logging.DEBUG: QColor.fromRgb(0x000000),
+    logging.INFO: QColor.fromRgb(0x000000),
     logging.WARN: QColor.fromRgb(0xffff4f),
     logging.ERROR: QColor.fromRgb(0xff4f4f),
     logging.CRITICAL: QColor.fromRgb(0xff4f4f)
