@@ -64,7 +64,7 @@ def cropped_images(stitcher, debug=False):
 
         # Warp image 
         image = trans_img.image
-        height, width, _ = image.shape
+        height, width = 750, 500
 
         src = np.float32([[x1, y1], [x2, y2], [x3, y3], [x4, y4]])
         dst = np.float32([[0, 0], [width, 0], [0, height], [width, height]])
@@ -73,7 +73,7 @@ def cropped_images(stitcher, debug=False):
         # Perspective transform original image
         warped = cv2.warpPerspective(image, matrix, (width, height))
 
-        resized = imutils.resize(warped, width=100)        
+        resized = imutils.resize(warped, width=150)        
         cropped.append(resized)
 
         if debug:

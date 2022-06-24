@@ -211,7 +211,7 @@ class MainTab(VideoTab):
         
         sidebar = self.layouts.sidebar
 
-        sidebar.addWidget(header_label("Tasks"))
+        # sidebar.addWidget(header_label("Tasks"))
         sidebar.addWidget(self.widgets.task_buttons.no_button_docking)
         sidebar.addWidget(self.widgets.task_buttons.button_docking)
         sidebar.addWidget(self.widgets.task_buttons.map_wreck)
@@ -222,7 +222,7 @@ class MainTab(VideoTab):
         sidebar.addWidget(self.widgets.fish_record)
         sidebar.addWidget(self.widgets.fish_button)
 
-        sidebar.addWidget(header_label("Manipulators"))
+        # sidebar.addWidget(header_label("Manipulators"))
         manipulator_grid = QGridLayout()
         self.layouts.manipulator_grid = manipulator_grid
         manipulator_grid.setSpacing(0)
