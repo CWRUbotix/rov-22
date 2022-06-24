@@ -1,0 +1,18 @@
+{
+	"sources": [
+		{
+			"api": "CAP_FFMPEG",
+			"template": "file",
+			"content": "transect/stitching/Transect.mp4",
+			"width": 1280,
+			"height": 720
+		},
+		{
+			"api": "CAP_FFMPEG",
+			"template": "file",
+			"content": "example-streams/2.mp4",
+			"width": 1920,
+			"height": 1080
+        }
+	]
+}

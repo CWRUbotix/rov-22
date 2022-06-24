@@ -14,6 +14,8 @@ import cv2
 
 from logger import root_logger
 
+DIST_BIAS = 1 # cm
+
 logger = root_logger.getChild(__name__)
 
 
@@ -193,6 +195,7 @@ class FishCaptureWidget(QLabel):
             point1 = self.params.triangulate_stereo_coord(self.coord1)
             point2 = self.params.triangulate_stereo_coord(self.coord2)
             dist = math.dist(point1, point2) * 2.126447913752668
-            return dist
+
+            return dist + DIST_BIAS
         else:
             return None

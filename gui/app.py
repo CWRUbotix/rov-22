@@ -168,10 +168,10 @@ class App(QWidget):
 
         # Connect the task buttons to the task they control
         self.main_tab.widgets.task_buttons.no_button_docking.clicked.connect(
-            lambda: self.task_scheduler.start_task(self.no_button_docking_task)
+            lambda: self.task_scheduler.toggle_task(self.no_button_docking_task)
         )
         self.main_tab.widgets.task_buttons.button_docking.clicked.connect(
-            lambda: self.task_scheduler.start_task(self.button_docking_task)
+            lambda: self.task_scheduler.toggle_task(self.button_docking_task)
         )
         self.main_tab.widgets.task_buttons.map_wreck.clicked.connect(self.map_wreck_task.map_wreck)
 

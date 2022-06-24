@@ -26,10 +26,12 @@ class MeasureWreckImage(QLabel):
             dist = self.get_dist()
 
             #Convert pixel get_dist into real-world length
-            length = 300 / self.width() * dist
+            length = 300 / self.pixmap().width() * dist
+
+            ship_length = length + 30 / math.sqrt(2) + 1.27 + 12 + 0.5
 
             self.distLabel.setText(
-                f"({self.points[0]['x']},{self.points[0]['y']}) -> ({self.points[1]['x']},{self.points[1]['y']}): {round(dist)} px, {round(length, 2)}cm"
+                f"({self.points[0]['x']},{self.points[0]['y']}) -> ({self.points[1]['x']},{self.points[1]['y']}): {round(dist)} px, {round(length, 2)}cm, ship length: {round(ship_length, 2)}cm"
             )
         
         self.distLabel.repaint()

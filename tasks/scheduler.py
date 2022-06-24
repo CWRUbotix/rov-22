@@ -36,6 +36,12 @@ class TaskScheduler(QThread):
             self.current_task = None
             self.change_task_signal.emit(None)
 
+    def toggle_task(self, task: BaseTask):
+        if self.current_task == task:
+            self.end_current_task()
+        else:
+            self.start_task(task)
+
     def run(self):
         last_timestamp = time.time_ns()
         period_ns = int(1e9) // PERIODIC_FREQUENCY
