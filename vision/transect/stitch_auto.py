@@ -1,7 +1,6 @@
 import cv2
 import numpy as np
 import math
-import imutils
 from vision.colors import *
 from vision.transect.line import *
 from vision.transect.stitch_transect import *
