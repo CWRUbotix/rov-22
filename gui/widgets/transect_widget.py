@@ -77,8 +77,11 @@ class TransectWidget(QWidget):
 
     def clear_previous(self):
         if self.image_num != 0:
-            os.remove(os.path.join(data_path, "transect_frames", self.picture_paths.pop()))
+            prev_path = self.picture_paths.pop()
+
+            os.remove(prev_path)
             self.image_num -= 1
+
             logger.info(f"Deleting transect frame {self.image_num+1}")
         else:
             logger.info("WARNING: There is no previous transect frame to delete")
