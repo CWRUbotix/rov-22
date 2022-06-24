@@ -80,26 +80,3 @@ class TransectStitcherWidget(QWidget):
         self.stitched_image_signal.emit(final_image)
 
         self.display_image(final_image)
-
-# if __name__ == '__main__':
-#     stitcher = TransectStitcher()
-
-#     folder_path = os.path.join(data_path, "transect", "stitching", "p00l")
-
-#     files = [img_name for img_name in os.listdir(folder_path)]
-#     files.sort()
-
-#     image_path = os.path.join(folder_path, files[0])
-
-#     for i in range(0, 8):
-#         image_path = os.path.join(folder_path, files[i])
-
-#         image = TransectImage(i, cv2.imread(image_path))
-#         stitcher.set_image(i, image)
-
-#     app = QApplication(sys.argv)
-
-#     demo = TransectStitcher(stitcher)
-#     demo.show()
-
-#     sys.exit(app.exec_())

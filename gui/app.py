@@ -222,6 +222,8 @@ class App(QWidget):
             self.controller.register_relay_callback(Relay.CLAW_BACK, self.main_tab.widgets.back_claw_button.toggle)
             self.controller.register_relay_callback(Relay.MAGNET, self.main_tab.widgets.magnet_button.toggle)
             self.controller.register_relay_callback(Relay.LIGHTS_FRONT, self.main_tab.widgets.lights_button.toggle)
+
+            self.controller.register_mode_callback(self.vehicle.set_mode)
         
         self.vehicle.mode_signal.connect(self.main_tab.widgets.manual_button.on_mode)
         self.main_tab.widgets.manual_button.set_mode_signal(self.vehicle.set_mode_signal)

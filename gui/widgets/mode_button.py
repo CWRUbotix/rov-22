@@ -27,7 +27,7 @@ class ModeButton(QPushButton):
         if mode == self.mode:
             self.setStyleSheet("QPushButton { background-color: blue }")
         else:
-            self.setStyleSheet("QPushButton { background-color: #575757 }")
+            self.setStyleSheet("QPushButton { background-color: #DFDFDF }")
     
     def on_click(self):
         logger.info(f'CLICKED: {self.mode}')

@@ -47,6 +47,7 @@ class Controller:
 
         self.switch_camera_callbacks = []
         self.toggle_relay_callbacks = []
+        self.switch_mode_callbacks = []
 
         self.get_big_video_index = get_big_video_index
 
@@ -119,6 +120,7 @@ class Controller:
 
         self.check_for_camera_change(event)
         self.check_for_relay_toggle(event)
+        self.check_for_mode_change(event)
 
     def get(self, control: t.Union[JoystickAxis, Trigger, Button]) -> t.Union[float, bool]:
         if isinstance(control, self.JoystickAxis):
@@ -141,6 +143,18 @@ class Controller:
 
     def check_for_camera_change(self, event):
         """Process an event and call the switch camera callbacks if appropriate"""
+        pass
+
+    def register_mode_callback(self, callback):
+        self.switch_mode_callbacks.append(callback)
+
+    def call_mode_callbacks(self, mode: str):
+        logger.info(mode)
+        for callback in self.switch_mode_callbacks:
+            callback(mode)
+
+    def check_for_mode_change(self, event):
+        """Process and event and call the switch mode callback if appropriate"""
         pass
 
     def register_relay_callback(self, relay: Relay, callback):
@@ -348,10 +362,14 @@ class PS5Controller(Controller):
         if event.code in (self.JoystickAxis.DPadX.value, self.JoystickAxis.DPadY.value):
             self.joystick_axes[self.JoystickAxis(event.code)] = event.state
             self.check_for_camera_change(event)
+            self.check_for_mode_change(event)
         else:
             super()._handle_event(event)
 
-    def check_for_camera_change(self, event):
+    def check_for_camera_change(self, event):        
+        if self.get(self.Button.Circle):
+            return
+        
         if event.code == self.JoystickAxis.DPadX.value and event.state != 0:
             self.call_camera_callbacks(CAM_INDICES[Camera.BOTTOM])
         if event.code == self.JoystickAxis.DPadY.value:
@@ -373,6 +391,18 @@ class PS5Controller(Controller):
             self.call_relay_callbacks(Relay.MAGNET)
         elif event.code == self.Button.Triangle.value:
             self.call_relay_callbacks(Relay.LIGHTS_FRONT)  # Actually toggles all lights
+
+    def check_for_mode_change(self, event):
+        if not self.get(self.Button.Circle):
+            return
+        
+        if event.code == self.JoystickAxis.DPadX.value and event.state != 0:
+            self.call_mode_callbacks("STABILIZE")
+        if event.code == self.JoystickAxis.DPadY.value:
+            if event.state == -1:
+                self.call_mode_callbacks("MANUAL")
+            elif event.state == 1:
+                self.call_mode_callbacks("ALT_HOLD")
 
 
 def get_active_controller_type():

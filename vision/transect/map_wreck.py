@@ -98,18 +98,6 @@ class MapWreck():
             cv2.setMouseCallback(window, self.draw)
 
             QThread.currentThread().msleep(20)
-            
-            # print('Starting wait')
-            # key = cv2.waitKey(20) & 0xFF
-            # print('Got key')
-            # # 'q' key to exit
-            # if key == ord("q"):
-            #     break
-
-            # # 'c' key to clear the window
-            # elif key == ord("c"):
-            #     self.canvas = self.new_canvas()
-            #     self.preview = self.canvas.copy()
 
         cv2.destroyWindow(window)
     
